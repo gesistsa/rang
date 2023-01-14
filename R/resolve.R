@@ -43,15 +43,20 @@
 
 ## We should consider Imports, Depends, LinkingTo, and Enhances
 
-.keep_queryable_dependencies <- function(dep_df) {
+.keep_queryable_dependencies <- function(dep_df, no_enhances = FALSE) {
     if (!"y" %in% colnames(dep_df)) {
         return(NULL)
     }
-    res <- dep_df[dep_df$type != "Suggests" & dep_df$y != "R" & !(dep_df$y %in% c("datasets", "utils", "grDevices", "graphics", "stats", "methods", "tools", "grid", "splines", "Rgraphviz", "parallel", "stats4")),]
+    if (isTRUE(no_enhances)) {
+        disabled_types <- c("Suggests", "Enhances")
+    } else {
+        disabled_types <- c("Suggests")
+    }
+    res <- dep_df[!dep_df$type %in% disabled_types & dep_df$y != "R" & !(dep_df$y %in% c("datasets", "utils", "grDevices", "graphics", "stats", "methods", "tools", "grid", "splines", "Rgraphviz", "parallel", "stats4")),]
     if (nrow(res) == 0) {
         return(NULL)
     } else {
-        return(res$y)
+        return(unique(res$y))
     }
 }
 
@@ -63,7 +68,7 @@
 ## snapshot_date <- "2022-12-10"
 
 #' @export
-resolve <- function(pkg, snapshot_date) {
+resolve <- function(pkg, snapshot_date, no_enhances = TRUE) {
     snapshot_date <- anytime::anytime(snapshot_date, tz = "UTC", asUTC = TRUE)
     if (snapshot_date >= anytime::anytime(Sys.Date())) {
         stop("We don't know the future.", call. = FALSE)
@@ -75,7 +80,7 @@ resolve <- function(pkg, snapshot_date) {
     output[['original']] <- pkg_dep_df
     output$dep <- list()
     q <- dequer::deque()
-    for (dep in .keep_queryable_dependencies(pkg_dep_df)) {
+    for (dep in .keep_queryable_dependencies(pkg_dep_df, no_enhances)) {
         dequer::pushback(q, dep)
     }
     seen_deps <- c()
@@ -83,7 +88,7 @@ resolve <- function(pkg, snapshot_date) {
         current_pkg <- dequer::pop(q)
         pkg_dep_df <- .get_snapshot_dependencies(pkg = current_pkg, snapshot_date = snapshot_date)
         output$dep[[current_pkg]] <- pkg_dep_df
-        pkgs_need_query <- setdiff(.keep_queryable_dependencies(pkg_dep_df), c(names(output$dep), seen_deps))
+        pkgs_need_query <- unique(setdiff(.keep_queryable_dependencies(pkg_dep_df, no_enhances), c(names(output$dep), seen_deps)))
         seen_deps <- union(seen_deps, pkgs_need_query)
         for (dep in pkgs_need_query) {
             dequer::pushback(q, dep)
@@ -103,4 +108,15 @@ print.gran <- function(x, ...) {
     }
     latest_version <- unique(x$original$x_version)
     cat("GRAN: The latest version of `", x$pkg, "` at ", as.character(x$snapshot_date), " was ", latest_version, ", which has ", total_deps, " unique dependencies (", total_terminal_nodes, " with no dependencies.)\n", sep = "")
+}
+
+as.edgelist <- function(x, ...) {
+    output <- data.frame(x = x$pkg, y = .keep_queryable_dependencies(x$original))
+    for (dep in x$dep) {
+        if (!.is_terminal_node(dep)) {
+            el <- data.frame(x = unique(dep$x), y = .keep_queryable_dependencies(dep))
+            output <- rbind(output, el)
+        }
+    }
+    output
 }

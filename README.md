@@ -26,7 +26,9 @@ To obtain the dependency graph of an R package, use `resolve`
 library(gran)
 rtoot_graph <- resolve(pkg = "rtoot", snapshot_date = "2022-12-31")
 rtoot_graph
-#> GRAN: The latest version of `rtoot` at 2022-12-31 was 0.2.0, which has 26 unique dependencies (15 with no dependencies.)
+#> GRAN: The latest version of `rtoot` at 2022-12-31 was 0.2.0, which has 24 unique dependencies (14 with no dependencies.)
 ```
+
+-----
 
 1.  Actually, it stands for “GESIS R Archive Network”.

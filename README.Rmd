@@ -38,4 +38,6 @@ rtoot_graph <- resolve(pkg = "rtoot", snapshot_date = "2022-12-31")
 rtoot_graph
 ```
 
+---
+
 [^gesis]: Actually, it stands for "GESIS R Archive Network".
