@@ -29,3 +29,9 @@
 ## saveRDS(dbi, "tests/testdata/dbi_dep_df.RDS")
 ## saveRDS(httr, "tests/testdata/httr_dep_df.RDS")
 ## saveRDS(R6, "tests/testdata/R6.RDS")
+
+## We should consider Imports, Depends, LinkingTo, and Enhances
+
+.is_terminal_node <- function(dep_df) {
+    nrow(dep_df[dep_df$type != "Suggests" & dep_df$y != "R" & !(dep_df$y %in% c("datasets", "utils", "grDevices", "graphics", "stats", "methods")),]) == 0
+}
