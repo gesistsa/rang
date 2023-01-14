@@ -1,24 +1,14 @@
----
-output: github_document
----
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
-
-```{r, include = FALSE}
-knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>",
-  fig.path = "man/figures/README-",
-  out.width = "100%"
-)
-```
 
 # gran
 
 <!-- badges: start -->
+
 <!-- badges: end -->
 
-The goal of gran (gran: R anachronism nullifier) [^gesis] is to obtain the dependency graph of an R package at a specific time point.
+The goal of gran (gran: R anachronism nullifier) \[1\] is to obtain the
+dependency graph of an R package at a specific time point.
 
 ## Installation
 
@@ -32,10 +22,11 @@ remotes::install_github("GESIS-Methods-Hub/gran")
 
 To obtain the dependency graph of an R package, use `resolve`
 
-```{r example}
+``` r
 library(gran)
 rtoot_graph <- resolve(pkg = "rtoot", snapshot_date = "2022-12-31")
 rtoot_graph
+#> GRAN: The latest version of `rtoot` at 2022-12-31 was 0.2.0, which has 26 unique dependencies (15 with no dependencies.)
 ```
 
-[^gesis]: Actually, it stands for "GESIS R Archive Network".
+1.  Actually, it stands for “GESIS R Archive Network”.

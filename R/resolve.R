@@ -9,12 +9,23 @@
     snapshot_date <- anytime::anytime(snapshot_date, tz = "UTC", asUTC = TRUE)
     search_res <- .search(pkg)
     ## exclude rows where Version, Date, dependecies are NA
-    search_res <- search_res[!is.na(search_res$Date) & !is.na(search_res$Version),]
-    search_res$pubdate <- anytime::anytime(search_res$Date, tz = "UTC", asUTC = TRUE)
+    if (is.null(search_res$`Date/Publication`)) {
+        search_res$`Date/Publication` <- search_res$Date
+    }
+    search_res <- search_res[!is.na(search_res$`Date/Publication`) & !is.na(search_res$Version),]
+    search_res$pubdate <- anytime::anytime(search_res$`Date/Publication`, tz = "UTC", asUTC = TRUE)
     snapshot_versions <- search_res[search_res$pubdate <= snapshot_date,]
-    best_version <- tail(snapshot_versions[order(snapshot_versions$pubdate),], n = 1)
-    dependencies <- best_version$dependencies[[1]]
-    data.frame(snapshot_date = snapshot_date, x = pkg, x_version = best_version$Version, y = dependencies$package, type = dependencies$type, y_raw_version = dependencies$version)
+    if (nrow(snapshot_versions) == 0) {
+        stop("No snapshot version exists for ", pkg, ".",  call. = FALSE)
+    }
+    latest_version <- tail(snapshot_versions[order(snapshot_versions$pubdate),], n = 1)
+    dependencies <- latest_version$dependencies[[1]]
+    if (nrow(dependencies != 0)) {
+        return(data.frame(snapshot_date = snapshot_date, x = pkg, x_version = latest_version$Version, x_pubdate = latest_version$pubdate,  y = dependencies$package, type = dependencies$type, y_raw_version = dependencies$version))
+    } else {
+        ## no y
+        return(data.frame(snapshot_date = snapshot_date, x = pkg, x_version = latest_version$Version, x_pubdate = latest_version$pubdate))
+    }
 }
 
 ## dep_df is a terminal node if
@@ -32,6 +43,64 @@
 
 ## We should consider Imports, Depends, LinkingTo, and Enhances
 
+.keep_queryable_dependencies <- function(dep_df) {
+    if (!"y" %in% colnames(dep_df)) {
+        return(NULL)
+    }
+    res <- dep_df[dep_df$type != "Suggests" & dep_df$y != "R" & !(dep_df$y %in% c("datasets", "utils", "grDevices", "graphics", "stats", "methods", "tools", "grid", "splines", "Rgraphviz", "parallel", "stats4")),]
+    if (nrow(res) == 0) {
+        return(NULL)
+    } else {
+        return(res$y)
+    }
+}
+
 .is_terminal_node <- function(dep_df) {
-    nrow(dep_df[dep_df$type != "Suggests" & dep_df$y != "R" & !(dep_df$y %in% c("datasets", "utils", "grDevices", "graphics", "stats", "methods")),]) == 0
+    length(.keep_queryable_dependencies(dep_df)) == 0
+}
+
+## pkg <- "rtoot"
+## snapshot_date <- "2022-12-10"
+
+#' @export
+resolve <- function(pkg, snapshot_date) {
+    snapshot_date <- anytime::anytime(snapshot_date, tz = "UTC", asUTC = TRUE)
+    if (snapshot_date >= anytime::anytime(Sys.Date())) {
+        stop("We don't know the future.", call. = FALSE)
+    }
+    pkg_dep_df <- .get_snapshot_dependencies(pkg = pkg, snapshot_date = snapshot_date)
+    output <- list()
+    output$pkg <- pkg
+    output$snapshot_date <- snapshot_date
+    output[['original']] <- pkg_dep_df
+    output$dep <- list()
+    q <- dequer::deque()
+    for (dep in .keep_queryable_dependencies(pkg_dep_df)) {
+        dequer::pushback(q, dep)
+    }
+    seen_deps <- c()
+    while (length(q) != 0) {
+        current_pkg <- dequer::pop(q)
+        pkg_dep_df <- .get_snapshot_dependencies(pkg = current_pkg, snapshot_date = snapshot_date)
+        output$dep[[current_pkg]] <- pkg_dep_df
+        pkgs_need_query <- setdiff(.keep_queryable_dependencies(pkg_dep_df), c(names(output$dep), seen_deps))
+        seen_deps <- union(seen_deps, pkgs_need_query)
+        for (dep in pkgs_need_query) {
+            dequer::pushback(q, dep)
+        }
+    }
+    attr(output, "class") <- "gran"
+    return(output)
+}
+
+#' @export
+print.gran <- function(x, ...) {
+    total_deps <- length(x$dep)
+    if (total_deps != 0) {
+        total_terminal_nodes <- sum(unlist(lapply(x$dep, .is_terminal_node)))
+    } else {
+        total_terminal_nodes <- 0
+    }
+    latest_version <- unique(x$original$x_version)
+    cat("GRAN: The latest version of `", x$pkg, "` at ", as.character(x$snapshot_date), " was ", latest_version, ", which has ", total_deps, " unique dependencies (", total_terminal_nodes, " with no dependencies.)\n", sep = "")
 }
