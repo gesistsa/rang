@@ -6,6 +6,19 @@ NULL
 
 .search <- memoise::memoise(pkgsearch::cran_package_history, cache = cachem::cache_mem(max_age = 60 * 60))
 
+.raw_sysreqs <- function(pkg) {
+    suppressWarnings(jsonlite::fromJSON(readLines(paste0("https://sysreqs.r-hub.io/pkg/", pkg)), simplifyVector = FALSE))
+}
+
+.msysreps <- memoise::memoise(.raw_sysreqs, cache = cachem::cache_mem(max_age = 60 * 60))
+
+.sysreps <- function(pkg, verbose = FALSE) {
+    if (isTRUE(verbose)) {
+        cat("Querying SystemRequirements of", pkg, "\n")
+    }
+    .msysreps(pkg)
+}
+
 ## get the latest version as of date
 ## let's call this output dep_df; basically is a rough version of edgelist
 .get_snapshot_dependencies <- function(pkg = "rtoot", snapshot_date = "2022-12-10") {
@@ -181,3 +194,16 @@ convert_edgelist <- function(x) {
     }
     output
 }
+
+## extract all the names of deps and pkgs: for .sysdeps
+.granlist_extract_all_deps <- function(granlist) {
+    pkgs <- names(granlist$grans)
+    all_deps <- unlist(lapply(granlist$grans, function(x) names(x$deps)))
+    unique(c(pkgs, all_deps))
+}
+
+.granlist_query_sysdeps <- function(granlist, verbose = FALSE) {
+    targets <- .granlist_extract_all_deps(granlist)
+    sapply(targets, .sysreps, verbose = verbose, simplify = FALSE, USE.NAMES = TRUE) ## don't gp me
+}
+
