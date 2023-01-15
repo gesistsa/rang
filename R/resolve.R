@@ -82,7 +82,7 @@ resolve <- function(pkg, snapshot_date, no_enhances = TRUE, no_suggests = TRUE, 
     output$no_suggests <- no_suggests
     output$snapshot_date <- snapshot_date
     output[['original']] <- pkg_dep_df
-    output$dep <- list()
+    output$deps <- list()
     output$unresolveddep <- character(0)
     q <- dequer::deque()
     for (dep in .keep_queryable_dependencies(pkg_dep_df, no_enhances, no_suggests)) {
@@ -96,7 +96,7 @@ resolve <- function(pkg, snapshot_date, no_enhances = TRUE, no_suggests = TRUE, 
         }
         tryCatch({
             pkg_dep_df <- .get_snapshot_dependencies(pkg = current_pkg, snapshot_date = snapshot_date)
-            output$dep[[current_pkg]] <- pkg_dep_df
+            output$deps[[current_pkg]] <- pkg_dep_df
             pkgs_need_query <- unique(setdiff(.keep_queryable_dependencies(pkg_dep_df, no_enhances, no_suggests), c(names(output$dep), seen_deps)))
             seen_deps <- union(seen_deps, pkgs_need_query)
             for (dep in pkgs_need_query) {
@@ -113,9 +113,9 @@ resolve <- function(pkg, snapshot_date, no_enhances = TRUE, no_suggests = TRUE, 
 
 #' @export
 print.gran <- function(x, ...) {
-    total_deps <- length(x$dep)
+    total_deps <- length(x$deps)
     if (total_deps != 0) {
-        total_terminal_nodes <- sum(unlist(lapply(x$dep, .is_terminal_node, no_enhances = x$no_enhances, no_suggests = x$no_suggests)))
+        total_terminal_nodes <- sum(unlist(lapply(x$deps, .is_terminal_node, no_enhances = x$no_enhances, no_suggests = x$no_suggests)))
     } else {
         total_terminal_nodes <- 0
     }
@@ -126,7 +126,7 @@ print.gran <- function(x, ...) {
 #' @export
 convert_edgelist <- function(x) {
     output <- data.frame(x = x$pkg, y = .keep_queryable_dependencies(x$original, x$no_enhances, x$no_suggests))
-    for (dep in x$dep) {
+    for (dep in x$deps) {
         if (!.is_terminal_node(dep, x$no_enhances)) {
             el <- data.frame(x = unique(dep$x), y = .keep_queryable_dependencies(dep, x$no_enhances, x$no_suggests))
             output <- rbind(output, el)
