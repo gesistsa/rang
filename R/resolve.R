@@ -43,16 +43,18 @@
 
 ## We should consider Imports, Depends, LinkingTo, and Enhances
 
-.keep_queryable_dependencies <- function(dep_df, no_enhances = FALSE) {
+.keep_queryable_dependencies <- function(dep_df, no_enhances = TRUE, no_suggests = TRUE) {
     if (!"y" %in% colnames(dep_df)) {
         return(NULL)
     }
-    if (isTRUE(no_enhances)) {
-        disabled_types <- c("Suggests", "Enhances")
-    } else {
-        disabled_types <- c("Suggests")
+    disabled_types <- c()
+    if (isTRUE(no_suggests)) {
+        disabled_types <- c(disabled_types, "Suggests")
     }
-    res <- dep_df[!dep_df$type %in% disabled_types & dep_df$y != "R" & !(dep_df$y %in% c("datasets", "utils", "grDevices", "graphics", "stats", "methods", "tools", "grid", "splines", "Rgraphviz", "parallel", "stats4")),]
+    if (isTRUE(no_enhances)) {
+        disabled_types <- c(disabled_types, "Enhances")
+    }
+    res <- dep_df[!dep_df$type %in% disabled_types & dep_df$y != "R" & !(dep_df$y %in% c("datasets", "utils", "grDevices", "graphics", "stats", "methods", "tools", "grid", "splines", "Rgraphviz", "parallel", "stats4", "tcltk")),]
     if (nrow(res) == 0) {
         return(NULL)
     } else {
@@ -60,15 +62,15 @@
     }
 }
 
-.is_terminal_node <- function(dep_df, no_enhances = TRUE) {
-    length(.keep_queryable_dependencies(dep_df, no_enhances)) == 0
+.is_terminal_node <- function(dep_df, no_enhances = TRUE, no_suggests = TRUE) {
+    length(.keep_queryable_dependencies(dep_df, no_enhances, no_suggests)) == 0
 }
 
 ## pkg <- "rtoot"
 ## snapshot_date <- "2022-12-10"
 
 #' @export
-resolve <- function(pkg, snapshot_date, no_enhances = TRUE) {
+resolve <- function(pkg, snapshot_date, no_enhances = TRUE, no_suggests = TRUE, verbose = FALSE) {
     snapshot_date <- anytime::anytime(snapshot_date, tz = "UTC", asUTC = TRUE)
     if (snapshot_date >= anytime::anytime(Sys.Date())) {
         stop("We don't know the future.", call. = FALSE)
@@ -77,23 +79,33 @@ resolve <- function(pkg, snapshot_date, no_enhances = TRUE) {
     output <- list()
     output$pkg <- pkg
     output$no_enhances <- no_enhances
+    output$no_suggests <- no_suggests
     output$snapshot_date <- snapshot_date
     output[['original']] <- pkg_dep_df
     output$dep <- list()
+    output$unresolveddep <- character(0)
     q <- dequer::deque()
-    for (dep in .keep_queryable_dependencies(pkg_dep_df, no_enhances)) {
+    for (dep in .keep_queryable_dependencies(pkg_dep_df, no_enhances, no_suggests)) {
         dequer::pushback(q, dep)
     }
     seen_deps <- c()
     while (length(q) != 0) {
         current_pkg <- dequer::pop(q)
-        pkg_dep_df <- .get_snapshot_dependencies(pkg = current_pkg, snapshot_date = snapshot_date)
-        output$dep[[current_pkg]] <- pkg_dep_df
-        pkgs_need_query <- unique(setdiff(.keep_queryable_dependencies(pkg_dep_df, no_enhances), c(names(output$dep), seen_deps)))
-        seen_deps <- union(seen_deps, pkgs_need_query)
-        for (dep in pkgs_need_query) {
-            dequer::pushback(q, dep)
+        if (isTRUE(verbose)) {
+            cat("Querying: ", current_pkg, "\n")
         }
+        tryCatch({
+            pkg_dep_df <- .get_snapshot_dependencies(pkg = current_pkg, snapshot_date = snapshot_date)
+            output$dep[[current_pkg]] <- pkg_dep_df
+            pkgs_need_query <- unique(setdiff(.keep_queryable_dependencies(pkg_dep_df, no_enhances, no_suggests), c(names(output$dep), seen_deps)))
+            seen_deps <- union(seen_deps, pkgs_need_query)
+            for (dep in pkgs_need_query) {
+                dequer::pushback(q, dep)
+            }
+        }, error = function(e) {
+            ## can't query
+            output$unresolveddep <- c(output$unresolveddep, current_pkg)
+        })
     }
     attr(output, "class") <- "gran"
     return(output)
@@ -103,7 +115,7 @@ resolve <- function(pkg, snapshot_date, no_enhances = TRUE) {
 print.gran <- function(x, ...) {
     total_deps <- length(x$dep)
     if (total_deps != 0) {
-        total_terminal_nodes <- sum(unlist(lapply(x$dep, .is_terminal_node, no_enhances = x$no_enhances)))
+        total_terminal_nodes <- sum(unlist(lapply(x$dep, .is_terminal_node, no_enhances = x$no_enhances, no_suggests = x$no_suggests)))
     } else {
         total_terminal_nodes <- 0
     }
@@ -113,10 +125,10 @@ print.gran <- function(x, ...) {
 
 #' @export
 convert_edgelist <- function(x) {
-    output <- data.frame(x = x$pkg, y = .keep_queryable_dependencies(x$original, x$no_enhances))
+    output <- data.frame(x = x$pkg, y = .keep_queryable_dependencies(x$original, x$no_enhances, x$no_suggests))
     for (dep in x$dep) {
         if (!.is_terminal_node(dep, x$no_enhances)) {
-            el <- data.frame(x = unique(dep$x), y = .keep_queryable_dependencies(dep, x$no_enhances))
+            el <- data.frame(x = unique(dep$x), y = .keep_queryable_dependencies(dep, x$no_enhances, x$no_suggests))
             output <- rbind(output, el)
         }
     }
