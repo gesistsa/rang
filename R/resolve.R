@@ -73,11 +73,43 @@ NULL
 ## snapshot_date <- "2022-12-10"
 
 #' @export
-resolve <- function(pkg, snapshot_date, no_enhances = TRUE, no_suggests = TRUE, verbose = FALSE) {
+resolve <- function(pkgs, snapshot_date, no_enhances = TRUE, no_suggests = TRUE, verbose = FALSE) {
+    if (missing(snapshot_date)) {
+        if (isTRUE(verbose)) {
+            cat("No `snapshot_date`: Assuming `snapshot_date` to be a week ago.\n")
+        }
+        snapshot_date <- Sys.Date() - 1
+    }
     snapshot_date <- anytime::anytime(snapshot_date, tz = "UTC", asUTC = TRUE)
     if (snapshot_date >= anytime::anytime(Sys.Date())) {
         stop("We don't know the future.", call. = FALSE)
     }
+    output <- list()
+    output$call <- match.call()
+    output$grans <- list()
+    output$snapshot_date <- snapshot_date
+    output$no_enhances <- no_enhances
+    output$no_suggests <- no_suggests
+    output$unresolved_pkgs <- character(0)
+    output$deps_sysreqs <- list() ##TBI
+    output$r_version <- character(0) ## TBI
+    for (pkg in pkgs) {
+        tryCatch({
+            res <- .resolve_pkg(pkg = pkg, snapshot_date = snapshot_date, no_enhances = no_enhances,
+                                no_suggests = no_suggests, verbose = verbose)
+            output$grans[[pkg]] <- res
+        }, error = function(e) {
+            if (isTRUE(verbose)) {
+                cat("Query failed: ", pkg, "\n")
+                output$unresolved_pkgs <- c(output$unresolved_pkgs, pkg)
+            }
+        })
+    }
+    attr(output, "class") <- "granlist"    
+    return(output)
+}
+
+.resolve_pkg <- function(pkg, snapshot_date, no_enhances = TRUE, no_suggests = TRUE, verbose = FALSE) {
     pkg_dep_df <- .get_snapshot_dependencies(pkg = pkg, snapshot_date = snapshot_date)
     output <- list()
     output$pkg <- pkg
@@ -124,6 +156,18 @@ print.gran <- function(x, ...) {
     }
     latest_version <- unique(x$original$x_version)
     cat("GRAN: The latest version of `", x$pkg, "` at ", as.character(x$snapshot_date), " was ", latest_version, ", which has ", total_deps, " unique dependencies (", total_terminal_nodes, " with no dependencies.)\n", sep = "")
+}
+
+#' @export
+print.granlist <- function(x, all_pkgs = FALSE, ...) {
+    n_grans <- length(x$grans)
+    cat("resolved:", n_grans, "package(s).\n")
+    if (n_grans <= 5 || isTRUE(all_pkgs)) {
+        print(x$grans)
+    } else {
+        cat("First 5 packages are:\n")
+        print(x$grans[seq_len(5)])
+    }
 }
 
 #' @export

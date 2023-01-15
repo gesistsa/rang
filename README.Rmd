@@ -18,7 +18,7 @@ knitr::opts_chunk$set(
 <!-- badges: start -->
 <!-- badges: end -->
 
-The goal of gran (gran: R anachronism nullifier) [^gesis] is to obtain the dependency graph of an R package at a specific time point.
+The goal of gran (gran: R anachronism nullifier) [^gesis] is to obtain the dependency graph of R packages at a specific time point.
 
 ## Installation
 
@@ -34,8 +34,8 @@ To obtain the dependency graph of an R package, use `resolve`
 
 ```{r example}
 library(gran)
-rtoot_graph <- resolve(pkg = "rtoot", snapshot_date = "2022-12-31")
-rtoot_graph
+graph <- resolve(pkgs = c("rtoot", "rtweet"), snapshot_date = "2022-12-31")
+graph
 ```
 
 ---

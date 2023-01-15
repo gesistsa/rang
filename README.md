@@ -8,7 +8,7 @@
 <!-- badges: end -->
 
 The goal of gran (gran: R anachronism nullifier) \[1\] is to obtain the
-dependency graph of an R package at a specific time point.
+dependency graph of R packages at a specific time point.
 
 ## Installation
 
@@ -24,9 +24,14 @@ To obtain the dependency graph of an R package, use `resolve`
 
 ``` r
 library(gran)
-rtoot_graph <- resolve(pkg = "rtoot", snapshot_date = "2022-12-31")
-rtoot_graph
-#> GRAN: The latest version of `rtoot` at 2022-12-31 was 0.2.0, which has 24 unique dependencies (14 with no dependencies.)
+graph <- resolve(pkgs = c("rtoot", "rtweet"), snapshot_date = "2022-12-31")
+graph
+#> resolved: 2 package(s).
+#> $rtoot
+#> GRAN: The latest version of `rtoot` at 2022-12-31 was 0.2.0, which has 24 unique dependencies (15 with no dependencies.)
+#> 
+#> $rtweet
+#> GRAN: The latest version of `rtweet` at 2022-12-31 was 1.0.2, which has 27 unique dependencies (16 with no dependencies.)
 ```
 
 -----
