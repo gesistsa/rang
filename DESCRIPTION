@@ -16,4 +16,5 @@ Imports:
     anytime,
     dequer,
     memoise,
-    pkgsearch
+    pkgsearch,
+    utils

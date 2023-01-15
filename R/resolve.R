@@ -18,7 +18,7 @@
     if (nrow(snapshot_versions) == 0) {
         stop("No snapshot version exists for ", pkg, ".",  call. = FALSE)
     }
-    latest_version <- tail(snapshot_versions[order(snapshot_versions$pubdate),], n = 1)
+    latest_version <- utils::tail(snapshot_versions[order(snapshot_versions$pubdate),], n = 1)
     dependencies <- latest_version$dependencies[[1]]
     if (nrow(dependencies != 0)) {
         return(data.frame(snapshot_date = snapshot_date, x = pkg, x_version = latest_version$Version, x_pubdate = latest_version$pubdate,  y = dependencies$package, type = dependencies$type, y_raw_version = dependencies$version))
@@ -110,7 +110,8 @@ print.gran <- function(x, ...) {
     cat("GRAN: The latest version of `", x$pkg, "` at ", as.character(x$snapshot_date), " was ", latest_version, ", which has ", total_deps, " unique dependencies (", total_terminal_nodes, " with no dependencies.)\n", sep = "")
 }
 
-as.edgelist <- function(x, ...) {
+#' @export
+convert_edgelist <- function(x) {
     output <- data.frame(x = x$pkg, y = .keep_queryable_dependencies(x$original))
     for (dep in x$dep) {
         if (!.is_terminal_node(dep)) {
