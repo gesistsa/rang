@@ -86,7 +86,7 @@ resolve <- function(pkg, snapshot_date, no_enhances = TRUE, no_suggests = TRUE, 
     output$snapshot_date <- snapshot_date
     output[['original']] <- pkg_dep_df
     output$deps <- list()
-    output$unresolveddep <- character(0)
+    output$unresolved_deps <- character(0)
     q <- dequer::deque()
     for (dep in .keep_queryable_dependencies(pkg_dep_df, no_enhances, no_suggests)) {
         dequer::pushback(q, dep)
@@ -107,7 +107,7 @@ resolve <- function(pkg, snapshot_date, no_enhances = TRUE, no_suggests = TRUE, 
             }
         }, error = function(e) {
             ## can't query
-            output$unresolveddep <- c(output$unresolveddep, current_pkg)
+            output$unresolved_deps <- c(output$unresolved_deps, current_pkg)
         })
     }
     attr(output, "class") <- "gran"
