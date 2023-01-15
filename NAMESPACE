@@ -3,3 +3,5 @@
 S3method(print,gran)
 export(convert_edgelist)
 export(resolve)
+importFrom(memoise,memoise)
+importFrom(pkgsearch,cran_package_history)

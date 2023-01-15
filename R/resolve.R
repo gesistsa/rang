@@ -1,3 +1,6 @@
+#' @importFrom memoise memoise
+#' @importFrom pkgsearch cran_package_history
+NULL
 
 ## one hr
 
