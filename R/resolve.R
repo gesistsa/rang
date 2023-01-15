@@ -60,8 +60,8 @@
     }
 }
 
-.is_terminal_node <- function(dep_df) {
-    length(.keep_queryable_dependencies(dep_df)) == 0
+.is_terminal_node <- function(dep_df, no_enhances = TRUE) {
+    length(.keep_queryable_dependencies(dep_df, no_enhances)) == 0
 }
 
 ## pkg <- "rtoot"
@@ -76,6 +76,7 @@ resolve <- function(pkg, snapshot_date, no_enhances = TRUE) {
     pkg_dep_df <- .get_snapshot_dependencies(pkg = pkg, snapshot_date = snapshot_date)
     output <- list()
     output$pkg <- pkg
+    output$no_enhances <- no_enhances
     output$snapshot_date <- snapshot_date
     output[['original']] <- pkg_dep_df
     output$dep <- list()
@@ -102,7 +103,7 @@ resolve <- function(pkg, snapshot_date, no_enhances = TRUE) {
 print.gran <- function(x, ...) {
     total_deps <- length(x$dep)
     if (total_deps != 0) {
-        total_terminal_nodes <- sum(unlist(lapply(x$dep, .is_terminal_node)))
+        total_terminal_nodes <- sum(unlist(lapply(x$dep, .is_terminal_node, no_enhances = x$no_enhances)))
     } else {
         total_terminal_nodes <- 0
     }
@@ -112,10 +113,10 @@ print.gran <- function(x, ...) {
 
 #' @export
 convert_edgelist <- function(x) {
-    output <- data.frame(x = x$pkg, y = .keep_queryable_dependencies(x$original))
+    output <- data.frame(x = x$pkg, y = .keep_queryable_dependencies(x$original, x$no_enhances))
     for (dep in x$dep) {
-        if (!.is_terminal_node(dep)) {
-            el <- data.frame(x = unique(dep$x), y = .keep_queryable_dependencies(dep))
+        if (!.is_terminal_node(dep, x$no_enhances)) {
+            el <- data.frame(x = unique(dep$x), y = .keep_queryable_dependencies(dep, x$no_enhances))
             output <- rbind(output, el)
         }
     }
