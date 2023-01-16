@@ -6,18 +6,18 @@ NULL
 
 .search <- memoise::memoise(pkgsearch::cran_package_history, cache = cachem::cache_mem(max_age = 60 * 60))
 
-.raw_sysreqs <- function(pkg) {
-    suppressWarnings(jsonlite::fromJSON(readLines(paste0("https://sysreqs.r-hub.io/pkg/", pkg)), simplifyVector = FALSE))
-}
+## .raw_sysreqs <- function(pkg) {
+##     suppressWarnings(jsonlite::fromJSON(readLines(paste0("https://sysreqs.r-hub.io/pkg/", pkg)), simplifyVector = FALSE))
+## }
 
-.msysreps <- memoise::memoise(.raw_sysreqs, cache = cachem::cache_mem(max_age = 60 * 60))
+## .msysreps <- memoise::memoise(.raw_sysreqs, cache = cachem::cache_mem(max_age = 60 * 60))
 
-.sysreps <- function(pkg, verbose = FALSE) {
-    if (isTRUE(verbose)) {
-        cat("Querying SystemRequirements of", pkg, "\n")
-    }
-    .msysreps(pkg)
-}
+## .sysreps <- function(pkg, verbose = FALSE) {
+##     if (isTRUE(verbose)) {
+##         cat("Querying SystemRequirements of", pkg, "\n")
+##     }
+##     .msysreps(pkg)
+## }
 
 ## get the latest version as of date
 ## let's call this output dep_df; basically is a rough version of edgelist
@@ -86,7 +86,7 @@ NULL
 ## snapshot_date <- "2022-12-10"
 
 #' @export
-resolve <- function(pkgs, snapshot_date, no_enhances = TRUE, no_suggests = TRUE, verbose = FALSE) {
+resolve <- function(pkgs, snapshot_date, no_enhances = TRUE, no_suggests = TRUE, get_sysreqs = TRUE, verbose = FALSE) {
     if (missing(snapshot_date)) {
         if (isTRUE(verbose)) {
             cat("No `snapshot_date`: Assuming `snapshot_date` to be a week ago.\n")
@@ -104,7 +104,7 @@ resolve <- function(pkgs, snapshot_date, no_enhances = TRUE, no_suggests = TRUE,
     output$no_enhances <- no_enhances
     output$no_suggests <- no_suggests
     output$unresolved_pkgs <- character(0)
-    output$deps_sysreqs <- list() ##TBI
+    output$deps_sysreqs <- list()
     output$r_version <- character(0) ## TBI
     for (pkg in pkgs) {
         tryCatch({
@@ -117,6 +117,10 @@ resolve <- function(pkgs, snapshot_date, no_enhances = TRUE, no_suggests = TRUE,
                 output$unresolved_pkgs <- c(output$unresolved_pkgs, pkg)
             }
         })
+    }
+    if (isTRUE(get_sysreqs)) {
+        res <- .granlist_query_sysreps(output)
+        output$deps_sysreqs <- res
     }
     attr(output, "class") <- "granlist"    
     return(output)
@@ -202,8 +206,7 @@ convert_edgelist <- function(x) {
     unique(c(pkgs, all_deps))
 }
 
-.granlist_query_sysdeps <- function(granlist, verbose = FALSE) {
+.granlist_query_sysreps <- function(granlist, os = "ubuntu-20.04") {
     targets <- .granlist_extract_all_deps(granlist)
-    sapply(targets, .sysreps, verbose = verbose, simplify = FALSE, USE.NAMES = TRUE) ## don't gp me
+    remotes::system_requirements(package = targets, os = os) ## don't gp me
 }
-

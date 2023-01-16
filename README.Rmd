@@ -34,8 +34,12 @@ To obtain the dependency graph of an R package, use `resolve`
 
 ```{r example}
 library(gran)
-graph <- resolve(pkgs = c("rtoot", "rtweet"), snapshot_date = "2022-12-31")
+graph <- resolve(pkgs = c("openNLP", "LDAvis", "topicmodels", "quanteda"), snapshot_date = "2020-01-16")
 graph
+```
+
+```{r example2}
+graph$deps_sysreqs
 ```
 
 ---

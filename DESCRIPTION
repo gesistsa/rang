@@ -18,4 +18,5 @@ Imports:
     jsonlite,
     memoise,
     pkgsearch,
+    remotes,
     utils
