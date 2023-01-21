@@ -86,7 +86,7 @@ NULL
 ## snapshot_date <- "2022-12-10"
 
 #' @export
-resolve <- function(pkgs, snapshot_date, no_enhances = TRUE, no_suggests = TRUE, get_sysreqs = TRUE, verbose = FALSE) {
+resolve <- function(pkgs, snapshot_date, no_enhances = TRUE, no_suggests = TRUE, get_sysreqs = TRUE, os = "ubuntu-20.04", verbose = FALSE) {
     if (missing(snapshot_date)) {
         if (isTRUE(verbose)) {
             cat("No `snapshot_date`: Assuming `snapshot_date` to be a week ago.\n")
@@ -119,7 +119,7 @@ resolve <- function(pkgs, snapshot_date, no_enhances = TRUE, no_suggests = TRUE,
         })
     }
     if (isTRUE(get_sysreqs)) {
-        res <- .granlist_query_sysreps(output)
+        res <- .granlist_query_sysreps(output, os = os)
         output$deps_sysreqs <- res
     }
     attr(output, "class") <- "granlist"    
