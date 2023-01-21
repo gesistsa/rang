@@ -136,13 +136,13 @@ resolve <- function(pkgs, snapshot_date, no_enhances = TRUE, no_suggests = TRUE,
     output[['original']] <- pkg_dep_df
     output$deps <- list()
     output$unresolved_deps <- character(0)
-    q <- dequer::deque()
+    q <- fastmap::faststack()
     for (dep in .keep_queryable_dependencies(pkg_dep_df, no_enhances, no_suggests)) {
-        dequer::pushback(q, dep)
+        q$push(dep)
     }
     seen_deps <- c()
-    while (length(q) != 0) {
-        current_pkg <- dequer::pop(q)
+    while (q$size() != 0) {
+        current_pkg <- q$pop()
         if (isTRUE(verbose)) {
             cat("Querying: ", current_pkg, "\n")
         }
@@ -152,7 +152,7 @@ resolve <- function(pkgs, snapshot_date, no_enhances = TRUE, no_suggests = TRUE,
             pkgs_need_query <- unique(setdiff(.keep_queryable_dependencies(pkg_dep_df, no_enhances, no_suggests), c(names(output$dep), seen_deps)))
             seen_deps <- union(seen_deps, pkgs_need_query)
             for (dep in pkgs_need_query) {
-                dequer::pushback(q, dep)
+                q$push(dep)
             }
         }, error = function(e) {
             ## can't query
