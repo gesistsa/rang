@@ -67,6 +67,29 @@
     if ("default-jdk" %in% debs) {
         cmd <- paste(cmd, "liblzma-dev libpcre3-dev libbz2-dev && R CMD javareconf")
     }
-    cmd
+    paste("apt-get update -qq &&", cmd)
 }
 
+#' @export 
+make_docker <- function(granlist, output_dir) {
+    if (missing(output_dir)) {
+        stop("You must provide `output_dir`.")
+    }
+    install_order <- .determine_installation_order(granlist)
+    sysreps_cmd <- .consolidate_sysreqs(granlist)
+    if (!dir.exists(output_dir)) {
+        dir.create(output_dir)
+    }
+    file.create(file.path(output_dir, "gran.R"))
+    con <- file(file.path(output_dir, "gran.R"), open="w")
+    writeLines(readLines(system.file("header.R", package = "gran")), con = con)
+    cat("install_order <- ", file = con)
+    dput(install_order, file = con)
+    writeLines(readLines(system.file("footer.R", package = "gran")), con = con)
+    close(con)
+    basic_docker <- c("", "", "COPY gran.R ./gran.R", "RUN Rscript gran.R", "CMD [\"R\"]")
+    basic_docker[1] <- paste0("FROM rocker/r-ver:", granlist$r_version)
+    basic_docker[2] <- paste("RUN", sysreps_cmd)
+    writeLines(basic_docker, file.path(output_dir, "Dockerfile"))
+    invisible()
+}
