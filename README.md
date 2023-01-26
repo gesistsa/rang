@@ -63,7 +63,7 @@ The object can be used to recreate the computing environment via
 [Rocker](https://github.com/rocker-org/rocker).
 
 ``` r
-make_docker(graph, "~/rocker_test")
+dockerize(graph, "~/rocker_test")
 ```
 
 Now, you can build and run the Docker container.

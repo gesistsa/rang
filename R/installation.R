@@ -71,7 +71,7 @@
 }
 
 #' @export 
-make_docker <- function(granlist, output_dir) {
+dockerize <- function(granlist, output_dir) {
     if (missing(output_dir)) {
         stop("You must provide `output_dir`.")
     }
