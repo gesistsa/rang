@@ -80,7 +80,7 @@
 #' \donttest{
 #' graph <- resolve(pkgs = c("openNLP", "LDAvis", "topicmodels", "quanteda"),
 #'                 snapshot_date = "2020-01-16")
-#" dockerize(graph, tempdir())
+#' dockerize(graph, ".")
 #' }
 #' @export 
 dockerize <- function(granlist, output_dir) {
