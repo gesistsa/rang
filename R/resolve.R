@@ -6,9 +6,11 @@ NULL
 
 .search <- memoise::memoise(pkgsearch::cran_package_history, cache = cachem::cache_mem(max_age = 60 * 60))
 
-## .raw_sysreqs <- function(pkg) {
-##     suppressWarnings(jsonlite::fromJSON(readLines(paste0("https://sysreqs.r-hub.io/pkg/", pkg)), simplifyVector = FALSE))
-## }
+.get_rver <- function(snapshot_date) {
+    allvers <- suppressWarnings(jsonlite::fromJSON(readLines("https://api.r-hub.io/rversions/r-versions"), simplifyVector = TRUE))
+    allvers$date <- anytime::anytime(allvers$date, tz = "UTC", asUTC = TRUE)
+    tail(allvers[allvers$date < snapshot_date,], 1)$version
+}
 
 ## .msysreps <- memoise::memoise(.raw_sysreqs, cache = cachem::cache_mem(max_age = 60 * 60))
 
@@ -105,7 +107,7 @@ resolve <- function(pkgs, snapshot_date, no_enhances = TRUE, no_suggests = TRUE,
     output$no_suggests <- no_suggests
     output$unresolved_pkgs <- character(0)
     output$deps_sysreqs <- list()
-    output$r_version <- character(0) ## TBI
+    output$r_version <- .get_rver(snapshot_date)
     for (pkg in pkgs) {
         tryCatch({
             res <- .resolve_pkg(pkg = pkg, snapshot_date = snapshot_date, no_enhances = no_enhances,
