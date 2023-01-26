@@ -53,7 +53,7 @@ make_docker(graph, "~/rocker_test")
 Now, you can build and run the Docker container.
 
 ``` bash
-cd rocker_test
+cd ~/rocker_test
 sudo docker build -t gran .
 sudo docker run --rm --name "grantest" -ti gran
 ```
