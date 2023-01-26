@@ -70,6 +70,18 @@
     paste("apt-get update -qq &&", cmd)
 }
 
+#' Docker The Resolved Result
+#'
+#' This function exports the result from [resolve()] to a Docker file.
+#' @param granlist output from [resolve()]
+#' @param output_dir where to put the Docker file
+#' @return output_dir, invisibly
+#' @examples
+#' \donttest{
+#' graph <- resolve(pkgs = c("openNLP", "LDAvis", "topicmodels", "quanteda"),
+#'                 snapshot_date = "2020-01-16")
+#" dockerize(graph, tempdir())
+#' }
 #' @export 
 dockerize <- function(granlist, output_dir) {
     if (missing(output_dir)) {
@@ -91,5 +103,5 @@ dockerize <- function(granlist, output_dir) {
     basic_docker[1] <- paste0("FROM rocker/r-ver:", granlist$r_version)
     basic_docker[2] <- paste("RUN", sysreps_cmd)
     writeLines(basic_docker, file.path(output_dir, "Dockerfile"))
-    invisible()
+    invisible(output_dir)
 }

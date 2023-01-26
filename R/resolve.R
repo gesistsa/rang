@@ -87,13 +87,32 @@ NULL
 ## pkg <- "rtoot"
 ## snapshot_date <- "2022-12-10"
 
+#' Resolve Dependencies Of R Packages
+#'
+#' This function recursively queries dependencies of R packages at a specific snapshot time. The dependency graph can then be used to recreate the computing environment. The data on dependencies are provided by R-hub.
+#' 
+#' @param pkgs character vector of R packages to resolve
+#' @param snapshot_date Snapshot date, if not specified, assume to be a month ago
+#' @param no_enhances logical, whether to ignore packages in the "Enhances" field
+#' @param no_suggests logical, whether to ignore packages in the "Suggests" field
+#' @param get_sysreps logical, whether to query for System Requirements
+#' @param os character, which OS to query for system requirements
+#' @param verbose logical, whether to display messages
+#' @return S3 object `granlist`
 #' @export
+#' @seealso [dockerize()]
+#' @examples
+#' \donttest{
+#' graph <- resolve(pkgs = c("openNLP", "LDAvis", "topicmodels", "quanteda"),
+#'                 snapshot_date = "2020-01-16")
+#' graph
+#' }
 resolve <- function(pkgs, snapshot_date, no_enhances = TRUE, no_suggests = TRUE, get_sysreqs = TRUE, os = "ubuntu-20.04", verbose = FALSE) {
     if (missing(snapshot_date)) {
         if (isTRUE(verbose)) {
-            cat("No `snapshot_date`: Assuming `snapshot_date` to be a week ago.\n")
+            cat("No `snapshot_date`: Assuming `snapshot_date` to be a month ago.\n")
         }
-        snapshot_date <- Sys.Date() - 1
+        snapshot_date <- Sys.Date() - 30
     }
     snapshot_date <- anytime::anytime(snapshot_date, tz = "UTC", asUTC = TRUE)
     if (snapshot_date >= anytime::anytime(Sys.Date())) {
