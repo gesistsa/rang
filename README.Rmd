@@ -35,11 +35,15 @@ To obtain the dependency graph of an R package, use `resolve`
 ```r
 library(gran)
 graph <- resolve(pkgs = c("openNLP", "LDAvis", "topicmodels", "quanteda"), snapshot_date = "2020-01-16")
-graph
 ```
 
 ```{r, include = FALSE}
+library(gran)
 graph <- readRDS("tests/testdata/graph.RDS")
+```
+
+```{r example1}
+graph
 ```
 
 ```{r example2}
