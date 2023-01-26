@@ -15,7 +15,7 @@ dependency graph of R packages at a specific time point.
 You can install the development version of gran like so:
 
 ``` r
-remotes::install_github("GESIS-Methods-Hub/gran")
+remotes::install_github("chainsawriot/gran")
 ```
 
 ## Example
