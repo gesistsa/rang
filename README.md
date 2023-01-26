@@ -24,7 +24,8 @@ To obtain the dependency graph of an R package, use `resolve`
 
 ``` r
 library(gran)
-graph <- resolve(pkgs = c("openNLP", "LDAvis", "topicmodels", "quanteda"), snapshot_date = "2020-01-16")
+graph <- resolve(pkgs = c("openNLP", "LDAvis", "topicmodels", "quanteda"),
+                 snapshot_date = "2020-01-16")
 ```
 
 ``` r
