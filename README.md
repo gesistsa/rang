@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# gran
+# gran <img src="man/figures/gran_logo.svg" align="right" height="200" />
 
 <!-- badges: start -->
 
@@ -114,6 +114,12 @@ loaded via a namespace (and not attached):
 [34] munsell_0.5.0       tm_0.7-7            slam_0.1-47        
 [37] crayon_1.3.4    
 ```
+
+## Acknowledgment
+
+The logo of gran is a remix of
+[this](https://commons.wikimedia.org/wiki/File:Flag_of_the_Canary_Islands.svg)
+public domain image.
 
 -----
 
