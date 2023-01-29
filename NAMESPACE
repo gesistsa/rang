@@ -2,7 +2,6 @@
 
 S3method(print,gran)
 S3method(print,granlist)
-export(convert_edgelist)
 export(dockerize)
 export(resolve)
 importFrom(memoise,memoise)

@@ -41,27 +41,26 @@
     vapply(installed_packages, function(x) version$get(x), character(1))
 }
 
-.install_from_cran <- function(x, lib, path = tempdir()) {
-    url <- paste0("https://cran.r-project.org/src/contrib/Archive/", names(x), "/", names(x), "_", x, ".tar.gz")
-    tarball_path <- file.path(path, paste0(names(x), "_", x, ".tar.gz"))
-    tryCatch({
-        suppressWarnings(download.file(url, destfile = tarball_path))
-    }, error = function(e) {
-        ## is the current latest
-        url <- paste0("https://cran.r-project.org/src/contrib/", names(x), "_", x, ".tar.gz")
-        download.file(url, destfile = tarball_path)
-    })
-    install.packages(pkg = tarball_path, lib = lib, repos = NULL)
-    ## check and error
-    installed_packages <- installed.packages(lib.loc = lib)
-    if (!names(x) %in% dimnames(installed_packages)[[1]]) {
-        stop("Fail to install ", names(x), "\n")
-    }
-    invisible()
-}
+## .install_from_cran <- function(x, lib, path = tempdir()) {
+##     url <- paste0("https://cran.r-project.org/src/contrib/Archive/", names(x), "/", names(x), "_", x, ".tar.gz")
+##     tarball_path <- file.path(path, paste0(names(x), "_", x, ".tar.gz"))
+##     tryCatch({
+##         suppressWarnings(utils::download.file(url, destfile = tarball_path))
+##     }, error = function(e) {
+##         ## is the current latest
+##         url <- paste0("https://cran.r-project.org/src/contrib/", names(x), "_", x, ".tar.gz")
+##         utils::download.file(url, destfile = tarball_path)
+##     })
+##     utils::install.packages(pkg = tarball_path, lib = lib, repos = NULL)
+##     ## check and error
+##     installed_packages <- utils::installed.packages(lib.loc = lib)
+##     if (!names(x) %in% dimnames(installed_packages)[[1]]) {
+##         stop("Fail to install ", names(x), "\n")
+##     }
+##     invisible()
+## }
 
 .consolidate_sysreqs <- function(granlist) {
-    strsplit(granlist$deps_sysreqs, "-y ")
     debs <- vapply(strsplit(granlist$deps_sysreqs, "-y "), function(x) x[2], character(1))
     cmd <- paste("apt-get install -y", paste(debs, collapse = " "))
     if ("default-jdk" %in% debs) {
@@ -78,9 +77,11 @@
 #' @return output_dir, invisibly
 #' @examples
 #' \donttest{
-#' graph <- resolve(pkgs = c("openNLP", "LDAvis", "topicmodels", "quanteda"),
-#'                 snapshot_date = "2020-01-16")
-#' dockerize(graph, ".")
+#' if (interactive()) {
+#'     graph <- resolve(pkgs = c("openNLP", "LDAvis", "topicmodels", "quanteda"),
+#'                     snapshot_date = "2020-01-16")
+#'     dockerize(graph, ".")
+#' }
 #' }
 #' @export 
 dockerize <- function(granlist, output_dir) {

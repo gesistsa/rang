@@ -19,8 +19,10 @@ This function exports the result from \code{\link[=resolve]{resolve()}} to a Doc
 }
 \examples{
 \donttest{
-graph <- resolve(pkgs = c("openNLP", "LDAvis", "topicmodels", "quanteda"),
-                snapshot_date = "2020-01-16")
-dockerize(graph, ".")
+if (interactive()) {
+    graph <- resolve(pkgs = c("openNLP", "LDAvis", "topicmodels", "quanteda"),
+                    snapshot_date = "2020-01-16")
+    dockerize(graph, ".")
+}
 }
 }

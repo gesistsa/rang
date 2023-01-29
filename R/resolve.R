@@ -9,7 +9,7 @@ NULL
 .get_rver <- function(snapshot_date) {
     allvers <- suppressWarnings(jsonlite::fromJSON(readLines("https://api.r-hub.io/rversions/r-versions"), simplifyVector = TRUE))
     allvers$date <- anytime::anytime(allvers$date, tz = "UTC", asUTC = TRUE)
-    tail(allvers[allvers$date < snapshot_date,], 1)$version
+    utils::tail(allvers[allvers$date < snapshot_date,], 1)$version
 }
 
 ## .msysreps <- memoise::memoise(.raw_sysreqs, cache = cachem::cache_mem(max_age = 60 * 60))
@@ -95,7 +95,7 @@ NULL
 #' @param snapshot_date Snapshot date, if not specified, assume to be a month ago
 #' @param no_enhances logical, whether to ignore packages in the "Enhances" field
 #' @param no_suggests logical, whether to ignore packages in the "Suggests" field
-#' @param get_sysreps logical, whether to query for System Requirements
+#' @param get_sysreqs logical, whether to query for System Requirements
 #' @param os character, which OS to query for system requirements
 #' @param verbose logical, whether to display messages
 #' @return S3 object `granlist`
@@ -103,9 +103,11 @@ NULL
 #' @seealso [dockerize()]
 #' @examples
 #' \donttest{
-#' graph <- resolve(pkgs = c("openNLP", "LDAvis", "topicmodels", "quanteda"),
+#' if (interactive()) {
+#'     graph <- resolve(pkgs = c("openNLP", "LDAvis", "topicmodels", "quanteda"),
 #'                 snapshot_date = "2020-01-16")
-#' graph
+#'     graph
+#' }
 #' }
 resolve <- function(pkgs, snapshot_date, no_enhances = TRUE, no_suggests = TRUE, get_sysreqs = TRUE, os = "ubuntu-20.04", verbose = FALSE) {
     if (missing(snapshot_date)) {
@@ -208,7 +210,6 @@ print.granlist <- function(x, all_pkgs = FALSE, ...) {
     }
 }
 
-#' @export
 convert_edgelist <- function(x) {
     output <- data.frame(x = x$pkg, y = .keep_queryable_dependencies(x$original, x$no_enhances, x$no_suggests))
     for (dep in x$deps) {

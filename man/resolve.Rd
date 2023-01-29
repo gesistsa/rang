@@ -23,11 +23,11 @@ resolve(
 
 \item{no_suggests}{logical, whether to ignore packages in the "Suggests" field}
 
+\item{get_sysreqs}{logical, whether to query for System Requirements}
+
 \item{os}{character, which OS to query for system requirements}
 
 \item{verbose}{logical, whether to display messages}
-
-\item{get_sysreps}{logical, whether to query for System Requirements}
 }
 \value{
 S3 object \code{granlist}
@@ -37,9 +37,11 @@ This function recursively queries dependencies of R packages at a specific snaps
 }
 \examples{
 \donttest{
-graph <- resolve(pkgs = c("openNLP", "LDAvis", "topicmodels", "quanteda"),
+if (interactive()) {
+    graph <- resolve(pkgs = c("openNLP", "LDAvis", "topicmodels", "quanteda"),
                 snapshot_date = "2020-01-16")
-graph
+    graph
+}
 }
 }
 \seealso{
