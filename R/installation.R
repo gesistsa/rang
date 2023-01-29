@@ -74,6 +74,7 @@
 #' This function exports the result from [resolve()] to a Docker file.
 #' @param granlist output from [resolve()]
 #' @param output_dir where to put the Docker file
+#' @param image character, which versioned Rocker image to use. Can only be "r-ver", "rstudio", "tidyverse", "verse", "geospatial"
 #' @return output_dir, invisibly
 #' @examples
 #' \donttest{
@@ -84,10 +85,11 @@
 #' }
 #' }
 #' @export 
-dockerize <- function(granlist, output_dir) {
+dockerize <- function(granlist, output_dir, image = c("r-ver", "rstudio", "tidyverse", "verse", "geospatial")) {
     if (missing(output_dir)) {
         stop("You must provide `output_dir`.")
     }
+    image <- match.arg(image)
     install_order <- .determine_installation_order(granlist)
     sysreps_cmd <- .consolidate_sysreqs(granlist)
     if (!dir.exists(output_dir)) {
@@ -101,8 +103,12 @@ dockerize <- function(granlist, output_dir) {
     writeLines(readLines(system.file("footer.R", package = "gran")), con = con)
     close(con)
     basic_docker <- c("", "", "COPY gran.R ./gran.R", "RUN Rscript gran.R", "CMD [\"R\"]")
-    basic_docker[1] <- paste0("FROM rocker/r-ver:", granlist$r_version)
+    basic_docker[1] <- paste0("FROM rocker/", image, ":", granlist$r_version)
     basic_docker[2] <- paste("RUN", sysreps_cmd)
+    if (image == "rstudio") {
+        basic_docker[5] <- "EXPOSE 8787"
+        basic_docker[6] <- "CMD [\"/init\"]"
+    }
     writeLines(basic_docker, file.path(output_dir, "Dockerfile"))
     invisible(output_dir)
 }

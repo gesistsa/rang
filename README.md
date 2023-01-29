@@ -115,6 +115,27 @@ loaded via a namespace (and not attached):
 [37] crayon_1.3.4    
 ```
 
+## Using alternative Rocker images
+
+One can also select other Rocker versioned images: `rstudio`,
+`tidyverse`, `verse`, `geospatial`.
+
+``` r
+dockerize(graph, "~/rocker_test", image = "rstudio")
+```
+
+`tidyverse`, `verse`, and `geospatial` are similar to the default
+(`r-ver`). For `rstudio`, one needs to build and launch it with:
+
+``` bash
+cd ~/rocker_test
+sudo docker build -t gran .
+sudo docker run -p 8787:8787 -e PASSWORD=abc123 --rm --name "grantest" -ti gran
+```
+
+With any browser, go to: `local:8787`. The default username is
+`rstudio`, password is as specified.
+
 ## Acknowledgment
 
 The logo of gran is a remix of

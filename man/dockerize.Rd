@@ -4,12 +4,18 @@
 \alias{dockerize}
 \title{Docker The Resolved Result}
 \usage{
-dockerize(granlist, output_dir)
+dockerize(
+  granlist,
+  output_dir,
+  image = c("r-ver", "rstudio", "tidyverse", "verse", "geospatial")
+)
 }
 \arguments{
 \item{granlist}{output from \code{\link[=resolve]{resolve()}}}
 
 \item{output_dir}{where to put the Docker file}
+
+\item{image}{character, which versioned Rocker image to use. Can only be "r-ver", "rstudio", "tidyverse", "verse", "geospatial"}
 }
 \value{
 output_dir, invisibly
