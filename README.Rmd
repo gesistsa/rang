@@ -39,7 +39,7 @@ graph <- resolve(pkgs = c("openNLP", "LDAvis", "topicmodels", "quanteda"),
 ```
 
 ```{r, include = FALSE}
-library(gran)
+devtools::load_all()
 graph <- readRDS("tests/testdata/graph.RDS")
 ```
 

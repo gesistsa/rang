@@ -32,16 +32,16 @@ graph <- resolve(pkgs = c("openNLP", "LDAvis", "topicmodels", "quanteda"),
 graph
 #> resolved: 4 package(s).
 #> $openNLP
-#> GRAN: The latest version of `openNLP` at 2020-01-16 was 0.2-7, which has 3 unique dependencies (2 with no dependencies.)
+#> The latest version of `openNLP` at 2020-01-16 was 0.2-7, which has 3 unique dependencies (2 with no dependencies.)
 #> 
 #> $LDAvis
-#> GRAN: The latest version of `LDAvis` at 2020-01-16 was 0.3.2, which has 2 unique dependencies (2 with no dependencies.)
+#> The latest version of `LDAvis` at 2020-01-16 was 0.3.2, which has 2 unique dependencies (2 with no dependencies.)
 #> 
 #> $topicmodels
-#> GRAN: The latest version of `topicmodels` at 2020-01-16 was 0.2-9, which has 7 unique dependencies (5 with no dependencies.)
+#> The latest version of `topicmodels` at 2020-01-16 was 0.2-9, which has 7 unique dependencies (5 with no dependencies.)
 #> 
 #> $quanteda
-#> GRAN: The latest version of `quanteda` at 2020-01-16 was 1.5.2, which has 64 unique dependencies (34 with no dependencies.)
+#> The latest version of `quanteda` at 2020-01-16 was 1.5.2, which has 64 unique dependencies (34 with no dependencies.)
 ```
 
 ``` r
