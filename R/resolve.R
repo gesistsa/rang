@@ -129,6 +129,7 @@ resolve <- function(pkgs, snapshot_date, no_enhances = TRUE, no_suggests = TRUE,
     output$unresolved_pkgs <- character(0)
     output$deps_sysreqs <- list()
     output$r_version <- .get_rver(snapshot_date)
+    output$os <- os
     for (pkg in pkgs) {
         tryCatch({
             res <- .resolve_pkg(pkg = pkg, snapshot_date = snapshot_date, no_enhances = no_enhances,
@@ -195,7 +196,7 @@ print.gran <- function(x, ...) {
         total_terminal_nodes <- 0
     }
     latest_version <- unique(x$original$x_version)
-    cat("GRAN: The latest version of `", x$pkg, "` at ", as.character(x$snapshot_date), " was ", latest_version, ", which has ", total_deps, " unique dependencies (", total_terminal_nodes, " with no dependencies.)\n", sep = "")
+    cat("The latest version of `", x$pkg, "` at ", as.character(x$snapshot_date), " was ", latest_version, ", which has ", total_deps, " unique dependencies (", total_terminal_nodes, " with no dependencies.)\n", sep = "")
 }
 
 #' @export

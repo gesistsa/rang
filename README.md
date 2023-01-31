@@ -49,7 +49,7 @@ graph$deps_sysreqs
 #> [1] "apt-get install -y default-jdk" "apt-get install -y libxml2-dev"
 #> [3] "apt-get install -y make"        "apt-get install -y zlib1g-dev" 
 #> [5] "apt-get install -y libpng-dev"  "apt-get install -y libgsl0-dev"
-#> [7] "apt-get install -y python3"     "apt-get install -y libicu-dev"
+#> [7] "apt-get install -y libicu-dev"  "apt-get install -y python3"
 ```
 
 ``` r
