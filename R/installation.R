@@ -89,6 +89,9 @@ dockerize <- function(granlist, output_dir, image = c("r-ver", "rstudio", "tidyv
     if (missing(output_dir)) {
         stop("You must provide `output_dir`.")
     }
+    if (!grepl("^ubuntu", granlist$os)) {
+        stop("System dependencies of ", granlist$os, " can't be dockerized.")
+    }
     image <- match.arg(image)
     install_order <- .determine_installation_order(granlist)
     sysreps_cmd <- .consolidate_sysreqs(granlist)

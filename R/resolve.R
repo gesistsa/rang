@@ -110,6 +110,9 @@ NULL
 #' }
 #' }
 resolve <- function(pkgs, snapshot_date, no_enhances = TRUE, no_suggests = TRUE, get_sysreqs = TRUE, os = "ubuntu-20.04", verbose = FALSE) {
+    if (!os %in% supported_os) {
+        stop("Don't know how to resolve ", os, ". Supported OSes are: ", paste(supported_os, collapse = ", "))
+    }
     if (missing(snapshot_date)) {
         if (isTRUE(verbose)) {
             cat("No `snapshot_date`: Assuming `snapshot_date` to be a month ago.\n")
@@ -233,3 +236,8 @@ convert_edgelist <- function(x) {
     targets <- .granlist_extract_all_deps(granlist)
     remotes::system_requirements(package = targets, os = os) ## don't gp me
 }
+
+## os <- names(remotes:::supported_os_versions())
+## supported_os <- unlist(mapply(function(x, y) paste(x,"-", y, sep = ""), os, remotes:::supported_os_versions()))
+## names(supported_os) <- NULL
+## usethis::use_data(supported_os, internal = TRUE)
