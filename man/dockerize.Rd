@@ -2,13 +2,22 @@
 % Please edit documentation in R/installation.R
 \name{dockerize}
 \alias{dockerize}
-\title{Docker The Resolved Result}
+\alias{dockerize_granlist}
+\alias{dockerise}
+\alias{dockerise_granlist}
+\title{Dockerize The Resolved Result}
 \usage{
 dockerize(
   granlist,
   output_dir,
   image = c("r-ver", "rstudio", "tidyverse", "verse", "geospatial")
 )
+
+dockerize_granlist(...)
+
+dockerise(...)
+
+dockerise_granlist(...)
 }
 \arguments{
 \item{granlist}{output from \code{\link[=resolve]{resolve()}}}
@@ -16,9 +25,11 @@ dockerize(
 \item{output_dir}{where to put the Docker file}
 
 \item{image}{character, which versioned Rocker image to use. Can only be "r-ver", "rstudio", "tidyverse", "verse", "geospatial"}
+
+\item{...}{arguments to be passed to \code{dockerize}}
 }
 \value{
-output_dir, invisibly
+\code{output_dir}, invisibly
 }
 \description{
 This function exports the result from \code{\link[=resolve]{resolve()}} to a Docker file.
@@ -31,4 +42,7 @@ if (interactive()) {
     dockerize(graph, ".")
 }
 }
+}
+\seealso{
+\code{\link[=resolve]{resolve()}}, \code{\link[=export_granlist]{export_granlist()}}
 }

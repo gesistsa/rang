@@ -2,7 +2,11 @@
 
 S3method(print,gran)
 S3method(print,granlist)
+export(dockerise)
+export(dockerise_granlist)
 export(dockerize)
+export(dockerize_granlist)
+export(export_granlist)
 export(resolve)
 importFrom(memoise,memoise)
 importFrom(pkgsearch,cran_package_history)

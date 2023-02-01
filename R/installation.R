@@ -69,13 +69,42 @@
     paste("apt-get update -qq &&", cmd)
 }
 
-#' Docker The Resolved Result
+#' Export The Resolved Result As Installation Script
+#'
+#' This function exports the results from [resolve()] to an installation script that can be run in a fresh R environment.
+#' @param granlist output from [resolve()]
+#' @param path character, path of the exported installation script
+#' @return `path`, invisibly
+#' @export
+#' @examples
+#' \donttest{
+#' if (interactive()) {
+#'     graph <- resolve(pkgs = c("openNLP", "LDAvis", "topicmodels", "quanteda"),
+#'                     snapshot_date = "2020-01-16")
+#'     export_granlist(graph, "gran.R")
+#' }
+#' }
+export_granlist <- function(granlist, path) {
+    install_order <- .determine_installation_order(granlist)
+    file.create(path)
+    con <- file(path, open="w")
+    writeLines(readLines(system.file("header.R", package = "gran")), con = con)
+    cat("install_order <- ", file = con)
+    dput(install_order, file = con)
+    writeLines(readLines(system.file("footer.R", package = "gran")), con = con)
+    close(con)
+    invisible(path)
+}
+
+#' Dockerize The Resolved Result
 #'
 #' This function exports the result from [resolve()] to a Docker file.
-#' @param granlist output from [resolve()]
 #' @param output_dir where to put the Docker file
 #' @param image character, which versioned Rocker image to use. Can only be "r-ver", "rstudio", "tidyverse", "verse", "geospatial"
-#' @return output_dir, invisibly
+#' @param ... arguments to be passed to `dockerize`
+#' @return `output_dir`, invisibly
+#' @inheritParams export_granlist
+#' @seealso [resolve()], [export_granlist()]
 #' @examples
 #' \donttest{
 #' if (interactive()) {
@@ -93,18 +122,12 @@ dockerize <- function(granlist, output_dir, image = c("r-ver", "rstudio", "tidyv
         stop("System dependencies of ", granlist$os, " can't be dockerized.")
     }
     image <- match.arg(image)
-    install_order <- .determine_installation_order(granlist)
     sysreps_cmd <- .consolidate_sysreqs(granlist)
     if (!dir.exists(output_dir)) {
         dir.create(output_dir)
     }
-    file.create(file.path(output_dir, "gran.R"))
-    con <- file(file.path(output_dir, "gran.R"), open="w")
-    writeLines(readLines(system.file("header.R", package = "gran")), con = con)
-    cat("install_order <- ", file = con)
-    dput(install_order, file = con)
-    writeLines(readLines(system.file("footer.R", package = "gran")), con = con)
-    close(con)
+    gran_path <- file.path(output_dir, "gran.R")
+    export_granlist(granlist, gran_path)
     basic_docker <- c("", "", "COPY gran.R ./gran.R", "RUN Rscript gran.R", "CMD [\"R\"]")
     basic_docker[1] <- paste0("FROM rocker/", image, ":", granlist$r_version)
     basic_docker[2] <- paste("RUN", sysreps_cmd)
@@ -114,4 +137,22 @@ dockerize <- function(granlist, output_dir, image = c("r-ver", "rstudio", "tidyv
     }
     writeLines(basic_docker, file.path(output_dir, "Dockerfile"))
     invisible(output_dir)
+}
+
+#' @rdname dockerize
+#' @export
+dockerize_granlist <- function(...) {
+    dockerize(...)
+}
+
+#' @rdname dockerize
+#' @export
+dockerise <- function(...) {
+    dockerize(...)
+}
+
+#' @rdname dockerize
+#' @export
+dockerise_granlist <- function(...) {
+    dockerize(...)
 }
