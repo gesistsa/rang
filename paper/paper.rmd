@@ -1,0 +1,124 @@
+---
+title: 'gran: Reconstructing reproducible R computing environments with ease'
+tags:
+  - R
+  - reproducibility
+  - docker
+authors:
+  - name: "Chung-hong Chan"
+    orcid: 0000-0002-6232-7530
+    affiliation: GESIS Leibniz-Institut für Sozialwissenschaften
+abstract: |
+  Enter the text of your abstract here.
+keywords:
+  - blah
+  - blee
+  - bloo
+  - these are optional and can be removed
+date: 02 February 2023
+year: 2023
+bibliography: paper.bib
+biblio-style: unsrt
+output: rticles::arxiv_article
+---
+
+# Statement of need
+
+The ability to reconstruct the computational environment is one of the most important aspects of reproducibility. In the realm of R, the important aspects are what and which version of installed R packages as well as the exact R version.
+
+`renv` [@renvrpkg] (and its derivatives such as `jetpack` and its predecessor `packrat`) takes a similar approach to Python's `virtualenv` and Ruby's `Gem` to pin down the exact version of R packages using a "lock file". `containerit` [@nuest:2019] takes the current state of the computational environment and "containerize" it as a Dockerfile. But `containerit` does not pin down the exact version of R packages. Other solutions such as `groundhog` [@groundhogrpkg] and `checkpoint` [@checkpointrpkg] depend on the availability of The Microsoft R Application Network (MRAN), which will be shut down on July 1st, 2023. 
+
+These solutions are better for prospective usage, i.e. using them now to ensure the reproducibility of the current research for future researchers. `gran` targets mostly on retrospective usage, i.e. using `gran` to reconstruct historical R computational environments which have not been completely declared. One can think of `gran` as an archaeological tool. In the following examples, `gran` is used to enable the reproducibility of published literature.
+
+# Basic usage
+
+There are two important functions of `gran`: `resolve()` and `dockerize()`.
+
+`resolve()` queries various web services from the r-hub project of the R Consortium for information about R packages at a specific time point that is necessary for reconstructing a computational environment, e.g. recursive dependencies, system requirements, and R version. For instance, if there was a computational environment constructed on 2020-01-16 (called "snapshot date") with the several natural language processing R packages, `resolve()` can be used to resolve all the dependencies of these R packages.
+
+```r
+library(gran)
+graph <- resolve(pkgs = c("openNLP", "LDAvis", "topicmodels", "quanteda"),
+                 snapshot_date = "2020-01-16")
+graph
+```
+
+The resolved result is an S3 object called `granlist`. The information contained in a `granlist` can then be used to construct a computational environment in the similar manner as `containerit`, but with the packages and R versions pinned on the snapshot date. Then, `dockerize()` is used to generate the `Dockerfile` and other scripts in the `output_dir`. For R >= 3.1, the images from the Rocker project are used [@boettiger:2017:IR]. For R < 3.1 but >= 2.1, a custom image based on Debian Woody is used. As of writing, `gran` does not support R < 2.1, i.e. snapshot date earlier than 2005-04-19. The development to support R < 2.1 is in progress.
+
+```r
+dockerize(granlist graph, output_dir = "docker")
+```
+
+There are two features of `dockerize()` that are important for future reproducibility. 
+
+1. By default, the container building process downloads source packages from CRAN and then compiles them from source. This step depends on the future availability of R packages on CRAN (which is extremely likely to be the case in the near future, given the continous availability since 1997-04-23) [^1]. However, it is possible also to cache (or archive) the source packages now. The archived R packages can then be used instead during the building process.
+
+[^1]: https://stat.ethz.ch/pipermail/r-announce/1997/000001.html
+
+```r
+dockerize(granlist graph, output_dir = "docker", cache = TRUE)
+```
+
+2. It is also possible to install R packages in a separate library during the building process to isolate all these R packages from the main library.
+
+```r
+dockerize(granlist graph, output_dir = "docker", cache = TRUE,
+          lib = "anotherlibrary")
+```
+
+For the sake of completeness, the instructions for building and running the Docker container for Unix-like systems are included here.
+
+```bash
+cd docker
+## might need to sudo
+docker build -t gran .
+docker run --rm --name "grantest" -ti gran
+```
+
+# Case Studies
+
+## quanteda JOSS paper
+
+The software paper of the text analysis R package `quanteda` was published on 2018-10-06 [@benoit:2018]. In the paper, the following R code snippet is included.
+
+```r
+library("quanteda")
+# construct the feature co-occurrence matrix
+examplefcm <-
+tokens(data_corpus_irishbudget2010, remove_punct = TRUE) %>%
+tokens_tolower() %>%
+tokens_remove(stopwords("english"), padding = FALSE) %>%
+fcm(context = "window", window = 5, tri = FALSE)
+# choose 30 most frequency features
+topfeats <- names(topfeatures(examplefcm, 30))
+# select the top 30 features only, plot the network
+set.seed(100)
+textplot_network(fcm_select(examplefcm, topfeats), min_freq = 0.8)
+```
+
+On 2023-02-08, this code snippet is not executable with the current version of `quanteda` (3.2.4). It is possible to install the "period appropriate" version of `quanteda` (1.3.4) using `remotes` on the current version of R (4.2.2). And indeed, the above code snippet can still be executed.
+
+```r
+remotes::install_version("quanteda", version = "1.3.4")
+```
+
+The issue is that installing `quanteda` 1.3.4 this way installs the latest dependencies from CRAN. `quanteda` 1.3.4 uses a deprecated (but not yet removed) function of `Matrix` (`as(<dgTMatrix>, "dgCMatrix")`). If this function were removed in the future, the above code snippet would not be executable anymore.
+
+Using `gran`, one can query the version of `quanteda` on 2018-10-06 and create a Docker container with all the "period appropriate" dependencies. Here, the `rstudio` Rocker image is selected.
+
+```r
+library(gran)
+graph <- resolve(pkgs = "quanteda",
+                 snapshot_date = "2018-10-06",
+                 os = "ubuntu-18.04")
+dockerize(graph, output_dir = "quanteda_docker",
+          image = "rstudio")
+```
+
+The above code snippet can be executed with the generated container without any problem.
+
+```{r, fig.cap = "The code snippet running in a R 3.5.1 container created with gran", echo = FALSE}
+knitr::include_graphics("quanteda_rstudio.png", dpi = 300)
+```
+
+# References
