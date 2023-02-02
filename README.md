@@ -30,7 +30,7 @@ graph <- resolve(pkgs = c("openNLP", "LDAvis", "topicmodels", "quanteda"),
 
 ``` r
 graph
-#> resolved: 4 package(s).
+#> resolved: 4 package(s). Unresolved package(s): 0 
 #> $openNLP
 #> The latest version of `openNLP` at 2020-01-16 was 0.2-7, which has 3 unique dependencies (2 with no dependencies.)
 #> 
