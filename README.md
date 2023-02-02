@@ -5,6 +5,7 @@
 
 <!-- badges: start -->
 
+[![R-CMD-check](https://github.com/chainsawriot/gran/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/chainsawriot/gran/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
 The goal of gran (gran: R anachronism nullifier) \[1\] is to obtain the
