@@ -6,11 +6,19 @@ NULL
 
 .search <- memoise::memoise(pkgsearch::cran_package_history, cache = cachem::cache_mem(max_age = 60 * 60))
 
+.rver <- function() {
+    suppressWarnings(jsonlite::fromJSON(readLines("https://api.r-hub.io/rversions/r-versions"), simplifyVector = TRUE))
+}
+
+.memo_rver <- memoise::memoise(.rver, cache = cachem::cache_mem(max_age = 120 * 60))
+
 .get_rver <- function(snapshot_date) {
-    allvers <- suppressWarnings(jsonlite::fromJSON(readLines("https://api.r-hub.io/rversions/r-versions"), simplifyVector = TRUE))
+    allvers <- .memo_rver()
     allvers$date <- anytime::anytime(allvers$date, tz = "UTC", asUTC = TRUE)
     utils::tail(allvers[allvers$date < snapshot_date,], 1)$version
 }
+
+
 
 ## .msysreps <- memoise::memoise(.raw_sysreqs, cache = cachem::cache_mem(max_age = 60 * 60))
 
