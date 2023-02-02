@@ -34,12 +34,7 @@ NULL
 .get_snapshot_dependencies <- function(pkg = "rtoot", snapshot_date = "2022-12-10") {
     snapshot_date <- anytime::anytime(snapshot_date, tz = "UTC", asUTC = TRUE)
     search_res <- .search(pkg)
-    ## exclude rows where Version, Date, dependecies are NA
-    if (is.null(search_res$`Date/Publication`)) {
-        search_res$`Date/Publication` <- search_res$Date
-    }
-    search_res <- search_res[!is.na(search_res$`Date/Publication`) & !is.na(search_res$Version),]
-    search_res$pubdate <- anytime::anytime(search_res$`Date/Publication`, tz = "UTC", asUTC = TRUE)
+    search_res$pubdate <- anytime::anytime(search_res$crandb_file_date, tz = "UTC", asUTC = TRUE)
     snapshot_versions <- search_res[search_res$pubdate <= snapshot_date,]
     if (nrow(snapshot_versions) == 0) {
         stop("No snapshot version exists for ", pkg, ".",  call. = FALSE)
