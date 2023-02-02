@@ -208,7 +208,7 @@ print.gran <- function(x, ...) {
 #' @export
 print.granlist <- function(x, all_pkgs = FALSE, ...) {
     n_grans <- length(x$grans)
-    cat("resolved:", n_grans, "package(s). Unresolved package(s): ", length(x$unresolved_pkgs), "\n")
+    cat("resolved:", n_grans, "package(s). Unresolved package(s):", length(x$unresolved_pkgs), "\n")
     if (n_grans > 0) {
         if (n_grans <= 5 || isTRUE(all_pkgs)) {
             print(x$grans)
