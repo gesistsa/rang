@@ -1,6 +1,6 @@
 Package: gran
 Title: Reconstructing Reproducible R Computing Environments With Ease
-Version: 0.0.0.9000
+Version: 0.0.1
 Authors@R: 
     person("Chung-hong", "Chan", , "chainsawtiney@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-6232-7530"))
