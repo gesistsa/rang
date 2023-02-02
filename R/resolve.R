@@ -92,9 +92,6 @@ NULL
     length(.keep_queryable_dependencies(dep_df, no_enhances, no_suggests)) == 0
 }
 
-## pkg <- "rtoot"
-## snapshot_date <- "2022-12-10"
-
 #' Resolve Dependencies Of R Packages
 #'
 #' This function recursively queries dependencies of R packages at a specific snapshot time. The dependency graph can then be used to recreate the computing environment. The data on dependencies are provided by R-hub.
@@ -138,7 +135,7 @@ resolve <- function(pkgs, snapshot_date, no_enhances = TRUE, no_suggests = TRUE,
     output$no_enhances <- no_enhances
     output$no_suggests <- no_suggests
     output$unresolved_pkgs <- character(0)
-    output$deps_sysreqs <- list()
+    output$deps_sysreqs <- character(0)
     output$r_version <- .get_rver(snapshot_date)
     output$os <- os
     for (pkg in pkgs) {
@@ -146,12 +143,15 @@ resolve <- function(pkgs, snapshot_date, no_enhances = TRUE, no_suggests = TRUE,
             res <- .resolve_pkg(pkg = pkg, snapshot_date = snapshot_date, no_enhances = no_enhances,
                                 no_suggests = no_suggests, verbose = verbose)
             output$grans[[pkg]] <- res
-        }, error = function(e) {
+        }, error = function(err) {
             if (isTRUE(verbose)) {
                 cat("Query failed: ", pkg, "\n")
-                output$unresolved_pkgs <- c(output$unresolved_pkgs, pkg)
             }
         })
+    }
+    output$unresolved_pkgs <- setdiff(pkgs, names(output$grans))
+    if (length(output$unresolved_pkgs) > 0) {
+        warning("Some package(s) can't be resolved: ", paste(output$unresolved_pkgs, collapse = ", "), call. = FALSE)
     }
     if (isTRUE(get_sysreqs)) {
         res <- .granlist_query_sysreps(output, os = os)
@@ -213,12 +213,14 @@ print.gran <- function(x, ...) {
 #' @export
 print.granlist <- function(x, all_pkgs = FALSE, ...) {
     n_grans <- length(x$grans)
-    cat("resolved:", n_grans, "package(s).\n")
-    if (n_grans <= 5 || isTRUE(all_pkgs)) {
-        print(x$grans)
-    } else {
-        cat("First 5 packages are:\n")
-        print(x$grans[seq_len(5)])
+    cat("resolved:", n_grans, "package(s). Unresolved package(s): ", length(x$unresolved_pkgs), "\n")
+    if (n_grans > 0) {
+        if (n_grans <= 5 || isTRUE(all_pkgs)) {
+            print(x$grans)
+        } else {
+            cat("First 5 packages are:\n")
+            print(x$grans[seq_len(5)])
+        }
     }
 }
 
@@ -242,6 +244,10 @@ convert_edgelist <- function(x) {
 
 .granlist_query_sysreps <- function(granlist, os = "ubuntu-20.04") {
     targets <- .granlist_extract_all_deps(granlist)
+    if (length(targets) == 0) {
+        warning("No packages to query for system requirements.", call. = FALSE)
+        return(NA)
+    }
     remotes::system_requirements(package = targets, os = os) ## don't gp me
 }
 
