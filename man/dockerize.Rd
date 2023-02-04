@@ -11,7 +11,9 @@ dockerize(
   granlist,
   output_dir,
   image = c("r-ver", "rstudio", "tidyverse", "verse", "geospatial"),
-  granlist_as_comment = TRUE
+  granlist_as_comment = TRUE,
+  verbose = TRUE,
+  lib = NA
 )
 
 dockerize_granlist(...)
@@ -29,6 +31,11 @@ dockerise_granlist(...)
 
 \item{granlist_as_comment}{logical, whether to write granlist and the steps to reproduce
 the file to \code{path} as comment}
+
+\item{verbose}{logical, pass to \code{\link[=install.packages]{install.packages()}}, the negated value is also passed as \code{quiet} to both \code{\link[=install.packages]{install.packages()}}
+and \code{\link[=download.file]{download.file()}}.}
+
+\item{lib}{character, pass to \code{\link[=install.packages]{install.packages()}}. By default, it is NA (to install the packages to the default location)}
 
 \item{...}{arguments to be passed to \code{dockerize}}
 }

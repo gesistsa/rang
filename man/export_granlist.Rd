@@ -4,7 +4,13 @@
 \alias{export_granlist}
 \title{Export The Resolved Result As Installation Script}
 \usage{
-export_granlist(granlist, path, granlist_as_comment = TRUE)
+export_granlist(
+  granlist,
+  path,
+  granlist_as_comment = TRUE,
+  verbose = TRUE,
+  lib = NA
+)
 }
 \arguments{
 \item{granlist}{output from \code{\link[=resolve]{resolve()}}}
@@ -13,6 +19,11 @@ export_granlist(granlist, path, granlist_as_comment = TRUE)
 
 \item{granlist_as_comment}{logical, whether to write granlist and the steps to reproduce
 the file to \code{path} as comment}
+
+\item{verbose}{logical, pass to \code{\link[=install.packages]{install.packages()}}, the negated value is also passed as \code{quiet} to both \code{\link[=install.packages]{install.packages()}}
+and \code{\link[=download.file]{download.file()}}.}
+
+\item{lib}{character, pass to \code{\link[=install.packages]{install.packages()}}. By default, it is NA (to install the packages to the default location)}
 }
 \value{
 \code{path}, invisibly
