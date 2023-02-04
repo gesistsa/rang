@@ -10,7 +10,8 @@
 dockerize(
   granlist,
   output_dir,
-  image = c("r-ver", "rstudio", "tidyverse", "verse", "geospatial")
+  image = c("r-ver", "rstudio", "tidyverse", "verse", "geospatial"),
+  granlist_as_comment = TRUE
 )
 
 dockerize_granlist(...)
@@ -25,6 +26,9 @@ dockerise_granlist(...)
 \item{output_dir}{where to put the Docker file}
 
 \item{image}{character, which versioned Rocker image to use. Can only be "r-ver", "rstudio", "tidyverse", "verse", "geospatial"}
+
+\item{granlist_as_comment}{logical, whether to write granlist and the steps to reproduce
+the file to \code{path} as comment}
 
 \item{...}{arguments to be passed to \code{dockerize}}
 }

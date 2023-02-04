@@ -4,12 +4,15 @@
 \alias{export_granlist}
 \title{Export The Resolved Result As Installation Script}
 \usage{
-export_granlist(granlist, path)
+export_granlist(granlist, path, granlist_as_comment = TRUE)
 }
 \arguments{
 \item{granlist}{output from \code{\link[=resolve]{resolve()}}}
 
 \item{path}{character, path of the exported installation script}
+
+\item{granlist_as_comment}{logical, whether to write granlist and the steps to reproduce
+the file to \code{path} as comment}
 }
 \value{
 \code{path}, invisibly

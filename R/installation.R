@@ -69,11 +69,24 @@
     paste("apt-get update -qq &&", cmd)
 }
 
+.write_granlist_as_comment <- function(granlist, con, path) {
+    cat("## ## To reconstruct this file, please install version",
+        as.character(utils::packageVersion("gran")), "of `gran` and run:\n", file = con)
+    cat("## granlist <- \n", file = con)
+    tempgrancontent <- tempfile()
+    dput(granlist, file = tempgrancontent)
+    granlist_src <- readLines(tempgrancontent)
+    writeLines(paste("##", granlist_src), con = con)
+    writeLines(paste("## gran::export_granlist(granlist = granlist, path =\"", path, "\")"), con = con)
+}
+
 #' Export The Resolved Result As Installation Script
 #'
 #' This function exports the results from [resolve()] to an installation script that can be run in a fresh R environment.
 #' @param granlist output from [resolve()]
 #' @param path character, path of the exported installation script
+#' @param granlist_as_comment logical, whether to write granlist and the steps to reproduce
+#' the file to `path` as comment
 #' @return `path`, invisibly
 #' @export
 #' @examples
@@ -84,7 +97,7 @@
 #'     export_granlist(graph, "gran.R")
 #' }
 #' }
-export_granlist <- function(granlist, path) {
+export_granlist <- function(granlist, path, granlist_as_comment = TRUE) {
     install_order <- .determine_installation_order(granlist)
     file.create(path)
     con <- file(path, open="w")
@@ -92,6 +105,9 @@ export_granlist <- function(granlist, path) {
     cat("install_order <- ", file = con)
     dput(install_order, file = con)
     writeLines(readLines(system.file("footer.R", package = "gran")), con = con)
+    if (isTRUE(granlist_as_comment)) {
+        .write_granlist_as_comment(granlist = granlist, con = con, path = path)
+    }
     close(con)
     invisible(path)
 }
@@ -114,7 +130,7 @@ export_granlist <- function(granlist, path) {
 #' }
 #' }
 #' @export 
-dockerize <- function(granlist, output_dir, image = c("r-ver", "rstudio", "tidyverse", "verse", "geospatial")) {
+dockerize <- function(granlist, output_dir, image = c("r-ver", "rstudio", "tidyverse", "verse", "geospatial"), granlist_as_comment = TRUE) {
     if (missing(output_dir)) {
         stop("You must provide `output_dir`.")
     }
@@ -127,7 +143,7 @@ dockerize <- function(granlist, output_dir, image = c("r-ver", "rstudio", "tidyv
         dir.create(output_dir)
     }
     gran_path <- file.path(output_dir, "gran.R")
-    export_granlist(granlist, gran_path)
+    export_granlist(granlist = granlist, path = gran_path, granlist_as_comment = granlist_as_comment)
     basic_docker <- c("", "", "COPY gran.R ./gran.R", "RUN Rscript gran.R", "CMD [\"R\"]")
     basic_docker[1] <- paste0("FROM rocker/", image, ":", granlist$r_version)
     basic_docker[2] <- paste("RUN", sysreps_cmd)
