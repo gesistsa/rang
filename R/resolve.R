@@ -95,7 +95,8 @@ NULL
 #' @param snapshot_date Snapshot date, if not specified, assume to be a month ago
 #' @param no_enhances logical, whether to ignore packages in the "Enhances" field
 #' @param no_suggests logical, whether to ignore packages in the "Suggests" field
-#' @param get_sysreqs logical, whether to query for System Requirements
+#' @param get_sysreqs logical, whether to query for System Requirements. Important: Archived CRAN can't be queried for system requirements. Those
+#' packages are assumed to have no system requirement.
 #' @param os character, which OS to query for system requirements
 #' @param verbose logical, whether to display messages
 #' @return S3 object `granlist`

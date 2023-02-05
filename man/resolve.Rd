@@ -23,7 +23,8 @@ resolve(
 
 \item{no_suggests}{logical, whether to ignore packages in the "Suggests" field}
 
-\item{get_sysreqs}{logical, whether to query for System Requirements}
+\item{get_sysreqs}{logical, whether to query for System Requirements. Important: Archived CRAN can't be queried for system requirements. Those
+packages are assumed to have no system requirement.}
 
 \item{os}{character, which OS to query for system requirements}
 
