@@ -73,11 +73,23 @@ graph$r_version
 #> [1] "3.6.2"
 ```
 
+The resolved result is an S3 object called `granlist` and can be
+exported as an installation script. The installation script can be
+execute on a vanilla R installation.
+
+``` r
+export_granlist(graph, "gran.R")
+```
+
+However, the execution of the installation script often fails (now) due
+to missing system dependencies and incompatible R versions. Therefore,
+the approach outlined below should be used.
+
 ## Recreate the computational environment via Rocker
 
-The object can be used to recreate the computational environment via
-[Rocker](https://github.com/rocker-org/rocker). Please note that the
-oldest R version one can get from Rocker is R 3.1.0.
+A `granlist` object can be used to recreate the computational
+environment via [Rocker](https://github.com/rocker-org/rocker). Please
+note that the oldest R version one can get from Rocker is R 3.1.0.
 
 ``` r
 dockerize(graph, "~/rocker_test")
