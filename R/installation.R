@@ -97,7 +97,7 @@
     mirror %in% all_mirrors
 }
 
-.normalize_url <- function(mirror) {
+.normalize_url <- function(mirror, https = TRUE) {
     if (grepl("^http://", mirror)) {
         mirror <- gsub("^http://", "https://", mirror)
     }
@@ -110,7 +110,11 @@
     if (grepl("/+$", mirror)) {
         mirror <- gsub("/+$", "/", mirror)
     }
-    return(mirror)
+    if (isTRUE(https)) {
+        return(mirror)
+    } else {
+        return(gsub("^https://", "http://", mirror))
+    }
 }
 
 #' Export The Resolved Result As Installation Script
@@ -142,6 +146,9 @@ export_granlist <- function(granlist, path, granlist_as_comment = TRUE, verbose 
         if (isFALSE(.check_mirror(cran_mirror))) {
             stop(cran_mirror, "does not appear to be a valid CRAN mirror.", call. = FALSE)
         }
+    }
+    if (utils::compareVersion(granlist$r_version, "3.3") == -1) { #20
+        cran_mirror <- .normalize_url(cran_mirror, https = FALSE)
     }
     install_order <- .determine_installation_order(granlist)
     file.create(path)
