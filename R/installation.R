@@ -69,7 +69,8 @@
     paste("apt-get update -qq &&", cmd)
 }
 
-.write_granlist_as_comment <- function(granlist, con, path) {
+.write_granlist_as_comment <- function(granlist, con, path, verbose, lib,
+                                       cran_mirror, check_cran_mirror) {
     cat("## ## To reconstruct this file, please install version",
         as.character(utils::packageVersion("gran")), "of `gran` and run:\n", file = con)
     cat("## granlist <- \n", file = con)
@@ -77,7 +78,39 @@
     dput(granlist, file = tempgrancontent)
     granlist_src <- readLines(tempgrancontent)
     writeLines(paste("##", granlist_src), con = con)
-    writeLines(paste("## gran::export_granlist(granlist = granlist, path =\"", path, "\")"), con = con)
+    if (is.na(lib)) {
+        lib_as_character <- "NA"
+    } else {
+        lib_as_character <- paste0("\"", lib, "\"")
+    }
+    writeLines(paste0("## gran::export_granlist(granlist = granlist, path = \"", path, "\", verbose = ",
+                     as.character(verbose), ", lib = ", lib_as_character,
+                     ", cran_mirror = \"", cran_mirror, "\", check_cran_mirror = ",
+                     as.character(check_cran_mirror), ")"), con = con)
+}
+
+.check_mirror <- function(mirror) {
+    if (mirror == "https://cran.r-project.org/") {
+        return(TRUE)
+    }
+    all_mirrors <- utils::getCRANmirrors()$URL
+    mirror %in% all_mirrors
+}
+
+.normalize_url <- function(mirror) {
+    if (grepl("^http://", mirror)) {
+        mirror <- gsub("^http://", "https://", mirror)
+    }
+    if (!grepl("^https://", mirror)) {
+        mirror <- paste0("https://", mirror)
+    }
+    if (!grepl("/$", mirror)) {
+        mirror <- paste0(mirror, "/")
+    }
+    if (grepl("/+$", mirror)) {
+        mirror <- gsub("/+$", "/", mirror)
+    }
+    return(mirror)
 }
 
 #' Export The Resolved Result As Installation Script
@@ -90,6 +123,8 @@
 #' @param verbose logical, pass to [install.packages()], the negated value is also passed as `quiet` to both [install.packages()]
 #' and [download.file()].
 #' @param lib character, pass to [install.packages()]. By default, it is NA (to install the packages to the default location)
+#' @param cran_mirror character, which CRAN mirror to use
+#' @param check_cran_mirror logical, whether to check the CRAN mirror
 #' @return `path`, invisibly
 #' @export
 #' @examples
@@ -100,7 +135,14 @@
 #'     export_granlist(graph, "gran.R")
 #' }
 #' }
-export_granlist <- function(granlist, path, granlist_as_comment = TRUE, verbose = TRUE, lib = NA) {
+export_granlist <- function(granlist, path, granlist_as_comment = TRUE, verbose = TRUE, lib = NA,
+                            cran_mirror = "https://cran.r-project.org/", check_cran_mirror = TRUE) {
+    cran_mirror <- .normalize_url(cran_mirror)
+    if (isTRUE(check_cran_mirror)) { ## probably need to stop this also if #17 is implemented
+        if (isFALSE(.check_mirror(cran_mirror))) {
+            stop(cran_mirror, "does not appear to be a valid CRAN mirror.", call. = FALSE)
+        }
+    }
     install_order <- .determine_installation_order(granlist)
     file.create(path)
     con <- file(path, open="w")
@@ -114,9 +156,12 @@ export_granlist <- function(granlist, path, granlist_as_comment = TRUE, verbose 
     } else {
         cat(paste0("lib <- \"", as.character(lib), "\"\n"), file = con)
     }
+    cat(paste0("cran_mirror <- \"", cran_mirror, "\"\n"), file = con)    
     writeLines(readLines(system.file("footer.R", package = "gran")), con = con)
     if (isTRUE(granlist_as_comment)) {
-        .write_granlist_as_comment(granlist = granlist, con = con, path = path)
+        .write_granlist_as_comment(granlist = granlist, con = con, path = path, verbose = verbose,
+                                   lib = lib, cran_mirror = cran_mirror,
+                                   check_cran_mirror = check_cran_mirror)
     }
     close(con)
     invisible(path)
@@ -141,7 +186,8 @@ export_granlist <- function(granlist, path, granlist_as_comment = TRUE, verbose 
 #' }
 #' @export
 dockerize <- function(granlist, output_dir, image = c("r-ver", "rstudio", "tidyverse", "verse", "geospatial"),
-                      granlist_as_comment = TRUE, verbose = TRUE, lib = NA) {
+                      granlist_as_comment = TRUE, verbose = TRUE, lib = NA,
+                      cran_mirror = "https://cran.r-project.org/", check_cran_mirror = TRUE) {
     if (missing(output_dir)) {
         stop("You must provide `output_dir`.")
     }
@@ -155,7 +201,8 @@ dockerize <- function(granlist, output_dir, image = c("r-ver", "rstudio", "tidyv
     }
     gran_path <- file.path(output_dir, "gran.R")
     export_granlist(granlist = granlist, path = gran_path, granlist_as_comment = granlist_as_comment,
-                    verbose = verbose, lib = lib)
+                    verbose = verbose, lib = lib, cran_mirror = cran_mirror,
+                    check_cran_mirror = check_cran_mirror)
     basic_docker <- c("", "", "COPY gran.R ./gran.R", "RUN Rscript gran.R", "CMD [\"R\"]")
     if (!is.na(lib)) {
         basic_docker[4] <- paste0("RUN mkdir ", lib, " && Rscript gran.R")

@@ -13,7 +13,9 @@ dockerize(
   image = c("r-ver", "rstudio", "tidyverse", "verse", "geospatial"),
   granlist_as_comment = TRUE,
   verbose = TRUE,
-  lib = NA
+  lib = NA,
+  cran_mirror = "https://cran.r-project.org/",
+  check_cran_mirror = TRUE
 )
 
 dockerize_granlist(...)
@@ -36,6 +38,10 @@ the file to \code{path} as comment}
 and \code{\link[=download.file]{download.file()}}.}
 
 \item{lib}{character, pass to \code{\link[=install.packages]{install.packages()}}. By default, it is NA (to install the packages to the default location)}
+
+\item{cran_mirror}{character, which CRAN mirror to use}
+
+\item{check_cran_mirror}{logical, whether to check the CRAN mirror}
 
 \item{...}{arguments to be passed to \code{dockerize}}
 }
