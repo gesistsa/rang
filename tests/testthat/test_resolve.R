@@ -34,3 +34,12 @@ test_that("unresolved", {
     expect_false(length(x2$grans) == 0)
     expect_equal(x2$deps_sysreqs, character(0))
 })
+
+test_that("issue #19", {
+    skip_if_offline()
+    skip_on_cran()
+    warns1 <- capture_warnings(x <- resolve("gRbase", snapshot_date = "2005-12-01"))
+    expect_true(length(warns1) == 1)
+    expect_true(any(grepl("^dynamicGraph can't", warns1)))
+    expect_true(length(x$deps_sysreqs) != 0)
+})

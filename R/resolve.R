@@ -243,7 +243,24 @@ convert_edgelist <- function(x) {
         warning("No packages to query for system requirements.", call. = FALSE)
         return(NA)
     }
-    remotes::system_requirements(package = targets, os = os) ## don't gp me
+    tryCatch({
+        return(remotes::system_requirements(package = targets, os = os))
+    }, error = function(e) {
+        return(.query_sysreps_safe(targets = targets, os = os))
+    })
+}
+
+.query_sysreps_safe <- function(targets, os = "ubuntu-20.04") {
+    output <- c()
+    for (pkg in targets) {
+        tryCatch({
+            result <- remotes::system_requirements(package = pkg, os = os)
+            output <- c(output, result)
+        }, error = function(e) {
+            warning(pkg, " can't be queried for System requirements. Assumed to have no requirement.", call. = FALSE)
+        })
+    }
+    return(unique(output))
 }
 
 ## os <- names(remotes:::supported_os_versions())
