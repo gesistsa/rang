@@ -1,10 +1,10 @@
 Package: gran
-Title: Reconstructing Reproducible R Computing Environments With Ease
+Title: Reconstructing Reproducible R Computational Environments With Ease
 Version: 0.0.1
 Authors@R: 
     person("Chung-hong", "Chan", , "chainsawtiney@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-6232-7530"))
-Description: Resolve the dependency graph of R packages at a specific time point based on the information from the 'R-hub' various web services <https://r-hub.github.io>. The dependency graph can then be used to reconstruct the R computing environment with 'Rocker' <https://rocker-project.org>.
+Description: Resolve the dependency graph of R packages at a specific time point based on the information from various 'R-hub' web services <https://r-hub.github.io>. The dependency graph can then be used to reconstruct the R computional environment with 'Rocker' <https://rocker-project.org>.
 License: GPL (>= 3)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

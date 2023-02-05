@@ -33,7 +33,7 @@ resolve(
 S3 object \code{granlist}
 }
 \description{
-This function recursively queries dependencies of R packages at a specific snapshot time. The dependency graph can then be used to recreate the computing environment. The data on dependencies are provided by R-hub.
+This function recursively queries dependencies of R packages at a specific snapshot time. The dependency graph can then be used to recreate the computational environment. The data on dependencies are provided by R-hub.
 }
 \examples{
 \donttest{

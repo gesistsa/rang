@@ -89,7 +89,7 @@ NULL
 
 #' Resolve Dependencies Of R Packages
 #'
-#' This function recursively queries dependencies of R packages at a specific snapshot time. The dependency graph can then be used to recreate the computing environment. The data on dependencies are provided by R-hub.
+#' This function recursively queries dependencies of R packages at a specific snapshot time. The dependency graph can then be used to recreate the computational environment. The data on dependencies are provided by R-hub.
 #' 
 #' @param pkgs character vector of R packages to resolve
 #' @param snapshot_date Snapshot date, if not specified, assume to be a month ago

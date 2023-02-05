@@ -58,9 +58,9 @@ graph$r_version
 #> [1] "3.6.2"
 ```
 
-## Recreate the computing environment
+## Recreate the computational environment
 
-The object can be used to recreate the computing environment via
+The object can be used to recreate the computational environment via
 [Rocker](https://github.com/rocker-org/rocker).
 
 ``` r

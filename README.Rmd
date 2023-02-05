@@ -56,9 +56,9 @@ graph$deps_sysreqs
 graph$r_version
 ```
 
-## Recreate the computing environment
+## Recreate the computational environment
 
-The object can be used to recreate the computing environment via [Rocker](https://github.com/rocker-org/rocker).
+The object can be used to recreate the computational environment via [Rocker](https://github.com/rocker-org/rocker).
 
 ```r
 dockerize(graph, "~/rocker_test")
