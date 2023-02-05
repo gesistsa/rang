@@ -11,6 +11,21 @@
 The goal of gran (gran: R anachronism nullifier) \[1\] is to obtain the
 dependency graph of R packages at a specific time point.
 
+Although this package can also be used to ensure the current R
+computational environment can be reconstructed by future researchers,
+this package gears towards reconstructing historical R computational
+environments which have not been completely declared. For the former
+purpose, packages such as [renv](https://github.com/rstudio/renv/),
+[groundhog](https://github.com/CredibilityLab/groundhog),
+[miniCRAN](https://github.com/andrie/miniCRAN), and
+[Require](https://github.com/PredictiveEcology/Require) should be used.
+One can think of gran as an archaeological tool.
+
+To reconstruct a historical R computational environment, this package
+assumes only the availability of source packages on CRAN. The
+reconstruction procedures have been tested in several vintage versions
+of R.
+
 ## Installation
 
 You can install the development version of gran like so:
@@ -58,10 +73,11 @@ graph$r_version
 #> [1] "3.6.2"
 ```
 
-## Recreate the computational environment
+## Recreate the computational environment via Rocker
 
 The object can be used to recreate the computational environment via
-[Rocker](https://github.com/rocker-org/rocker).
+[Rocker](https://github.com/rocker-org/rocker). Please note that the
+oldest R version one can get from Rocker is R 3.1.0.
 
 ``` r
 dockerize(graph, "~/rocker_test")
@@ -141,7 +157,8 @@ With any browser, go to: `local:8787`. The default username is
 
 The logo of gran is a remix of
 [this](https://commons.wikimedia.org/wiki/File:Flag_of_the_Canary_Islands.svg)
-public domain image.
+public domain image. The two dogs should be *Presa Canario*, the native
+dog breed on the islands of Gran Canaria and Tenerife.
 
 -----
 
