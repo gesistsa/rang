@@ -61,6 +61,9 @@
 ## }
 
 .consolidate_sysreqs <- function(granlist) {
+    if (length(granlist$deps_sysreqs) == 0) {
+        return("apt-get update -qq")
+    }
     debs <- vapply(strsplit(granlist$deps_sysreqs, "-y "), function(x) x[2], character(1))
     cmd <- paste("apt-get install -y", paste(debs, collapse = " "))
     if ("default-jdk" %in% debs) {
@@ -115,6 +118,42 @@
     } else {
         return(gsub("^https://", "http://", mirror))
     }
+}
+
+.cache_r_package <- function(x, cache_dir, cran_mirror, verbose) {
+    url <- paste(cran_mirror, "src/contrib/Archive/", names(x), "/", names(x), "_", x, ".tar.gz", sep = "")
+    tarball_path <- file.path(cache_dir, paste(names(x), "_", x, ".tar.gz", sep = ""))
+    tryCatch({
+        suppressWarnings(download.file(url, destfile = tarball_path, quiet = !verbose))
+    }, error = function(e) {
+        ## is the current latest
+        url <- paste(cran_mirror, "src/contrib/", names(x), "_", x, ".tar.gz", sep = "")
+        download.file(url, destfile = tarball_path, quiet = !verbose)
+    })
+    if (!file.exists(tarball_path)) {
+        warning(names(x), "(", x,") can't be cache.")
+    }
+}
+
+.cache_cran <- function(granlist, output_dir, cran_mirror, verbose) {
+    install_order <- .determine_installation_order(granlist)
+    cache_dir <- file.path(output_dir, "cache")
+    if (!dir.exists(cache_dir)) {
+        dir.create(cache_dir)
+    }
+    for (i in seq_along(install_order)) {
+        .cache_r_package(x = install_order[i], cache_dir = cache_dir,
+                         cran_mirror = cran_mirror, verbose = verbose)
+    }
+    ## For #14, cache R source in the future here
+    invisible(output_dir)
+}
+
+.insert_cache_dir <- function(basic_docker) {
+    gran_line <- which(basic_docker == "RUN Rscript gran.R")
+    c(basic_docker[1:(gran_line - 1)],
+      "COPY cache ./cache",
+      basic_docker[gran_line:length(basic_docker)])
 }
 
 #' Export The Resolved Result As Installation Script
@@ -184,7 +223,8 @@ export_granlist <- function(granlist, path, granlist_as_comment = TRUE, verbose 
 #' This function exports the result from [resolve()] to a Docker file.
 #' @param output_dir where to put the Docker file
 #' @param image character, which versioned Rocker image to use. Can only be "r-ver", "rstudio", "tidyverse", "verse", "geospatial".
-#' This applies only when R version <= 3.1.
+#' This applies only when R version <= 3.1
+#' @param cache logical, whether to cache the content from CRAN now. Please note that the system requirements are not cached
 #' @param ... arguments to be passed to `dockerize`
 #' @return `output_dir`, invisibly
 #' @inheritParams export_granlist
@@ -200,7 +240,7 @@ export_granlist <- function(granlist, path, granlist_as_comment = TRUE, verbose 
 #' }
 #' @export
 dockerize <- function(granlist, output_dir, image = c("r-ver", "rstudio", "tidyverse", "verse", "geospatial"),
-                      granlist_as_comment = TRUE, verbose = TRUE, lib = NA,
+                      granlist_as_comment = TRUE, cache = FALSE, verbose = TRUE, lib = NA,
                       cran_mirror = "https://cran.r-project.org/", check_cran_mirror = TRUE) {
     if (missing(output_dir)) {
         stop("You must provide `output_dir`.")
@@ -217,6 +257,9 @@ dockerize <- function(granlist, output_dir, image = c("r-ver", "rstudio", "tidyv
     export_granlist(granlist = granlist, path = gran_path, granlist_as_comment = granlist_as_comment,
                     verbose = verbose, lib = lib, cran_mirror = cran_mirror,
                     check_cran_mirror = check_cran_mirror)
+    if (isTRUE(cache)) {
+        .cache_cran(granlist, output_dir, cran_mirror, verbose)
+    }
     basic_docker <- c("", "", "COPY gran.R ./gran.R", "RUN Rscript gran.R", "CMD [\"R\"]")
     if (!is.na(lib)) {
         basic_docker[4] <- paste0("RUN mkdir ", lib, " && Rscript gran.R")
@@ -226,6 +269,9 @@ dockerize <- function(granlist, output_dir, image = c("r-ver", "rstudio", "tidyv
     if (image == "rstudio") {
         basic_docker[5] <- "EXPOSE 8787"
         basic_docker[6] <- "CMD [\"/init\"]"
+    }
+    if (isTRUE(cache)) {
+        basic_docker <- .insert_cache_dir(basic_docker)
     }
     writeLines(basic_docker, file.path(output_dir, "Dockerfile"))
     invisible(output_dir)

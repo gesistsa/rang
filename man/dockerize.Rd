@@ -12,6 +12,7 @@ dockerize(
   output_dir,
   image = c("r-ver", "rstudio", "tidyverse", "verse", "geospatial"),
   granlist_as_comment = TRUE,
+  cache = FALSE,
   verbose = TRUE,
   lib = NA,
   cran_mirror = "https://cran.r-project.org/",
@@ -30,10 +31,12 @@ dockerise_granlist(...)
 \item{output_dir}{where to put the Docker file}
 
 \item{image}{character, which versioned Rocker image to use. Can only be "r-ver", "rstudio", "tidyverse", "verse", "geospatial".
-This applies only when R version <= 3.1.}
+This applies only when R version <= 3.1}
 
 \item{granlist_as_comment}{logical, whether to write granlist and the steps to reproduce
 the file to \code{path} as comment}
+
+\item{cache}{logical, whether to cache the content from CRAN now. Please note that the system requirements are not cached}
 
 \item{verbose}{logical, pass to \code{\link[=install.packages]{install.packages()}}, the negated value is also passed as \code{quiet} to both \code{\link[=install.packages]{install.packages()}}
 and \code{\link[=download.file]{download.file()}}.}

@@ -16,9 +16,8 @@
     }
 }
 
-.install_from_cran <- function(x, lib, path = tempdir(), verbose, cran_mirror, current_r_version) {
+.download_package <- function(tarball_path, x, verbose) {
     url <- paste(cran_mirror, "src/contrib/Archive/", names(x), "/", names(x), "_", x, ".tar.gz", sep = "")
-    tarball_path <- file.path(path, paste(names(x), "_", x, ".tar.gz", sep = ""))
     tryCatch({
         suppressWarnings(download.file(url, destfile = tarball_path, quiet = !verbose))
     }, error = function(e) {
@@ -26,6 +25,14 @@
         url <- paste(cran_mirror, "src/contrib/", names(x), "_", x, ".tar.gz", sep = "")
         download.file(url, destfile = tarball_path, quiet = !verbose)
     })
+    invisible(tarball_path)
+}
+
+.install_from_cran <- function(x, lib, path = tempdir(), verbose, cran_mirror, current_r_version) {
+    tarball_path <- file.path(path, paste(names(x), "_", x, ".tar.gz", sep = ""))
+    if (!file.exists(tarball_path)) {
+        .download_package(tarball_path = tarball_path, x = x, verbose = verbose)
+    }
     .install_packages(tarball_path, lib, verbose, current_r_version)
     ## check and error
     if (!is.na(lib)) {
