@@ -74,3 +74,27 @@ test_that("integration of #20 to dockerize()", {
     expect_false(any(grepl("^cran_mirror <- \"https://cran\\.r\\-project\\.org/\"", x)))
     expect_true(any(grepl("^cran_mirror <- \"http://cran\\.r\\-project\\.org/\"", x)))
 })
+
+test_that("Dockerize R < 3.1 and >= 2.1", {
+    gran_rio <- readRDS("../testdata/gran_rio_old.RDS")
+    expect_equal(gran_rio$r_version, "3.0.1")
+    temp_dir <- file.path(tempdir(), sample(1:10000, size = 1))
+    dockerize(gran_rio, output_dir = temp_dir)
+    expect_true(file.exists(file.path(temp_dir, "compile_r.sh")))
+    Dockerfile <- readLines(file.path(temp_dir, "Dockerfile"))
+    expect_true(any(grepl("^RUN bash compile_r.sh 3.0.1", Dockerfile)))
+    ## lib
+    dockerize(gran_rio, output_dir = temp_dir, lib = "abc")
+    Dockerfile <- readLines(file.path(temp_dir, "Dockerfile"))
+    expect_true(any(grepl("^RUN mkdir", Dockerfile)))
+})
+
+test_that("Docker R < 2.1", {
+    gran_rio <- readRDS("../testdata/gran_rio_old.RDS")
+    gran_rio$r_version <- "2.1.0" ## exactly 2.1.0, no error
+    temp_dir <- file.path(tempdir(), sample(1:10000, size = 1))
+    expect_error(dockerize(gran_rio, output_dir = temp_dir), NA)
+    gran_rio <- readRDS("../testdata/gran_rio_old.RDS")
+    gran_rio$r_version <- "2.0.0"
+    expect_error(dockerize(gran_rio, output_dir = temp_dir))    
+})

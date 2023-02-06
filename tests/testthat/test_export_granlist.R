@@ -98,3 +98,13 @@ test_that("integration of https to `export_granlist` #20", {
     expect_false(any(grepl("^cran_mirror <- \"https://cran\\.r\\-project\\.org/\"", x)))
     expect_true(any(grepl("^cran_mirror <- \"http://cran\\.r\\-project\\.org/\"", x)))
 })
+
+test_that("Docker R < 2.1", {
+    gran_rio <- readRDS("../testdata/gran_rio_old.RDS")
+    gran_rio$r_version <- "2.1.0" ## exactly 2.1.0, no error
+    temp_r <- tempfile(fileext = ".R")
+    expect_error(export_granlist(gran_rio, path = temp_r), NA)
+    gran_rio <- readRDS("../testdata/gran_rio_old.RDS")
+    gran_rio$r_version <- "2.0.0"
+    expect_error(export_granlist(gran_rio, path = temp_r))
+})
