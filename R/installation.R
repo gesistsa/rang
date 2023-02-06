@@ -124,11 +124,11 @@
     url <- paste(cran_mirror, "src/contrib/Archive/", names(x), "/", names(x), "_", x, ".tar.gz", sep = "")
     tarball_path <- file.path(cache_dir, paste(names(x), "_", x, ".tar.gz", sep = ""))
     tryCatch({
-        suppressWarnings(download.file(url, destfile = tarball_path, quiet = !verbose))
+        suppressWarnings(utils::download.file(url, destfile = tarball_path, quiet = !verbose))
     }, error = function(e) {
         ## is the current latest
         url <- paste(cran_mirror, "src/contrib/", names(x), "_", x, ".tar.gz", sep = "")
-        download.file(url, destfile = tarball_path, quiet = !verbose)
+        utils::download.file(url, destfile = tarball_path, quiet = !verbose)
     })
     if (!file.exists(tarball_path)) {
         warning(names(x), "(", x,") can't be cache.")
