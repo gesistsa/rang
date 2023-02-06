@@ -1,6 +1,8 @@
 current_r_version <- paste(R.Version()[c("major","minor")], collapse = ".", sep = "")
 
-if (dir.exists("cache")) {
+## In Unix, all things are file.
+## Before you complain, R <= 3.2.0 doesn't have dir.exists.
+if (file.exists("cache")) {
     path <- "cache"
 } else {
     path <- tempdir()

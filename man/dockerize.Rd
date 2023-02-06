@@ -31,7 +31,7 @@ dockerise_granlist(...)
 \item{output_dir}{where to put the Docker file}
 
 \item{image}{character, which versioned Rocker image to use. Can only be "r-ver", "rstudio", "tidyverse", "verse", "geospatial".
-This applies only when R version <= 3.1}
+This applies only to R version <= 3.1}
 
 \item{granlist_as_comment}{logical, whether to write granlist and the steps to reproduce
 the file to \code{path} as comment}
@@ -53,7 +53,8 @@ and \code{\link[=download.file]{download.file()}}.}
 \code{output_dir}, invisibly
 }
 \description{
-This function exports the result from \code{\link[=resolve]{resolve()}} to a Docker file.
+This function exports the result from \code{\link[=resolve]{resolve()}} to a Docker file. For R version >= 3.1.0, the Dockerfile is based on the versioned Rocker image.
+For R version < 3.1.0, the Dockerfile is based on Debian and it compiles R from source.
 }
 \details{
 The idea behind this is to determine the installation order of R packages locally. Then, the installation script can be depolyed to another
@@ -70,6 +71,7 @@ if (interactive()) {
 }
 }
 \references{
+\href{https://rocker-project.org}{The Rocker Project}
 Ripley, B. (2005) \href{https://cran.r-project.org/doc/Rnews/Rnews_2005-1.pdf}{Packages and their Management in R 2.1.0.} R News, 5(1):8--11.
 }
 \seealso{

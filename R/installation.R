@@ -156,6 +156,25 @@
       basic_docker[gran_line:length(basic_docker)])
 }
 
+.generate_pre310_docker <- function(r_version, debian_version = "lenny", lib, sysreps_cmd, cache) {
+    basic_docker <- c(
+        paste0("FROM debian/eol:", debian_version),
+        "ENV TZ UTC",
+        "RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && apt-get update -qq && apt-get install wget locales build-essential r-base-dev  -y",
+        "COPY gran.R ./gran.R",
+        "COPY compile_r.sh ./compile_r.sh",
+        paste("RUN", sysreps_cmd),
+        paste("RUN bash compile_r.sh", r_version),
+        "CMD [\"R\"]")
+    if (!is.na(lib)) {
+        basic_docker[7] <- paste0("RUN mkdir ", lib, " && bash compile_r.sh ", r_version)
+    }
+    if (isTRUE(cache)) {
+        basic_docker <- c(basic_docker[1:5], "COPY cache ./cache", basic_docker[6:8])
+    }
+    return(basic_docker)
+}
+
 #' Export The Resolved Result As Installation Script
 #'
 #' This function exports the results from [resolve()] to an installation script that can be run in a fresh R environment.
@@ -185,6 +204,9 @@
 #' }
 export_granlist <- function(granlist, path, granlist_as_comment = TRUE, verbose = TRUE, lib = NA,
                             cran_mirror = "https://cran.r-project.org/", check_cran_mirror = TRUE) {
+    if (utils::compareVersion(granlist$r_version, "2.1") == -1) {
+        stop("`export_granlist` doesn't support this R version (yet).")
+    }
     cran_mirror <- .normalize_url(cran_mirror)
     if (isTRUE(check_cran_mirror)) { ## probably need to stop this also if #17 is implemented
         if (isFALSE(.check_mirror(cran_mirror))) {
@@ -220,16 +242,20 @@ export_granlist <- function(granlist, path, granlist_as_comment = TRUE, verbose 
 
 #' Dockerize The Resolved Result
 #'
-#' This function exports the result from [resolve()] to a Docker file.
+#' This function exports the result from [resolve()] to a Docker file. For R version >= 3.1.0, the Dockerfile is based on the versioned Rocker image.
+#' For R version < 3.1.0, the Dockerfile is based on Debian and it compiles R from source.
 #' @param output_dir where to put the Docker file
 #' @param image character, which versioned Rocker image to use. Can only be "r-ver", "rstudio", "tidyverse", "verse", "geospatial".
-#' This applies only when R version <= 3.1
+#' This applies only to R version <= 3.1
 #' @param cache logical, whether to cache the content from CRAN now. Please note that the system requirements are not cached
 #' @param ... arguments to be passed to `dockerize`
 #' @return `output_dir`, invisibly
 #' @inheritParams export_granlist
-#' @inherit export_granlist details references
+#' @inherit export_granlist details
 #' @seealso [resolve()], [export_granlist()]
+#' @references
+#' [The Rocker Project](https://rocker-project.org)
+#' Ripley, B. (2005) [Packages and their Management in R 2.1.0.](https://cran.r-project.org/doc/Rnews/Rnews_2005-1.pdf) R News, 5(1):8--11.
 #' @examples
 #' \donttest{
 #' if (interactive()) {
@@ -248,6 +274,9 @@ dockerize <- function(granlist, output_dir, image = c("r-ver", "rstudio", "tidyv
     if (!grepl("^ubuntu", granlist$os)) {
         stop("System dependencies of ", granlist$os, " can't be dockerized.")
     }
+    if (utils::compareVersion(granlist$r_version, "2.1") == -1) {
+        stop("`dockerize` doesn't support this R version (yet).")
+    }
     image <- match.arg(image)
     sysreps_cmd <- .consolidate_sysreqs(granlist)
     if (!dir.exists(output_dir)) {
@@ -260,18 +289,26 @@ dockerize <- function(granlist, output_dir, image = c("r-ver", "rstudio", "tidyv
     if (isTRUE(cache)) {
         .cache_cran(granlist, output_dir, cran_mirror, verbose)
     }
-    basic_docker <- c("", "", "COPY gran.R ./gran.R", "RUN Rscript gran.R", "CMD [\"R\"]")
-    if (!is.na(lib)) {
-        basic_docker[4] <- paste0("RUN mkdir ", lib, " && Rscript gran.R")
-    }
-    basic_docker[1] <- paste0("FROM rocker/", image, ":", granlist$r_version)
-    basic_docker[2] <- paste("RUN", sysreps_cmd)
-    if (image == "rstudio") {
-        basic_docker[5] <- "EXPOSE 8787"
-        basic_docker[6] <- "CMD [\"/init\"]"
-    }
-    if (isTRUE(cache)) {
-        basic_docker <- .insert_cache_dir(basic_docker)
+    if (utils::compareVersion(granlist$r_version, "3.1") == -1) {
+        file.copy(system.file("compile_r.sh", package = "gran"), file.path(output_dir, "compile_r.sh"),
+                  overwrite = TRUE)
+        basic_docker <- .generate_pre310_docker(r_version = granlist$r_version,
+                                                sysreps_cmd = sysreps_cmd, lib = lib,
+                                                cache = cache)
+    } else {
+        basic_docker <- c("", "", "COPY gran.R ./gran.R", "RUN Rscript gran.R", "CMD [\"R\"]")
+        if (!is.na(lib)) {
+            basic_docker[4] <- paste0("RUN mkdir ", lib, " && Rscript gran.R")
+        }
+        basic_docker[1] <- paste0("FROM rocker/", image, ":", granlist$r_version)
+        basic_docker[2] <- paste("RUN", sysreps_cmd)
+        if (image == "rstudio") {
+            basic_docker[5] <- "EXPOSE 8787"
+            basic_docker[6] <- "CMD [\"/init\"]"
+        }
+        if (isTRUE(cache)) {
+            basic_docker <- .insert_cache_dir(basic_docker)
+        }
     }
     writeLines(basic_docker, file.path(output_dir, "Dockerfile"))
     invisible(output_dir)
