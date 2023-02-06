@@ -42,6 +42,17 @@ test_that(".normalize_url", {
     expect_equal(x, "https://cran.r-project.org/")
 })
 
+test_that(".normalize_url https issue #20", {
+    x <- .normalize_url("http://cran.r-project.org/") # https = TRUE
+    expect_equal(x, "https://cran.r-project.org/")
+    x <- .normalize_url("http://cran.r-project.org/", https = FALSE)
+    expect_equal(x, "http://cran.r-project.org/")
+    x <- .normalize_url("cran.r-project.org", https = FALSE)
+    expect_equal(x, "http://cran.r-project.org/")
+    x <- .normalize_url("cran.r-project.org//", https = FALSE)
+    expect_equal(x, "http://cran.r-project.org/")
+})
+
 test_that(".check_mirror", {
     expect_true(.check_mirror("https://cran.r-project.org/"))
     expect_true(.check_mirror("https://cloud.r-project.org/"))
@@ -64,4 +75,26 @@ test_that("integration of mirror selection to `export_granlist` #18", {
     expect_error(export_granlist(gran_ok, path = temp_r, cran_mirror = "https://www.chainsawriot.com/", check_cran_mirror = FALSE), NA)
     x <- readLines(temp_r)
     expect_true(any(grepl("^cran_mirror <- \"https://www\\.chainsawriot\\.com/\"", x)))
+})
+
+test_that("integration of https to `export_granlist` #20", {
+    gran_ok <- readRDS("../testdata/gran_ok.RDS")
+    expect_equal(gran_ok$r_version, "4.2.2")
+    temp_r <- tempfile(fileext = ".R")
+    export_granlist(gran_ok, path = temp_r) ## cran_mirror = "https://cran.r-project.org/"
+    x <- readLines(temp_r)
+    expect_true(any(grepl("^cran_mirror <- \"https://cran\\.r\\-project\\.org/\"", x)))
+    gran_ok <- readRDS("../testdata/gran_ok.RDS")
+    gran_ok$r_version <- "3.3.0"
+    temp_r <- tempfile(fileext = ".R")
+    export_granlist(gran_ok, path = temp_r) ## cran_mirror = "https://cran.r-project.org/"
+    x <- readLines(temp_r)
+    expect_true(any(grepl("^cran_mirror <- \"https://cran\\.r\\-project\\.org/\"", x)))
+    gran_ok <- readRDS("../testdata/gran_ok.RDS")
+    gran_ok$r_version <- "3.2.0"
+    temp_r <- tempfile(fileext = ".R")
+    export_granlist(gran_ok, path = temp_r) ## cran_mirror = "https://cran.r-project.org/"
+    x <- readLines(temp_r)
+    expect_false(any(grepl("^cran_mirror <- \"https://cran\\.r\\-project\\.org/\"", x)))
+    expect_true(any(grepl("^cran_mirror <- \"http://cran\\.r\\-project\\.org/\"", x)))
 })

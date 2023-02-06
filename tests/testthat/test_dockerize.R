@@ -54,3 +54,23 @@ test_that("integration of #18 in dockerize()", {
     x <- readLines(file.path(temp_dir, "gran.R"))
     expect_true(any(grepl("^cran_mirror <- \"https://www\\.chainsawriot\\.com/\"", x)))
 })
+
+test_that("integration of #20 to dockerize()", {
+    gran_ok <- readRDS("../testdata/gran_ok.RDS")
+    expect_equal(gran_ok$r_version, "4.2.2")
+    temp_dir <- file.path(tempdir(), sample(1:10000, size = 1))
+    dockerize(gran_ok, output_dir = temp_dir) ## cran_mirror = "https://cran.r-project.org/"
+    x <- readLines(file.path(temp_dir, "gran.R"))
+    expect_true(any(grepl("^cran_mirror <- \"https://cran\\.r\\-project\\.org/\"", x)))
+    gran_ok <- readRDS("../testdata/gran_ok.RDS")
+    gran_ok$r_version <- "3.3.0"
+    dockerize(gran_ok, output_dir = temp_dir) ## cran_mirror = "https://cran.r-project.org/"
+    x <- readLines(file.path(temp_dir, "gran.R"))
+    expect_true(any(grepl("^cran_mirror <- \"https://cran\\.r\\-project\\.org/\"", x)))
+    gran_ok <- readRDS("../testdata/gran_ok.RDS")
+    gran_ok$r_version <- "3.2.0"
+    dockerize(gran_ok, output_dir = temp_dir) ## cran_mirror = "https://cran.r-project.org/"
+    x <- readLines(file.path(temp_dir, "gran.R"))    
+    expect_false(any(grepl("^cran_mirror <- \"https://cran\\.r\\-project\\.org/\"", x)))
+    expect_true(any(grepl("^cran_mirror <- \"http://cran\\.r\\-project\\.org/\"", x)))
+})
