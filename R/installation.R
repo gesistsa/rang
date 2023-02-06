@@ -130,7 +130,12 @@
 #' @param cran_mirror character, which CRAN mirror to use
 #' @param check_cran_mirror logical, whether to check the CRAN mirror
 #' @return `path`, invisibly
+#' @details The idea behind this is to determine the installation order of R packages locally. Then, the installation script can be depolyed to another
+#' fresh R session to install R packages. [dockerize()] is a more reasonable way because a fresh R session with all system requirements
+#' is provided. The current approach does not work in R < 2.1.0.
 #' @export
+#' @references
+#' Ripley, B. (2005) [Packages and their Management in R 2.1.0.](https://cran.r-project.org/doc/Rnews/Rnews_2005-1.pdf) R News, 5(1):8--11. 
 #' @examples
 #' \donttest{
 #' if (interactive()) {
@@ -178,10 +183,12 @@ export_granlist <- function(granlist, path, granlist_as_comment = TRUE, verbose 
 #'
 #' This function exports the result from [resolve()] to a Docker file.
 #' @param output_dir where to put the Docker file
-#' @param image character, which versioned Rocker image to use. Can only be "r-ver", "rstudio", "tidyverse", "verse", "geospatial"
+#' @param image character, which versioned Rocker image to use. Can only be "r-ver", "rstudio", "tidyverse", "verse", "geospatial".
+#' This applies only when R version <= 3.1.
 #' @param ... arguments to be passed to `dockerize`
 #' @return `output_dir`, invisibly
 #' @inheritParams export_granlist
+#' @inherit export_granlist details references
 #' @seealso [resolve()], [export_granlist()]
 #' @examples
 #' \donttest{

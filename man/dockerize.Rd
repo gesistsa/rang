@@ -29,7 +29,8 @@ dockerise_granlist(...)
 
 \item{output_dir}{where to put the Docker file}
 
-\item{image}{character, which versioned Rocker image to use. Can only be "r-ver", "rstudio", "tidyverse", "verse", "geospatial"}
+\item{image}{character, which versioned Rocker image to use. Can only be "r-ver", "rstudio", "tidyverse", "verse", "geospatial".
+This applies only when R version <= 3.1.}
 
 \item{granlist_as_comment}{logical, whether to write granlist and the steps to reproduce
 the file to \code{path} as comment}
@@ -51,6 +52,11 @@ and \code{\link[=download.file]{download.file()}}.}
 \description{
 This function exports the result from \code{\link[=resolve]{resolve()}} to a Docker file.
 }
+\details{
+The idea behind this is to determine the installation order of R packages locally. Then, the installation script can be depolyed to another
+fresh R session to install R packages. \code{\link[=dockerize]{dockerize()}} is a more reasonable way because a fresh R session with all system requirements
+is provided. The current approach does not work in R < 2.1.0.
+}
 \examples{
 \donttest{
 if (interactive()) {
@@ -59,6 +65,9 @@ if (interactive()) {
     dockerize(graph, ".")
 }
 }
+}
+\references{
+Ripley, B. (2005) \href{https://cran.r-project.org/doc/Rnews/Rnews_2005-1.pdf}{Packages and their Management in R 2.1.0.} R News, 5(1):8--11.
 }
 \seealso{
 \code{\link[=resolve]{resolve()}}, \code{\link[=export_granlist]{export_granlist()}}
