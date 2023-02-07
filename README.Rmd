@@ -124,7 +124,15 @@ loaded via a namespace (and not attached):
 [37] crayon_1.3.4    
 ```
 
-## Using alternative Rocker images
+### Caching R packages
+
+One can also cache (or archive) the R packages from CRAN at the time `dockerize` is executed. The cached R packages will then transfer to the container. Please note that system requirements (i.e. `deb` packages) are not cached.
+
+```r
+dockerize(graph, "~/rocker_test", cache = TRUE)
+```
+
+### Using alternative Rocker images
 
 One can also select other Rocker versioned images: `rstudio`, `tidyverse`, `verse`, `geospatial`.
 
@@ -141,6 +149,15 @@ sudo docker run -p 8787:8787 -e PASSWORD=abc123 --rm --name "grantest" -ti gran
 ```
 
 With any browser, go to: `local:8787`. The default username is `rstudio`, password is as specified.
+
+## Recreate the computational environment for R < 3.1.0
+
+`gran` can still be used to recreate computational environments for R < 3.1.0. The Dockerfile generated is based on Debian Woody (3.0) and the requested version of R is compiled from source. As of writing, this method works for R < 3.1.0 but not R < 2.1.0. The `image` parameter is ignored in this case.
+
+```r
+gran_rio <- resolve("rio", snapshot_date = "2013-08-28") ## R 3.0.1
+dockerize(gran_rio, output_dir = "~/old_renviron")
+```
 
 ## Acknowledgment
 
