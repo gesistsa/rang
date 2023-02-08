@@ -64,6 +64,7 @@ NULL
   con <- url(repo_descr$download_url)
   descr_df <- as.data.frame(read.dcf(con))
   pkg_dep_df <- .parse_desc(descr_df,snapshot_date)
+  pkg_dep_df$x <- pkg
   pkg_dep_df$x_version <- sha$sha
   pkg_dep_df$x_pubdate <- sha$x_pubdate
   if("y"%in% names(pkg_dep_df)){
@@ -112,7 +113,7 @@ NULL
   if(length(deps)!=0){
     return(data.frame(
       snapshot_date = snapshot_date,
-      x = descr_df[["Package"]],
+      # x = descr_df[["Package"]],
       # x_version = descr_df[["Version"]],
       y = deps,
       type = unlist(type),
@@ -121,7 +122,7 @@ NULL
   } else{
     return(data.frame(
       snapshot_date = as.Date(snapshot_date),
-      x = descr_df[["Package"]],
+      # x = descr_df[["Package"]],
       # x_version = descr_df[["Version"]]
     ))  
   }
