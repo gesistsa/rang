@@ -61,15 +61,17 @@ NULL
   snapshot_date <- anytime::anytime(snapshot_date, tz = "UTC", asUTC = TRUE)
   sha <- .get_sha(pkg,snapshot_date)  
   repo_descr <- gh::gh(paste0("GET /repos/",pkg,"/contents/DESCRIPTION"),ref=sha$sha)
-  descr_df <- as.data.frame(read.dcf(url(repo_descr$download_url)))
-  pkg_dep_df <- .parse_desc(descr_df)
+  con <- url(repo_descr$download_url)
+  descr_df <- as.data.frame(read.dcf(con))
+  pkg_dep_df <- .parse_desc(descr_df,snapshot_date)
+  pkg_dep_df$x_version <- sha$sha
   pkg_dep_df$x_pubdate <- sha$x_pubdate
   if("y"%in% names(pkg_dep_df)){
     return(pkg_dep_df[,c("snapshot_date", "x", "x_version", "x_pubdate", "y", "type", "y_raw_version")])  
   } else{
     return(pkg_dep_df)
   }
-  
+  on.exit(close(con))
 }
 
 # get the commit sha for the commit closest to date
@@ -85,8 +87,8 @@ NULL
   list(sha = commits[[idx]]$sha,x_pubdate =  anytime::anytime(dates[[idx]], tz = "UTC", asUTC = TRUE))
 }
 
-# parse a desription file from github repo
-.parse_desc <- function(descr_df){
+# parse a description file from github repo
+.parse_desc <- function(descr_df,snapshot_date){
   types <- c("Depends","LinkingTo","Imports","Suggests","Enhances")
   depends <- descr_df[["Depends"]]
   imports <- descr_df[["Imports"]]
@@ -111,7 +113,7 @@ NULL
     return(data.frame(
       snapshot_date = as.Date(snapshot_date),
       x = descr_df[["Package"]],
-      x_version = descr_df[["Version"]],
+      # x_version = descr_df[["Version"]],
       y = deps,
       type = unlist(type),
       y_raw_version = unlist(version)
@@ -120,7 +122,7 @@ NULL
     return(data.frame(
       snapshot_date = as.Date(snapshot_date),
       x = descr_df[["Package"]],
-      x_version = descr_df[["Version"]]
+      # x_version = descr_df[["Version"]]
     ))  
   }
   
@@ -339,16 +341,63 @@ convert_edgelist <- function(x) {
 }
 
 .query_sysreps_safe <- function(targets, os = "ubuntu-20.04") {
-    output <- c()
-    for (pkg in targets) {
-        tryCatch({
-            result <- remotes::system_requirements(package = pkg, os = os)
-            output <- c(output, result)
-        }, error = function(e) {
-            warning(pkg, " can't be queried for System requirements. Assumed to have no requirement.", call. = FALSE)
-        })
+  output <- c()
+  for (pkg in targets) {
+    if(isFALSE(grepl("/",pkg))){
+      tryCatch({
+        result <- remotes::system_requirements(package = pkg, os = os)
+        output <- c(output, result)
+      }, error = function(e) {
+        warning(pkg, " can't be queried for System requirements. Assumed to have no requirement.", call. = FALSE)
+      })
+    } else{
+      tryCatch({
+        result <- system_requirements_gh(package = pkg,os = os)
+        output <- c(output, result)
+      }, error = function(e) {
+        warning(pkg, " can't be queried for System requirements. Assumed to have no requirement.", call. = FALSE)
+      })
     }
-    return(unique(output))
+  }
+  return(unique(output))
+}
+
+# get system requirements for github packages
+DEFAULT_RSPM <- "https://packagemanager.rstudio.com"
+DEFAULT_RSPM_REPO_ID <- "1"
+system_requirements_gh <- function(package, os){
+  curl = Sys.which("curl")
+  
+  rspm_repo_id <- Sys.getenv("RSPM_REPO_ID", DEFAULT_RSPM_REPO_ID)
+  rspm <- Sys.getenv("RSPM_ROOT", DEFAULT_RSPM)
+  
+  rspm_repo_url <- sprintf("%s/__api__/repos/%s", rspm, rspm_repo_id)
+  desc_file <- tempfile()
+  # potenital issue: not going back to snapshot time! but the same is true for the remotes approach?
+  repo_descr <- gh::gh(paste0("GET /repos/",package,"/contents/DESCRIPTION")) 
+  
+  writeLines(readLines(repo_descr$download_url),con = desc_file)
+  res <- system2(
+    curl,
+    args = c(
+      "--silent",
+      "--data-binary",
+      shQuote(paste0("@", desc_file)),
+      shQuote(sprintf("%s/sysreqs?distribution=%s&release=%s&suggests=true",
+                      rspm_repo_url,
+                      "ubuntu",
+                      "20.04")
+      )
+    ),
+    stdout = TRUE
+  )
+  file.remove(desc_file)
+  res <- json$parse(res)
+  if (!is.null(res$error)) {
+    stop(res$error)
+  }
+  unique(unlist(c(res[["install_scripts"]], 
+                  lapply(res[["dependencies"]], `[[`, "install_scripts"))))
 }
 
 ## os <- names(remotes:::supported_os_versions())
