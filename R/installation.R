@@ -34,7 +34,7 @@
     while(length(setdiff(needed_packages, c(installed_packages,noncran_packages))) != 0) {
         for (package in needed_packages) {
             ##print(package)
-            if (!package %in% installed_packages) {
+            if (!package %in% installed_packages & !package%in% noncran_packages) {
                 ## check requirement
                 requirement_fulfilled <- length(setdiff(dep$get(package), installed_packages)) == 0
                 if (requirement_fulfilled) {
