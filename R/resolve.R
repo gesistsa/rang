@@ -111,7 +111,7 @@ NULL
   
   if(length(deps)!=0){
     return(data.frame(
-      snapshot_date = as.Date(snapshot_date),
+      snapshot_date = snapshot_date,
       x = descr_df[["Package"]],
       # x_version = descr_df[["Version"]],
       y = deps,
