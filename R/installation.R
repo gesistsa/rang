@@ -19,14 +19,19 @@
     }
     ## installation simulation
     installed_packages <- c()
+    noncran_packages <- c()
     needed_packages <- dep$keys()
     ## install all terminal nodes
     for (package in needed_packages) {
+        if(.is_github(package)){
+          noncran_packages <- c(noncran_packages,package)
+          next()
+        }
         if (is.null(dep$get(package))) {
             installed_packages <- c(installed_packages, package)
         }
     }
-    while(length(setdiff(needed_packages, installed_packages)) != 0) {
+    while(length(setdiff(needed_packages, c(installed_packages,noncran_packages))) != 0) {
         for (package in needed_packages) {
             ##print(package)
             if (!package %in% installed_packages) {
@@ -38,7 +43,7 @@
             }
         }
     }
-    vapply(installed_packages, function(x) version$get(x), character(1))
+    vapply(c(installed_packages,noncran_packages), function(x) version$get(x), character(1))
 }
 
 ## .install_from_cran <- function(x, lib, path = tempdir()) {
