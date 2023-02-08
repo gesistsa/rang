@@ -180,7 +180,7 @@ resolve <- function(pkgs, snapshot_date, no_enhances = TRUE, no_suggests = TRUE,
         tryCatch({
             pkg_dep_df <- .get_snapshot_dependencies(pkg = current_pkg, snapshot_date = snapshot_date)
             output$deps[[current_pkg]] <- pkg_dep_df
-            pkgs_need_query <- unique(setdiff(.keep_queryable_dependencies(pkg_dep_df, no_enhances, no_suggests), c(names(output$dep), seen_deps)))
+            pkgs_need_query <- unique(setdiff(.keep_queryable_dependencies(pkg_dep_df, no_enhances, no_suggests), c(names(output$deps), seen_deps)))
             seen_deps <- union(seen_deps, pkgs_need_query)
             for (dep in pkgs_need_query) {
                 q$push(dep)
