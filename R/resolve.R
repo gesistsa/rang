@@ -214,6 +214,9 @@ resolve <- function(pkgs, snapshot_date, no_enhances = TRUE, no_suggests = TRUE,
     if (snapshot_date >= anytime::anytime(Sys.Date())) {
         stop("We don't know the future.", call. = FALSE)
     }
+    if(any(grepl("/",pkgs))){
+      pkgs <- c(pkgs,"devtools")
+    }
     output <- list()
     output$call <- match.call()
     output$grans <- list()
