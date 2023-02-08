@@ -32,7 +32,7 @@ NULL
 ## get the latest version as of date
 ## let's call this output dep_df; basically is a rough version of edgelist
 .get_snapshot_dependencies <- function(pkg = "rtoot", snapshot_date = "2022-12-10") {
-  if(isFALSE(grepl("/",pkg))){
+  if(isFALSE(.is_github(pkg))){
     return(.get_snapshot_dependencies_cran(pkg = pkg,snapshot_date = snapshot_date))
   } else{
     return(.get_snapshot_dependencies_gh(pkg = pkg,snapshot_date = snapshot_date))
@@ -73,6 +73,10 @@ NULL
     return(pkg_dep_df)
   }
   on.exit(close(con))
+}
+
+.is_github <- function(pkg){
+  grepl("/",pkg)
 }
 
 # get the commit sha for the commit closest to date
@@ -214,7 +218,7 @@ resolve <- function(pkgs, snapshot_date, no_enhances = TRUE, no_suggests = TRUE,
     if (snapshot_date >= anytime::anytime(Sys.Date())) {
         stop("We don't know the future.", call. = FALSE)
     }
-    if(any(grepl("/",pkgs))){
+    if(any(.is_github(pkgs))){
       pkgs <- c(pkgs,"devtools")
     }
     output <- list()
@@ -347,7 +351,7 @@ convert_edgelist <- function(x) {
 .query_sysreps_safe <- function(targets, os = "ubuntu-20.04") {
   output <- c()
   for (pkg in targets) {
-    if(isFALSE(grepl("/",pkg))){
+    if(isFALSE(.is_github(pkg))){
       tryCatch({
         result <- remotes::system_requirements(package = pkg, os = os)
         output <- c(output, result)
