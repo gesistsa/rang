@@ -46,47 +46,43 @@
     invisible()
 }
 
-.install_from_github <- function(x,lib, verbose, current_r_version){
+## return TRUE when the installed version is older
+.check_version_older <- function(pkg = "devtools", version = "1.6.1", lib = NA) {
+  if (is.na(lib)) {
+    lib <- NULL
+  }
+  utils::compareVersion(utils::packageDescription(pkg, fields = "Version", lib.loc = lib), version) == -1
+}
+
+.install_github <- function(pkg, sha, lib = NA) {
+  if (is.na(lib)) {
+    lib <- NULL
+  }
+  if ("remotes" %in% utils::installed.packages()) {
+    remotes::install_github(repo = pkg, ref = sha, dependencies = FALSE, upgrade = "never", force = TRUE, lib = lib)
+    return(invisible())
+  }
+  old_devtools <- .check_version_older(pkg = "devtools", version = "1.6.1", lib = NA)
+  if (isFALSE(old_devtools)) {
+    devtools::install_github(repo = pkg, ref = sha, dependencies = FALSE, upgrade = "never", force = TRUE, lib = lib)
+  } else {
+    devtools::install_github(username = user_repo[1], repo = user_repo[2], ref = sha, dependencies = FALSE,
+                             upgrade = "never", force = TRUE, lib = lib)
+  }
+  invisible()
+}
+
+
+.install_from_github <- function(x,lib){
   pkg <- names(x)
   sha <- unname(x)
-  if (utils::compareVersion(current_r_version, "3.0") != -1) {
-    if (is.na(lib)) {
-      if(packageVersion(devtools)>="1.6.1"){}{
-        devtools::install_github(repo = pkg,ref = sha,dependencies = FALSE, upgrade = "never",force = TRUE)
-      } else{
-        user_repo <- strsplit(pkg,"/")[[1]]
-        devtools::install_github(username = user_repo[1],repo = user_repo[2], ref = sha,dependencies = FALSE, upgrade = "never",force = TRUE)
-      }
-    } else {
-      if(packageVersion(devtools)>="1.6.1"){}{
-        devtools::install_github(repo = pkg,ref = sha,dependencies = FALSE, upgrade = "never",lib = lib,force = TRUE)
-      } else{
-        user_repo <- strsplit(pkg,"/")[[1]]
-        devtools::install_github(username = user_repo[1],repo = user_repo[2],ref = sha,dependencies = FALSE, upgrade = "never",lib = lib,force = TRUE)
-      }
-    }
-  } else {
-    if (is.na(lib)) {
-      if(packageVersion(devtools)>="1.6.1"){}{
-        devtools::install_github(repo = pkg,ref = sha,dependencies = FALSE, upgrade = "never",force = TRUE)
-      } else{
-        user_repo <- strsplit(pkg,"/")[[1]]
-        devtools::install_github(username = user_repo[1],repo = user_repo[2],ref = sha,dependencies = FALSE, upgrade = "never",force = TRUE)
-      }
-    } else {
-      if(packageVersion(devtools)>="1.6.1"){}{
-        devtools::install_github(repo = pkg,ref = sha,dependencies = FALSE, upgrade = "never",force = TRUE)
-      } else{
-        user_repo <- strsplit(pkg,"/")[[1]]
-        devtools::install_github(username = user_repo[1],repo = user_repo[2],ref = sha,dependencies = FALSE, upgrade = "never",force = TRUE)
-      }
-    }
-  }
+  .install_github(pkg = pkg, sha = sha,lib = lib)
+
   ## check and error
   if (!is.na(lib)) {
-    installed_packages <- installed.packages(lib.loc = lib)
+    installed_packages <- utils::installed.packages(lib.loc = lib)
   } else {
-    installed_packages <- installed.packages()
+    installed_packages <- utils::installed.packages()
   }
   installed_gh <- strsplit(pkg,"/")[[1]][2]
   if (!installed_gh %in% dimnames(installed_packages)[[1]]) {
