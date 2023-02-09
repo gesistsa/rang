@@ -51,15 +51,35 @@
   sha <- unname(x)
   if (utils::compareVersion(current_r_version, "3.0") != -1) {
     if (is.na(lib)) {
-      devtools::install_github(repo = pkg,ref = sha,dependencies = FALSE, upgrade = "never",force = TRUE)
+      if(packageVersion(devtools)>="1.6.1"){}{
+        devtools::install_github(repo = pkg,ref = sha,dependencies = FALSE, upgrade = "never",force = TRUE)
+      } else{
+        user_repo <- strsplit(pkg,"/")[[1]]
+        devtools::install_github(username = user_repo[1],repo = user_repo[2], ref = sha,dependencies = FALSE, upgrade = "never",force = TRUE)
+      }
     } else {
-      devtools::install_github(repo = pkg,ref = sha,dependencies = FALSE, upgrade = "never",lib = lib,force = TRUE)
+      if(packageVersion(devtools)>="1.6.1"){}{
+        devtools::install_github(repo = pkg,ref = sha,dependencies = FALSE, upgrade = "never",lib = lib,force = TRUE)
+      } else{
+        user_repo <- strsplit(pkg,"/")[[1]]
+        devtools::install_github(username = user_repo[1],repo = user_repo[2],ref = sha,dependencies = FALSE, upgrade = "never",lib = lib,force = TRUE)
+      }
     }
   } else {
     if (is.na(lib)) {
-      devtools::install_github(repo = pkg,ref = sha,dependencies = FALSE, upgrade = "never",force = TRUE)
+      if(packageVersion(devtools)>="1.6.1"){}{
+        devtools::install_github(repo = pkg,ref = sha,dependencies = FALSE, upgrade = "never",force = TRUE)
+      } else{
+        user_repo <- strsplit(pkg,"/")[[1]]
+        devtools::install_github(username = user_repo[1],repo = user_repo[2],ref = sha,dependencies = FALSE, upgrade = "never",force = TRUE)
+      }
     } else {
-      devtools::install_github(repo = pkg,ref = sha,dependencies = FALSE, upgrade = "never",force = TRUE)
+      if(packageVersion(devtools)>="1.6.1"){}{
+        devtools::install_github(repo = pkg,ref = sha,dependencies = FALSE, upgrade = "never",force = TRUE)
+      } else{
+        user_repo <- strsplit(pkg,"/")[[1]]
+        devtools::install_github(username = user_repo[1],repo = user_repo[2],ref = sha,dependencies = FALSE, upgrade = "never",force = TRUE)
+      }
     }
   }
   ## check and error
