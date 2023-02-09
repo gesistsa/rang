@@ -46,47 +46,42 @@
     invisible()
 }
 
-## return TRUE when the installed version is older
-.check_version_older <- function(pkg = "devtools", version = "1.6.1", lib = NA) {
-  if (is.na(lib)) {
-    lib <- NULL
-  }
-  utils::compareVersion(utils::packageDescription(pkg, fields = "Version", lib.loc = lib), version) == -1
+# installing github packages
+.download_github_safe <- function(pkg,sha,file){
+  tryCatch(
+    download.file(paste("http://api.github.com/repos/", pkg, "/tarball/", sha, sep = ""), destfile = file),
+    error = function(e){
+      stop(paste0("couldn't download ",pkg," from github"),call. = FALSE)
+    }
+  )
 }
 
-.install_github <- function(pkg, sha, lib = NA) {
-  if (is.na(lib)) {
-    lib <- NULL
-  }
-  if ("remotes" %in% utils::installed.packages()) {
-    remotes::install_github(repo = pkg, ref = sha, dependencies = FALSE, upgrade = "never", force = TRUE, lib = lib)
-    return(invisible())
-  }
-  old_devtools <- .check_version_older(pkg = "devtools", version = "1.6.1", lib = NA)
-  if (isFALSE(old_devtools)) {
-    devtools::install_github(repo = pkg, ref = sha, dependencies = FALSE, upgrade = "never", force = TRUE, lib = lib)
-  } else {
-    devtools::install_github(username = user_repo[1], repo = user_repo[2], ref = sha, dependencies = FALSE,
-                             upgrade = "never", force = TRUE, lib = lib)
-  }
-  invisible()
-}
-
-
-.install_from_github <- function(x,lib){
+.install_from_github <- function(x, lib){
   pkg <- names(x)
   sha <- unname(x)
-  .install_github(pkg = pkg, sha = sha,lib = lib)
-
-  ## check and error
-  if (!is.na(lib)) {
-    installed_packages <- utils::installed.packages(lib.loc = lib)
-  } else {
-    installed_packages <- utils::installed.packages()
+  dest_tar <- tempfile(fileext = ".tar.gz")
+  tmp_dir <- tempdir(check = TRUE)
+  tryCatch(
+    download.file(paste("https://api.github.com/repos/", pkg, "/tarball/", sha, sep = ""), destfile = dest_tar),
+    error = function(e){
+      .download_github_safe(pkg,sha,dest_tar)
+    }
+  )
+  
+  system(command = paste("tar", "-zxf ", dest_tar, "-C", tmp_dir))
+  dlist <- list.dirs(path = tmp_dir, recursive = FALSE)
+  pkg_dir <- dlist[grepl(sha, dlist)]
+  if(length(pkg_dir)!=1){
+    stop(paste0("couldn't locate the unzipped package source in ",tmp_dir))
   }
-  installed_gh <- strsplit(pkg,"/")[[1]][2]
-  if (!installed_gh %in% dimnames(installed_packages)[[1]]) {
-    stop("Fail to install ", pkg, "\n")
+  
+  res <- system(command = paste("cd ", tmp_dir, " && R", "CMD", "build", pkg_dir), intern = TRUE)
+  tar_file_line <- res[grepl("*.tar.gz", res)]
+  flist <- list.files(tmp_dir, pattern = "tar.gz", recursive = FALSE)
+  tarball_path <- paste0(tmp_dir, "/", flist[vapply(flist, function(f) any(grepl(f, res)), logical(1))])
+  if(length(tarball_path)!=1){
+    stop(paste0("couldn't locate the install tarball in ",tmp_dir))
   }
-  invisible()
+  install.packages(tarball_path, repos = NULL,lib = lib)
+  unlink(tarball_path)
 }
