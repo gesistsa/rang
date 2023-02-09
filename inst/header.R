@@ -59,8 +59,10 @@
 .install_from_github <- function(x, lib){
   pkg <- names(x)
   sha <- unname(x)
+  short_sha <- substr(sha,1,7)
   dest_tar <- tempfile(fileext = ".tar.gz")
   tmp_dir <- tempdir(check = TRUE)
+  
   tryCatch(
     download.file(paste("https://api.github.com/repos/", pkg, "/tarball/", sha, sep = ""), destfile = dest_tar),
     error = function(e){
@@ -70,18 +72,24 @@
   
   system(command = paste("tar", "-zxf ", dest_tar, "-C", tmp_dir))
   dlist <- list.dirs(path = tmp_dir, recursive = FALSE)
-  pkg_dir <- dlist[grepl(sha, dlist)]
+  pkg_dir <- dlist[grepl(short_sha, dlist)]
   if(length(pkg_dir)!=1){
-    stop(paste0("couldn't locate the unzipped package source in ",tmp_dir))
+    stop(paste0("couldn't uniquely locate the unzipped package source in ",tmp_dir))
   }
   
-  res <- system(command = paste("cd ", tmp_dir, " && R", "CMD", "build", pkg_dir), intern = TRUE)
+  res <- system(command = paste("R", "CMD", "build", pkg_dir), intern = TRUE)
   tar_file_line <- res[grepl("*.tar.gz", res)]
-  flist <- list.files(tmp_dir, pattern = "tar.gz", recursive = FALSE)
-  tarball_path <- paste0(tmp_dir, "/", flist[vapply(flist, function(f) any(grepl(f, res)), logical(1))])
+  flist <- list.files(pattern = "tar.gz", recursive = FALSE)
+  tarball_path <- file.path(flist[vapply(flist, function(f) any(grepl(f, res)), logical(1))])
+  
   if(length(tarball_path)!=1){
-    stop(paste0("couldn't locate the install tarball in ",tmp_dir))
+    stop(paste0("couldn't uniquely locate the install tarball in ",tmp_dir))
   }
-  install.packages(tarball_path, repos = NULL,lib = lib)
+  if (!is.na(lib)) {
+    install.packages(pkgs = tarball_path, repos = NULL,lib = lib)
+  } else{
+    install.packages(pkgs = tarball_path, repos = NULL)
+  }
   unlink(tarball_path)
+  invisible()
 }
