@@ -45,3 +45,32 @@
     }
     invisible()
 }
+
+.install_from_github <- function(x,lib, verbose, current_r_version){
+  pkg <- names(x)
+  sha <- unname(x)
+  if (utils::compareVersion(current_r_version, "3.0") != -1) {
+    if (is.na(lib)) {
+      devtools::install_github(repo = pkg,ref = sha,dependencies = FALSE, upgrade = "never",force = TRUE)
+    } else {
+      devtools::install_github(repo = pkg,ref = sha,dependencies = FALSE, upgrade = "never",lib = lib,force = TRUE)
+    }
+  } else {
+    if (is.na(lib)) {
+      devtools::install_github(repo = pkg,ref = sha,dependencies = FALSE, upgrade = "never",force = TRUE)
+    } else {
+      devtools::install_github(repo = pkg,ref = sha,dependencies = FALSE, upgrade = "never",force = TRUE)
+    }
+  }
+  ## check and error
+  if (!is.na(lib)) {
+    installed_packages <- installed.packages(lib.loc = lib)
+  } else {
+    installed_packages <- installed.packages()
+  }
+  installed_gh <- strsplit(pkg,"/")[[1]][2]
+  if (!installed_gh %in% dimnames(installed_packages)[[1]]) {
+    stop("Fail to install ", pkg, "\n")
+  }
+  invisible()
+}
