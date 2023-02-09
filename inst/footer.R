@@ -11,8 +11,7 @@ if (file.exists("cache")) {
 if (length(install_order) >= 1) {
     for (i in seq(from = 1, to = length(install_order), by = 1)) {
         if(grepl("/",names(install_order[i]))){
-          .install_from_github(x = install_order[i],lib = lib, verbose = verbose, 
-                               current_r_version = current_r_version)
+          .install_from_github(x = install_order[i],lib = lib)
         } else{
           .install_from_cran(x = install_order[i], lib = lib, path = path, verbose = verbose,
                              cran_mirror = cran_mirror, current_r_version = current_r_version) 

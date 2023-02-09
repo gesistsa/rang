@@ -46,31 +46,50 @@
     invisible()
 }
 
-.install_from_github <- function(x,lib, verbose, current_r_version){
+# installing github packages
+.download_github_safe <- function(pkg,sha,file){
+  tryCatch(
+    download.file(paste("http://api.github.com/repos/", pkg, "/tarball/", sha, sep = ""), destfile = file),
+    error = function(e){
+      stop(paste0("couldn't download ",pkg," from github"),call. = FALSE)
+    }
+  )
+}
+
+.install_from_github <- function(x, lib){
   pkg <- names(x)
   sha <- unname(x)
-  if (utils::compareVersion(current_r_version, "3.0") != -1) {
-    if (is.na(lib)) {
-      devtools::install_github(repo = pkg,ref = sha,dependencies = FALSE, upgrade = "never",force = TRUE)
-    } else {
-      devtools::install_github(repo = pkg,ref = sha,dependencies = FALSE, upgrade = "never",lib = lib,force = TRUE)
+  short_sha <- substr(sha,1,7)
+  dest_tar <- tempfile(fileext = ".tar.gz")
+  tmp_dir <- tempdir(check = TRUE)
+  
+  tryCatch(
+    download.file(paste("https://api.github.com/repos/", pkg, "/tarball/", sha, sep = ""), destfile = dest_tar),
+    error = function(e){
+      .download_github_safe(pkg,sha,dest_tar)
     }
-  } else {
-    if (is.na(lib)) {
-      devtools::install_github(repo = pkg,ref = sha,dependencies = FALSE, upgrade = "never",force = TRUE)
-    } else {
-      devtools::install_github(repo = pkg,ref = sha,dependencies = FALSE, upgrade = "never",force = TRUE)
-    }
+  )
+  
+  system(command = paste("tar", "-zxf ", dest_tar, "-C", tmp_dir))
+  dlist <- list.dirs(path = tmp_dir, recursive = FALSE)
+  pkg_dir <- dlist[grepl(short_sha, dlist)]
+  if(length(pkg_dir)!=1){
+    stop(paste0("couldn't uniquely locate the unzipped package source in ",tmp_dir))
   }
-  ## check and error
+  
+  res <- system(command = paste("R", "CMD", "build", pkg_dir), intern = TRUE)
+  tar_file_line <- res[grepl("*.tar.gz", res)]
+  flist <- list.files(pattern = "tar.gz", recursive = FALSE)
+  tarball_path <- file.path(flist[vapply(flist, function(f) any(grepl(f, res)), logical(1))])
+  
+  if(length(tarball_path)!=1){
+    stop(paste0("couldn't uniquely locate the install tarball in ",tmp_dir))
+  }
   if (!is.na(lib)) {
-    installed_packages <- installed.packages(lib.loc = lib)
-  } else {
-    installed_packages <- installed.packages()
+    install.packages(pkgs = tarball_path, repos = NULL,lib = lib)
+  } else{
+    install.packages(pkgs = tarball_path, repos = NULL)
   }
-  installed_gh <- strsplit(pkg,"/")[[1]][2]
-  if (!installed_gh %in% dimnames(installed_packages)[[1]]) {
-    stop("Fail to install ", pkg, "\n")
-  }
+  unlink(tarball_path)
   invisible()
 }
