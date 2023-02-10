@@ -195,14 +195,14 @@
     basic_docker[(gran_line+1):length(basic_docker)])
 }
 
-.generate_pre310_docker <- function(materials_dir,r_version, debian_version = "lenny", lib, sysreps_cmd, cache) {
+.generate_pre310_docker <- function(materials_dir,r_version, debian_version = "lenny", lib, sysreqs_cmd, cache) {
     basic_docker <- c(
         paste0("FROM debian/eol:", debian_version),
         "ENV TZ UTC",
         "RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && apt-get update -qq && apt-get install wget locales build-essential r-base-dev  -y",
         "COPY gran.R ./gran.R",
         "COPY compile_r.sh ./compile_r.sh",
-        paste("RUN", sysreps_cmd),
+        paste("RUN", sysreqs_cmd),
         paste("RUN bash compile_r.sh", r_version),
         "CMD [\"R\"]")
     if (!is.na(lib)) {
@@ -318,7 +318,7 @@ dockerize <- function(granlist, output_dir, materials_dir = NULL, image = c("r-v
         stop("`dockerize` doesn't support this R version (yet).")
     }
     image <- match.arg(image)
-    sysreps_cmd <- .consolidate_sysreqs(granlist)
+    sysreqs_cmd <- .consolidate_sysreqs(granlist)
     if (!dir.exists(output_dir)) {
         dir.create(output_dir)
     }
@@ -333,7 +333,7 @@ dockerize <- function(granlist, output_dir, materials_dir = NULL, image = c("r-v
         file.copy(system.file("compile_r.sh", package = "gran"), file.path(output_dir, "compile_r.sh"),
                   overwrite = TRUE)
         basic_docker <- .generate_pre310_docker(materials_dir, r_version = granlist$r_version,
-                                                sysreps_cmd = sysreps_cmd, lib = lib,
+                                                sysreqs_cmd = sysreqs_cmd, lib = lib,
                                                 cache = cache)
     } else {
         basic_docker <- c("", "", "COPY gran.R ./gran.R", "RUN Rscript gran.R", "CMD [\"R\"]")
@@ -341,7 +341,7 @@ dockerize <- function(granlist, output_dir, materials_dir = NULL, image = c("r-v
             basic_docker[4] <- paste0("RUN mkdir ", lib, " && Rscript gran.R")
         }
         basic_docker[1] <- paste0("FROM rocker/", image, ":", granlist$r_version)
-        basic_docker[2] <- paste("RUN", sysreps_cmd)
+        basic_docker[2] <- paste("RUN", sysreqs_cmd)
         if (image == "rstudio") {
             basic_docker[5] <- "EXPOSE 8787"
             basic_docker[6] <- "CMD [\"/init\"]"
