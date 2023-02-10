@@ -10,6 +10,7 @@
 dockerize(
   granlist,
   output_dir,
+  materials_dir = NULL,
   image = c("r-ver", "rstudio", "tidyverse", "verse", "geospatial"),
   granlist_as_comment = TRUE,
   cache = FALSE,
@@ -29,6 +30,8 @@ dockerise_granlist(...)
 \item{granlist}{output from \code{\link[=resolve]{resolve()}}}
 
 \item{output_dir}{where to put the Docker file}
+
+\item{materials_dir}{additional resources (e.g. analysis scripts) to be copied into \code{output_dir}}
 
 \item{image}{character, which versioned Rocker image to use. Can only be "r-ver", "rstudio", "tidyverse", "verse", "geospatial".
 This applies only to R version <= 3.1}
