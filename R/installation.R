@@ -161,7 +161,14 @@
       basic_docker[gran_line:length(basic_docker)])
 }
 
-.generate_pre310_docker <- function(r_version, debian_version = "lenny", lib, sysreps_cmd, cache) {
+.insert_material_dir <- function(basic_docker){
+  gran_line <- which(basic_docker == "COPY gran.R ./gran.R")
+  c(basic_docker[1:gran_line], 
+    "COPY material/ ./material/",
+    basic_docker[(gran_line+1):length(basic_docker)])
+}
+
+.generate_pre310_docker <- function(material_dir,r_version, debian_version = "lenny", lib, sysreps_cmd, cache) {
     basic_docker <- c(
         paste0("FROM debian/eol:", debian_version),
         "ENV TZ UTC",
@@ -250,6 +257,7 @@ export_granlist <- function(granlist, path, granlist_as_comment = TRUE, verbose 
 #' This function exports the result from [resolve()] to a Docker file. For R version >= 3.1.0, the Dockerfile is based on the versioned Rocker image.
 #' For R version < 3.1.0, the Dockerfile is based on Debian and it compiles R from source.
 #' @param output_dir where to put the Docker file
+#' @param material_dir additional resources (e.g. analysis scripts) to be copied into `output_dir`
 #' @param image character, which versioned Rocker image to use. Can only be "r-ver", "rstudio", "tidyverse", "verse", "geospatial".
 #' This applies only to R version <= 3.1
 #' @param cache logical, whether to cache the content from CRAN now. Please note that the system requirements are not cached
@@ -270,7 +278,7 @@ export_granlist <- function(granlist, path, granlist_as_comment = TRUE, verbose 
 #' }
 #' }
 #' @export
-dockerize <- function(granlist, output_dir, image = c("r-ver", "rstudio", "tidyverse", "verse", "geospatial"),
+dockerize <- function(granlist, output_dir, material_dir = NULL, image = c("r-ver", "rstudio", "tidyverse", "verse", "geospatial"),
                       granlist_as_comment = TRUE, cache = FALSE, verbose = TRUE, lib = NA,
                       cran_mirror = "https://cran.r-project.org/", check_cran_mirror = TRUE) {
     if (missing(output_dir)) {
@@ -297,7 +305,7 @@ dockerize <- function(granlist, output_dir, image = c("r-ver", "rstudio", "tidyv
     if (utils::compareVersion(granlist$r_version, "3.1") == -1) {
         file.copy(system.file("compile_r.sh", package = "gran"), file.path(output_dir, "compile_r.sh"),
                   overwrite = TRUE)
-        basic_docker <- .generate_pre310_docker(r_version = granlist$r_version,
+        basic_docker <- .generate_pre310_docker(material_dir, r_version = granlist$r_version,
                                                 sysreps_cmd = sysreps_cmd, lib = lib,
                                                 cache = cache)
     } else {
@@ -314,6 +322,20 @@ dockerize <- function(granlist, output_dir, image = c("r-ver", "rstudio", "tidyv
         if (isTRUE(cache)) {
             basic_docker <- .insert_cache_dir(basic_docker)
         }
+    }
+    if(!is.null(material_dir)){
+      if(!dir.exists(material_dir)){
+        stop(paste0("The folder ",material_dir," does not exist"),call. = FALSE)
+      } else{
+        out_mat_dir <- paste0(output_dir,"/material")
+        if (!dir.exists(out_mat_dir)) {
+          dir.create(out_mat_dir)
+        }
+        file.copy(list.files(material_dir, full.names = TRUE), 
+                  out_mat_dir, 
+                  recursive = TRUE)
+        basic_docker <- .insert_material_dir(basic_docker)
+      }
     }
     writeLines(basic_docker, file.path(output_dir, "Dockerfile"))
     invisible(output_dir)
