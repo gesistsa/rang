@@ -26,6 +26,9 @@ assumes only the availability of source packages on CRAN. The
 reconstruction procedures have been tested in several vintage versions
 of R.
 
+**Important:** This package is in a very early stage. API might still
+change.
+
 ## Installation
 
 You can install the development version of gran like so:
