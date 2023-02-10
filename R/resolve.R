@@ -247,6 +247,7 @@ resolve <- function(pkgs, snapshot_date, no_enhances = TRUE, no_suggests = TRUE,
     if (isTRUE(get_sysreqs)) {
         res <- .granlist_query_sysreps(output, os = os)
         output$deps_sysreqs <- res
+        .has_ppa_in_sysreqs(output)
     }
     attr(output, "class") <- "granlist"    
     return(output)

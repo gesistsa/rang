@@ -98,3 +98,23 @@ test_that("Docker R < 2.1", {
     gran_rio$r_version <- "2.0.0"
     expect_error(dockerize(gran_rio, output_dir = temp_dir))    
 })
+
+test_that(".consolidate_sysreqs and issue #21", {
+    graph <- readRDS("../testdata/graph.RDS")
+    expect_equal(.consolidate_sysreqs(graph), "apt-get update -qq && apt-get install -y default-jdk libxml2-dev make zlib1g-dev libpng-dev libgsl0-dev libicu-dev python3 liblzma-dev libpcre3-dev libbz2-dev && R CMD javareconf")
+    graph <- readRDS("../testdata/gran_ok.RDS")
+    expect_equal(.consolidate_sysreqs(graph), "apt-get update -qq")
+    graph <- readRDS("../testdata/issue21.RDS")
+    expected_output <- "apt-get update -qq && apt-get install -y software-properties-common && add-apt-repository -y ppa:cran/libgit2 && apt-get update && apt-get install -y pari-gp pandoc libfreetype6-dev libfribidi-dev libharfbuzz-dev make git libxml2-dev libfontconfig1-dev cmake zlib1g-dev libpng-dev libjpeg-dev libgit2-dev libssl-dev libicu-dev libcurl4-openssl-dev libtiff-dev libgsl0-dev libssh2-1-dev"
+    expect_warning(output <- .consolidate_sysreqs(graph))
+    expect_equal(output, expected_output)
+    graph <- readRDS("../testdata/issue21_ubuntu2004.RDS")
+    expect_warning(output <- .consolidate_sysreqs(graph), NA)
+    expect_true(grepl("gnutls", output))
+})
+
+test_that("Dockerize warning, issue #21", {
+    graph <- readRDS("../testdata/issue21.RDS")
+    temp_dir <- file.path(tempdir(), sample(1:10000, size = 1))
+    expect_warning(dockerize(graph, output_dir = temp_dir))
+})

@@ -83,3 +83,11 @@ test_that("cache for R < 3.1 and R >= 2.1", {
     expect_true(file.exists(file.path(temp_dir, "cache", "evaluate_0.4.7.tar.gz")))
     expect_true(file.exists(file.path(temp_dir, "cache", "testthat_0.7.1.tar.gz")))
 })
+
+## This should be tested. But this takes too long without cache.
+## test_that("issue #21", {
+##     skip_if_offline()
+##     skip_on_cran()
+##     expect_warning(x <- resolve("devtools", os = "ubuntu-18.04"))
+##     expect_warning(x <- resolve("devtools", os = "ubuntu-20.04"), NA)
+## })
