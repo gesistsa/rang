@@ -65,16 +65,43 @@
 ##     invisible()
 ## }
 
-.consolidate_sysreqs <- function(granlist) {
-    if (length(granlist$deps_sysreqs) == 0) {
-        return("apt-get update -qq")
+.has_ppa_in_sysreqs <- function(granlist, warn = TRUE) {
+    res <- isTRUE(any(grepl("add-apt-repository", granlist$deps_sysreqs)))
+    if (isTRUE(res) && isTRUE(warn)) {
+        warning("The command for getting system requirements is likely not going to work for the default Docker images. You might need to requery system requirements with another version of Ubuntu.", call. = FALSE)
     }
-    debs <- vapply(strsplit(granlist$deps_sysreqs, "-y "), function(x) x[2], character(1))
+    return(res)
+}
+
+.group_apt_cmds <- function(cmds, fix_libgit2 = FALSE) {
+    debs <- vapply(strsplit(cmds, "-y "), function(x) x[2], character(1))
+    if (isTRUE(fix_libgit2) && "libgit2-dev" %in% debs) {
+        if ("libcurl4-openssl-dev" %in% debs) {
+            debs[debs == "libcurl4-openssl-dev"] <- "libcurl4-gnutls-dev"
+        }
+    }
     cmd <- paste("apt-get install -y", paste(debs, collapse = " "))
     if ("default-jdk" %in% debs) {
         cmd <- paste(cmd, "liblzma-dev libpcre3-dev libbz2-dev && R CMD javareconf")
     }
-    paste("apt-get update -qq &&", cmd)
+    return(cmd)
+}
+
+.consolidate_sysreqs <- function(granlist) {
+    if (length(granlist$deps_sysreqs) == 0) {
+        return("apt-get update -qq")
+    }
+    if (isFALSE(.has_ppa_in_sysreqs(granlist))) {
+        cmds <- granlist$deps_sysreqs
+        prefix <- ""
+        cmd <- .group_apt_cmds(cmds, fix_libgit2 = TRUE)
+    } else {
+        update_index <- which("apt-get update" == granlist$deps_sysreqs)
+        cmds <- granlist$deps_sysreqs[(update_index + 1):length(granlist$deps_sysreqs)]
+        prefix <- paste0(paste(granlist$deps_sysreqs[1:update_index], collapse = " && "), " && ")
+        cmd <- .group_apt_cmds(cmds, fix_libgit2 = FALSE)
+    }
+    paste0("apt-get update -qq && ", prefix, cmd)
 }
 
 .write_granlist_as_comment <- function(granlist, con, path, verbose, lib,
