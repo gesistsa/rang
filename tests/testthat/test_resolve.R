@@ -1,3 +1,7 @@
+.gen_temp_dir <- function() {
+    file.path(tempdir(), paste(sample(c(LETTERS, letters), 20, replace = TRUE), collapse = ""))
+}
+
 test_that("defensive programming", {
     expect_error(resolve("LDAvis", os = "windows"))
 })
@@ -48,7 +52,7 @@ test_that("cache #17", {
     skip_if_offline()
     skip_on_cran()
     gran_ok <- readRDS("../testdata/gran_ok.RDS")
-    temp_dir <- file.path(tempdir(), sample(1:10000, size = 1))
+    temp_dir <- .gen_temp_dir()
     dockerize(gran_ok, output_dir = temp_dir) ## cache = FALSE
     x <- readLines(file.path(temp_dir, "Dockerfile"))
     expect_false(any(grepl("^COPY cache", x)))
@@ -71,7 +75,7 @@ test_that("cache for R < 3.1 and R >= 2.1", {
     skip_on_cran()
     gran_rio <- readRDS("../testdata/gran_rio_old.RDS")
     expect_equal(gran_rio$r_version, "3.0.1")
-    temp_dir <- file.path(tempdir(), sample(1:10000, size = 1))
+    temp_dir <- .gen_temp_dir()
     dockerize(gran_rio, output_dir = temp_dir, cache = TRUE, verbose = FALSE)
     x <- readLines(file.path(temp_dir, "Dockerfile"))
     expect_true(any(grepl("^COPY cache", x)))
