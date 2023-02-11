@@ -1,3 +1,7 @@
+.gen_temp_dir <- function() {
+    file.path(tempdir(), paste(sample(c(LETTERS, letters), 20, replace = TRUE), collapse = ""))
+}
+
 test_that("defensive programming", {
     graph <- readRDS("../testdata/sle_graph.RDS")
     expect_error(dockerize(graph, output_dir = tempdir()))
@@ -5,7 +9,7 @@ test_that("defensive programming", {
 
 test_that("integration of #13 in dockerize()", {
     gran_ok <- readRDS("../testdata/gran_ok.RDS")
-    temp_dir <- file.path(tempdir(), sample(1:10000, size = 1))
+    temp_dir <- .gen_temp_dir()
     dockerize(granlist = gran_ok, output_dir = temp_dir) ## granlist_as_comment = TRUE
     x <- readLines(file.path(temp_dir, "gran.R"))
     expect_true(any(grepl("^## ## To reconstruct this file", x)))
@@ -17,7 +21,7 @@ test_that("integration of #13 in dockerize()", {
 test_that("integration of #16 in dockerize()", {
     ## verbose
     gran_ok <- readRDS("../testdata/gran_ok.RDS")
-    temp_dir <- file.path(tempdir(), sample(1:10000, size = 1))
+    temp_dir <- .gen_temp_dir()
     dockerize(granlist = gran_ok, output_dir = temp_dir) ## verbose = TRUE
     x <- readLines(file.path(temp_dir, "gran.R"))
     expect_true(any(grepl("^verbose <- TRUE", x)))
@@ -39,7 +43,7 @@ test_that("integration of #16 in dockerize()", {
 
 test_that("integration of #18 in dockerize()", {
     gran_ok <- readRDS("../testdata/gran_ok.RDS")
-    temp_dir <- file.path(tempdir(), sample(1:10000, size = 1))
+    temp_dir <- .gen_temp_dir()
     dockerize(granlist = gran_ok, output_dir = temp_dir) ## cran_mirror = "https://cran.r-project.org/"
     x <- readLines(file.path(temp_dir, "gran.R"))
     expect_true(any(grepl("^cran_mirror <- \"https://cran\\.r\\-project\\.org/\"", x)))
@@ -58,7 +62,7 @@ test_that("integration of #18 in dockerize()", {
 test_that("integration of #20 to dockerize()", {
     gran_ok <- readRDS("../testdata/gran_ok.RDS")
     expect_equal(gran_ok$r_version, "4.2.2")
-    temp_dir <- file.path(tempdir(), sample(1:10000, size = 1))
+    temp_dir <- .gen_temp_dir()
     dockerize(gran_ok, output_dir = temp_dir) ## cran_mirror = "https://cran.r-project.org/"
     x <- readLines(file.path(temp_dir, "gran.R"))
     expect_true(any(grepl("^cran_mirror <- \"https://cran\\.r\\-project\\.org/\"", x)))
@@ -70,7 +74,7 @@ test_that("integration of #20 to dockerize()", {
     gran_ok <- readRDS("../testdata/gran_ok.RDS")
     gran_ok$r_version <- "3.2.0"
     dockerize(gran_ok, output_dir = temp_dir) ## cran_mirror = "https://cran.r-project.org/"
-    x <- readLines(file.path(temp_dir, "gran.R"))    
+    x <- readLines(file.path(temp_dir, "gran.R"))
     expect_false(any(grepl("^cran_mirror <- \"https://cran\\.r\\-project\\.org/\"", x)))
     expect_true(any(grepl("^cran_mirror <- \"http://cran\\.r\\-project\\.org/\"", x)))
 })
@@ -78,7 +82,7 @@ test_that("integration of #20 to dockerize()", {
 test_that("Dockerize R < 3.1 and >= 2.1", {
     gran_rio <- readRDS("../testdata/gran_rio_old.RDS")
     expect_equal(gran_rio$r_version, "3.0.1")
-    temp_dir <- file.path(tempdir(), sample(1:10000, size = 1))
+    temp_dir <- .gen_temp_dir()
     dockerize(gran_rio, output_dir = temp_dir)
     expect_true(file.exists(file.path(temp_dir, "compile_r.sh")))
     Dockerfile <- readLines(file.path(temp_dir, "Dockerfile"))
@@ -92,11 +96,11 @@ test_that("Dockerize R < 3.1 and >= 2.1", {
 test_that("Docker R < 2.1", {
     gran_rio <- readRDS("../testdata/gran_rio_old.RDS")
     gran_rio$r_version <- "2.1.0" ## exactly 2.1.0, no error
-    temp_dir <- file.path(tempdir(), sample(1:10000, size = 1))
+    temp_dir <- .gen_temp_dir()
     expect_error(dockerize(gran_rio, output_dir = temp_dir), NA)
     gran_rio <- readRDS("../testdata/gran_rio_old.RDS")
     gran_rio$r_version <- "2.0.0"
-    expect_error(dockerize(gran_rio, output_dir = temp_dir))    
+    expect_error(dockerize(gran_rio, output_dir = temp_dir))
 })
 
 test_that(".consolidate_sysreqs and issue #21", {
@@ -115,6 +119,74 @@ test_that(".consolidate_sysreqs and issue #21", {
 
 test_that("Dockerize warning, issue #21", {
     graph <- readRDS("../testdata/issue21.RDS")
-    temp_dir <- file.path(tempdir(), sample(1:10000, size = 1))
+    temp_dir <- .gen_temp_dir()
     expect_warning(dockerize(graph, output_dir = temp_dir))
+})
+
+test_that("material_dir, non-existing, #23", {
+    ## normal case
+    gran_rio <- readRDS("../testdata/gran_rio_old.RDS")
+    temp_dir <- .gen_temp_dir()
+    expect_error(dockerize(gran_rio, output_dir = temp_dir, materials_dir = NULL), NA)
+    ## non-existing
+    fake_material_dir <- .gen_temp_dir()
+    expect_false(dir.exists(fake_material_dir))
+    expect_error(dockerize(gran_rio, output_dir = temp_dir, materials_dir = fake_material_dir))    
+})
+
+test_that("material_dir, existing, no subdir, #23", {
+    ## exist, but empty dir
+    ## Pre R 3.1.0
+    gran_rio <- readRDS("../testdata/gran_rio_old.RDS")
+    temp_dir <- .gen_temp_dir()
+    fake_material_dir <- .gen_temp_dir()
+    dir.create(fake_material_dir)
+    dockerize(gran_rio, output_dir = temp_dir, materials_dir = fake_material_dir)
+    expect_true(dir.exists(file.path(temp_dir, "materials")))
+    expect_equal(list.files(file.path(temp_dir, "materials")), character(0))
+    expect_true(any(readLines(file.path(temp_dir, "Dockerfile")) == "COPY materials/ ./materials/"))
+    ## Post R 3.1.0
+    graph <- readRDS("../testdata/graph.RDS")
+    temp_dir <- .gen_temp_dir()
+    fake_material_dir <- .gen_temp_dir()
+    dir.create(fake_material_dir)
+    dockerize(graph, output_dir = temp_dir, materials_dir = fake_material_dir)
+    expect_true(dir.exists(file.path(temp_dir, "materials")))
+    expect_equal(list.files(file.path(temp_dir, "materials")), character(0))
+    expect_true(any(readLines(file.path(temp_dir, "Dockerfile")) == "COPY materials/ ./materials/"))
+    ## Will only test post 3.1.0 from now on
+    ## some files in fake_material_dir
+    temp_dir <- .gen_temp_dir()
+    fake_material_dir <- .gen_temp_dir()
+    dir.create(fake_material_dir)
+    file.copy("../testdata/graph.RDS", file.path(fake_material_dir, "graph.RDS"))
+    writeLines(c("831721", "GESIS"), file.path(fake_material_dir, "test.R"))
+    dockerize(graph, output_dir = temp_dir, materials_dir = fake_material_dir)
+    expect_true(dir.exists(file.path(temp_dir, "materials")))
+    expect_equal(list.files(file.path(temp_dir, "materials")), c("graph.RDS", "test.R"))
+    expect_true(any(readLines(file.path(temp_dir, "Dockerfile")) == "COPY materials/ ./materials/"))
+    expect_true(file.exists(file.path(temp_dir, "materials", "graph.RDS")))
+    expect_true(file.exists(file.path(temp_dir, "materials", "test.R")))
+    content <- readLines(file.path(temp_dir, "materials", "test.R"))
+    expect_equal(content[1], "831721")
+    expect_equal(content[2], "GESIS")
+})
+
+test_that("material_dir, existing, with 1 subdir, #23", {
+    temp_dir <- .gen_temp_dir()
+    fake_material_dir <- .gen_temp_dir()
+    dir.create(fake_material_dir)
+    dir.create(file.path(fake_material_dir, "data"))
+    file.copy("../testdata/graph.RDS", file.path(fake_material_dir, "data", "graph.RDS"))
+    writeLines(c("831721", "GESIS"), file.path(fake_material_dir, "test.R"))
+    graph <- readRDS("../testdata/graph.RDS")
+    dockerize(graph, output_dir = temp_dir, materials_dir = fake_material_dir)
+    expect_true(dir.exists(file.path(temp_dir, "materials")))
+    expect_true(any(readLines(file.path(temp_dir, "Dockerfile")) == "COPY materials/ ./materials/"))
+    expect_true(dir.exists(file.path(temp_dir, "materials", "data")))
+    expect_true(file.exists(file.path(temp_dir, "materials", "data", "graph.RDS")))
+    expect_true(file.exists(file.path(temp_dir, "materials", "test.R")))
+    content <- readLines(file.path(temp_dir, "materials", "test.R"))
+    expect_equal(content[1], "831721")
+    expect_equal(content[2], "GESIS")
 })

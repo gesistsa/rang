@@ -192,10 +192,10 @@
   gran_line <- which(basic_docker == "COPY gran.R ./gran.R")
   c(basic_docker[1:gran_line], 
     "COPY materials/ ./materials/",
-    basic_docker[(gran_line+1):length(basic_docker)])
+    basic_docker[(gran_line + 1):length(basic_docker)])
 }
 
-.generate_pre310_docker <- function(materials_dir,r_version, debian_version = "lenny", lib, sysreqs_cmd, cache) {
+.generate_pre310_docker <- function(r_version, debian_version = "lenny", lib, sysreqs_cmd, cache) {
     basic_docker <- c(
         paste0("FROM debian/eol:", debian_version),
         "ENV TZ UTC",
@@ -283,9 +283,9 @@ export_granlist <- function(granlist, path, granlist_as_comment = TRUE, verbose 
 #'
 #' This function exports the result from [resolve()] to a Docker file. For R version >= 3.1.0, the Dockerfile is based on the versioned Rocker image.
 #' For R version < 3.1.0, the Dockerfile is based on Debian and it compiles R from source.
-#' @param output_dir where to put the Docker file
-#' @param materials_dir additional resources (e.g. analysis scripts) to be copied into `output_dir`
-#' @param image character, which versioned Rocker image to use. Can only be "r-ver", "rstudio", "tidyverse", "verse", "geospatial".
+#' @param output_dir character, where to put the Docker file and associated content
+#' @param materials_dir character, path to the directiry containing dditional resources (e.g. analysis scripts) to be copied into `output_dir` and in turn into the Docker container
+#' @param image character, which versioned Rocker image to use. Can only be "r-ver", "rstudio", "tidyverse", "verse", "geospatial"
 #' This applies only to R version <= 3.1
 #' @param cache logical, whether to cache the content from CRAN now. Please note that the system requirements are not cached
 #' @param ... arguments to be passed to `dockerize`
@@ -309,13 +309,16 @@ dockerize <- function(granlist, output_dir, materials_dir = NULL, image = c("r-v
                       granlist_as_comment = TRUE, cache = FALSE, verbose = TRUE, lib = NA,
                       cran_mirror = "https://cran.r-project.org/", check_cran_mirror = TRUE) {
     if (missing(output_dir)) {
-        stop("You must provide `output_dir`.")
+        stop("You must provide `output_dir`.", call. = FALSE)
     }
     if (!grepl("^ubuntu", granlist$os)) {
-        stop("System dependencies of ", granlist$os, " can't be dockerized.")
+        stop("System dependencies of ", granlist$os, " can't be dockerized.", call. = FALSE)
     }
     if (utils::compareVersion(granlist$r_version, "2.1") == -1) {
-        stop("`dockerize` doesn't support this R version (yet).")
+        stop("`dockerize` doesn't support this R version (yet):", granlist$r_version, call. = FALSE)
+    }
+    if (!is.null(materials_dir) && !(dir.exists(materials_dir))) {
+        stop(paste0("The folder ", materials_dir, " does not exist"), call. = FALSE)
     }
     image <- match.arg(image)
     sysreqs_cmd <- .consolidate_sysreqs(granlist)
@@ -350,19 +353,15 @@ dockerize <- function(granlist, output_dir, materials_dir = NULL, image = c("r-v
             basic_docker <- .insert_cache_dir(basic_docker)
         }
     }
-    if(!is.null(materials_dir)){
-      if(!dir.exists(materials_dir)){
-        stop(paste0("The folder ",materials_dir," does not exist"),call. = FALSE)
-      } else{
-        out_mat_dir <- paste0(output_dir,"/materials")
-        if (!dir.exists(out_mat_dir)) {
-          dir.create(out_mat_dir)
+    if (!(is.null(materials_dir))) {
+        out_mat_dir <- file.path(output_dir, "materials")
+        if (isFALSE(dir.exists(out_mat_dir))) {
+            dir.create(out_mat_dir)
         }
         file.copy(list.files(materials_dir, full.names = TRUE), 
                   out_mat_dir, 
                   recursive = TRUE)
         basic_docker <- .insert_materials_dir(basic_docker)
-      }
     }
     writeLines(basic_docker, file.path(output_dir, "Dockerfile"))
     invisible(output_dir)

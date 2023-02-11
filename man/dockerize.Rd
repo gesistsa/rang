@@ -29,11 +29,11 @@ dockerise_granlist(...)
 \arguments{
 \item{granlist}{output from \code{\link[=resolve]{resolve()}}}
 
-\item{output_dir}{where to put the Docker file}
+\item{output_dir}{character, where to put the Docker file and associated content}
 
-\item{materials_dir}{additional resources (e.g. analysis scripts) to be copied into \code{output_dir}}
+\item{materials_dir}{character, path to the directiry containing dditional resources (e.g. analysis scripts) to be copied into \code{output_dir} and in turn into the Docker container}
 
-\item{image}{character, which versioned Rocker image to use. Can only be "r-ver", "rstudio", "tidyverse", "verse", "geospatial".
+\item{image}{character, which versioned Rocker image to use. Can only be "r-ver", "rstudio", "tidyverse", "verse", "geospatial"
 This applies only to R version <= 3.1}
 
 \item{granlist_as_comment}{logical, whether to write granlist and the steps to reproduce
