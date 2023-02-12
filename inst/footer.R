@@ -8,13 +8,15 @@ if (file.exists("cache")) {
     path <- tempdir()
 }
 
-if (length(install_order) >= 1) {
-    for (i in seq(from = 1, to = length(install_order), by = 1)) {
-        if(grepl("/",names(install_order[i]))){
-          .install_from_github(x = install_order[i],lib = lib)
-        } else{
-          .install_from_cran(x = install_order[i], lib = lib, path = path, verbose = verbose,
+if (nrow(install_order) >= 1) {
+    for (i in seq(from = 1, to = nrow(install_order), by = 1)) {
+        x <- install_order$x[i]
+        source <- install_order$source[i]
+        version <- install_order$version[i]
+        handle <- install_order$handle[i]
+        uid <- install_order$uid[i]
+        .install_from_source(x = x, version = version, handle = handle, source = source, uid = uid,
+                             lib = lib, path = path, verbose = verbose,
                              cran_mirror = cran_mirror, current_r_version = current_r_version) 
-        }
     }
 }

@@ -16,22 +16,28 @@
     }
 }
 
-.download_package <- function(tarball_path, x, verbose) {
-    url <- paste(cran_mirror, "src/contrib/Archive/", names(x), "/", names(x), "_", x, ".tar.gz", sep = "")
-    tryCatch({
-        suppressWarnings(download.file(url, destfile = tarball_path, quiet = !verbose))
-    }, error = function(e) {
-        ## is the current latest
-        url <- paste(cran_mirror, "src/contrib/", names(x), "_", x, ".tar.gz", sep = "")
-        download.file(url, destfile = tarball_path, quiet = !verbose)
-    })
+.download_package <- function(tarball_path, x, version, handle, source, uid, verbose) {
+    if (source == "github") {
+        .download_package_from_github(tarball_path, x, version, handle, source, uid)
+    } else {
+        url <- paste(cran_mirror, "src/contrib/Archive/", x, "/", x, "_", version, ".tar.gz", sep = "")
+        tryCatch({
+            suppressWarnings(download.file(url, destfile = tarball_path, quiet = !verbose))
+        }, error = function(e) {
+            ## is the current latest
+            url <- paste(cran_mirror, "src/contrib/", x, "_", version, ".tar.gz", sep = "")
+            download.file(url, destfile = tarball_path, quiet = !verbose)
+        })
+    }
     invisible(tarball_path)
 }
 
-.install_from_cran <- function(x, lib, path = tempdir(), verbose, cran_mirror, current_r_version) {
-    tarball_path <- file.path(path, paste(names(x), "_", x, ".tar.gz", sep = ""))
+.install_from_source <- function(x, version, handle, source, uid, lib,
+                                 path = tempdir(), verbose, cran_mirror, current_r_version) {
+    tarball_path <- file.path(path, paste(x, "_", version, ".tar.gz", sep = ""))
     if (!file.exists(tarball_path)) {
-        .download_package(tarball_path = tarball_path, x = x, verbose = verbose)
+        .download_package(tarball_path = tarball_path, x = x, version = version, handle = handle, source = source,
+                          uid = uid, verbose = verbose)
     }
     .install_packages(tarball_path, lib, verbose, current_r_version)
     ## check and error
@@ -40,56 +46,44 @@
     } else {
         installed_packages <- installed.packages()
     }
-    if (!names(x) %in% dimnames(installed_packages)[[1]]) {
-        stop("Fail to install ", names(x), "\n")
+    if (!x %in% dimnames(installed_packages)[[1]]) {
+        stop("Fail to install ", x, "\n")
     }
     invisible()
 }
 
 # installing github packages
-.download_github_safe <- function(pkg,sha,file){
-  tryCatch(
-    download.file(paste("http://api.github.com/repos/", pkg, "/tarball/", sha, sep = ""), destfile = file),
-    error = function(e){
-      stop(paste0("couldn't download ",pkg," from github"),call. = FALSE)
-    }
-  )
+.download_github_safe <- function(handle, sha, file) {
+    tryCatch(
+        download.file(paste("http://api.github.com/repos/", handle, "/tarball/", sha, sep = ""), destfile = file),
+        error = function(e) {
+            stop(paste0("couldn't download ", handle, " from github"), call. = FALSE)
+        }
+    )
 }
 
-.install_from_github <- function(x, lib){
-  pkg <- names(x)
-  sha <- unname(x)
-  short_sha <- substr(sha,1,7)
-  dest_tar <- tempfile(fileext = ".tar.gz")
-  tmp_dir <- tempdir(check = TRUE)
-  
-  tryCatch(
-    download.file(paste("https://api.github.com/repos/", pkg, "/tarball/", sha, sep = ""), destfile = dest_tar),
-    error = function(e){
-      .download_github_safe(pkg,sha,dest_tar)
+.download_package_from_github <- function(tarball_path, x, version, handle, source, uid) {
+    sha <- uid
+    short_sha <- substr(sha, 1, 7)
+    dest_tar <- tempfile(fileext = ".tar.gz")
+    tmp_dir <- tempdir(check = TRUE)
+    tryCatch(
+        download.file(paste("https://api.github.com/repos/", handle, "/tarball/", sha, sep = ""), destfile = dest_tar),
+        error = function(e) {
+            .download_github_safe(handle, sha, dest_tar)
+        }
+    )  
+    system(command = paste("tar", "-zxf ", dest_tar, "-C", tmp_dir))
+    dlist <- list.dirs(path = tmp_dir, recursive = FALSE)
+    pkg_dir <- dlist[grepl(short_sha, dlist)]
+    if(length(pkg_dir)!=1) {
+        stop(paste0("couldn't uniquely locate the unzipped package source in ",tmp_dir))
     }
-  )
-  
-  system(command = paste("tar", "-zxf ", dest_tar, "-C", tmp_dir))
-  dlist <- list.dirs(path = tmp_dir, recursive = FALSE)
-  pkg_dir <- dlist[grepl(short_sha, dlist)]
-  if(length(pkg_dir)!=1){
-    stop(paste0("couldn't uniquely locate the unzipped package source in ",tmp_dir))
-  }
-  
-  res <- system(command = paste("R", "CMD", "build", pkg_dir), intern = TRUE)
-  tar_file_line <- res[grepl("*.tar.gz", res)]
-  flist <- list.files(pattern = "tar.gz", recursive = FALSE)
-  tarball_path <- file.path(flist[vapply(flist, function(f) any(grepl(f, res)), logical(1))])
-  
-  if(length(tarball_path)!=1){
-    stop(paste0("couldn't uniquely locate the install tarball in ",tmp_dir))
-  }
-  if (!is.na(lib)) {
-    install.packages(pkgs = tarball_path, repos = NULL,lib = lib)
-  } else{
-    install.packages(pkgs = tarball_path, repos = NULL)
-  }
-  unlink(tarball_path)
-  invisible()
+    res <- system(command = paste("R", "CMD", "build", pkg_dir), intern = TRUE)
+    expected_tarball_path <- paste(x, "_", version, ".tar.gz", sep = "")
+    if (!file.exists(expected_tarball_path)) {
+        stop("Cannot locate the built tarball.")
+    }
+    file.rename(from = expected_tarball_path, to = tarball_path)
+    return(tarball_path)
 }
