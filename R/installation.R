@@ -181,14 +181,14 @@
     }
 }
 
-.cache_r_package <- function(x, cache_dir, cran_mirror, verbose) {
-    url <- paste(cran_mirror, "src/contrib/Archive/", names(x), "/", names(x), "_", x, ".tar.gz", sep = "")
-    tarball_path <- file.path(cache_dir, paste(names(x), "_", x, ".tar.gz", sep = ""))
+.cache_cran <- function(x, version, cache_dir, cran_mirror, verbose) {
+    url <- paste(cran_mirror, "src/contrib/Archive/", x, "/", x, "_", version, ".tar.gz", sep = "")
+    tarball_path <- file.path(cache_dir, paste(x, "_", version, ".tar.gz", sep = ""))
     tryCatch({
         suppressWarnings(utils::download.file(url, destfile = tarball_path, quiet = !verbose))
     }, error = function(e) {
         ## is the current latest
-        url <- paste(cran_mirror, "src/contrib/", names(x), "_", x, ".tar.gz", sep = "")
+        url <- paste(cran_mirror, "src/contrib/", x, "_", version, ".tar.gz", sep = "")
         utils::download.file(url, destfile = tarball_path, quiet = !verbose)
     })
     if (!file.exists(tarball_path)) {
@@ -196,15 +196,55 @@
     }
 }
 
-.cache_cran <- function(granlist, output_dir, cran_mirror, verbose) {
+.gen_temp_dir <- function() {
+    file.path(tempdir(), paste(sample(c(LETTERS, letters), 20, replace = TRUE), collapse = ""))
+}
+
+.cache_github <- function(x, version, handle, source, uid, cache_dir, verbose) {
+    sha <- uid
+    short_sha <- substr(sha, 1, 7)
+    dest_zip <- tempfile(fileext = ".zip")
+    tmp_dir <- .gen_temp_dir()
+    ## unlike inside the container, we use zip here because it is less buggy
+    download.file(paste("https://api.github.com/repos/", handle, "/zipball/", sha, sep = ""), destfile = dest_zip,
+                  quiet = !verbose)
+    unzip(dest_zip, exdir = tmp_dir)
+    dlist <- list.dirs(path = tmp_dir, recursive = FALSE)
+    pkg_dir <- dlist[grepl(short_sha, dlist)]
+    if (length(pkg_dir) != 1) {
+        stop(paste0("couldn't uniquely locate the unzipped package source in ", tmp_dir))
+    }
+    res <- system(command = paste("R", "CMD", "build", pkg_dir), intern = TRUE)
+    expected_tarball_path <- paste(x, "_", version, ".tar.gz", sep = "")
+    if (!file.exists(expected_tarball_path)) {
+        stop("Cannot locate the built tarball.")
+    }
+    file.rename(from = expected_tarball_path, to = file.path(cache_dir, expected_tarball_path))
+    unlink(expected_tarball_path)
+}
+
+
+.cache_pkgs <- function(granlist, output_dir, cran_mirror, verbose) {
     install_order <- .determine_installation_order(granlist)
     cache_dir <- file.path(output_dir, "cache")
     if (!dir.exists(cache_dir)) {
         dir.create(cache_dir)
     }
-    for (i in seq_along(install_order)) {
-        .cache_r_package(x = install_order[i], cache_dir = cache_dir,
-                         cran_mirror = cran_mirror, verbose = verbose)
+    for (i in seq(from = 1, to = nrow(install_order), by = 1)) {
+        x <- install_order$x[i]
+        source <- install_order$source[i]
+        version <- install_order$version[i]
+        handle <- install_order$handle[i]
+        uid <- install_order$uid[i]
+        if (source == "cran") {
+            .cache_cran(x = x, version = version, cache_dir = cache_dir,
+                        cran_mirror = cran_mirror, verbose = verbose)
+        }
+        if (source == "github") {
+            .cache_github(x = x, version = version, handle = handle,
+                          source = source, uid = uid,
+                          cache_dir = cache_dir, verbose = verbose)
+        }
     }
     ## For #14, cache R source in the future here
     invisible(output_dir)
@@ -359,7 +399,7 @@ dockerize <- function(granlist, output_dir, materials_dir = NULL, image = c("r-v
                     verbose = verbose, lib = lib, cran_mirror = cran_mirror,
                     check_cran_mirror = check_cran_mirror)
     if (isTRUE(cache)) {
-        .cache_cran(granlist, output_dir, cran_mirror, verbose)
+        .cache_pkgs(granlist, output_dir, cran_mirror, verbose)
     }
     if (utils::compareVersion(granlist$r_version, "3.1") == -1) {
         file.copy(system.file("compile_r.sh", package = "gran"), file.path(output_dir, "compile_r.sh"),
