@@ -1,15 +1,16 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# gran <img src="man/figures/gran_logo.svg" align="right" height="200" />
+# rang <img src="man/figures/rang_logo.svg" align="right" height="200" />
 
 <!-- badges: start -->
 
-[![R-CMD-check](https://github.com/chainsawriot/gran/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/chainsawriot/gran/actions/workflows/R-CMD-check.yaml)
+[![R-CMD-check](https://github.com/chainsawriot/rang/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/chainsawriot/rang/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
-The goal of gran (gran: R anachronism nullifier) \[1\] is to obtain the
-dependency graph of R packages at a specific time point.
+The goal of rang (Reconstructing Ancient Number-crunching Gears) \[1\]
+is to obtain the dependency graph of R packages at a specific time
+point.
 
 Although this package can also be used to ensure the current R
 computational environment can be reconstructed by future researchers,
@@ -19,7 +20,7 @@ purpose, packages such as [renv](https://github.com/rstudio/renv/),
 [groundhog](https://github.com/CredibilityLab/groundhog),
 [miniCRAN](https://github.com/andrie/miniCRAN), and
 [Require](https://github.com/PredictiveEcology/Require) should be used.
-One can think of gran as an archaeological tool.
+One can think of rang as an archaeological tool.
 
 To reconstruct a historical R computational environment, this package
 assumes only the availability of source packages on CRAN. The
@@ -31,10 +32,10 @@ change.
 
 ## Installation
 
-You can install the development version of gran like so:
+You can install the development version of rang like so:
 
 ``` r
-remotes::install_github("chainsawriot/gran")
+remotes::install_github("chainsawriot/rang")
 ```
 
 ## Example
@@ -42,7 +43,7 @@ remotes::install_github("chainsawriot/gran")
 To obtain the dependency graph of an R package, use `resolve`
 
 ``` r
-library(gran)
+library(rang)
 graph <- resolve(pkgs = c("openNLP", "LDAvis", "topicmodels", "quanteda"),
                  snapshot_date = "2020-01-16")
 ```
@@ -50,17 +51,17 @@ graph <- resolve(pkgs = c("openNLP", "LDAvis", "topicmodels", "quanteda"),
 ``` r
 graph
 #> resolved: 4 package(s). Unresolved package(s): 0 
-#> $openNLP
-#> The latest version of `openNLP` at 2020-01-16 was 0.2-7, which has 3 unique dependencies (2 with no dependencies.)
+#> $`cran::openNLP`
+#> The latest version of `openNLP` [cran] at 2020-01-16 was 0.2-7, which has 3 unique dependencies (2 with no dependencies.)
 #> 
-#> $LDAvis
-#> The latest version of `LDAvis` at 2020-01-16 was 0.3.2, which has 2 unique dependencies (2 with no dependencies.)
+#> $`cran::LDAvis`
+#> The latest version of `LDAvis` [cran] at 2020-01-16 was 0.3.2, which has 2 unique dependencies (2 with no dependencies.)
 #> 
-#> $topicmodels
-#> The latest version of `topicmodels` at 2020-01-16 was 0.2-9, which has 7 unique dependencies (5 with no dependencies.)
+#> $`cran::topicmodels`
+#> The latest version of `topicmodels` [cran] at 2020-01-16 was 0.2-9, which has 7 unique dependencies (5 with no dependencies.)
 #> 
-#> $quanteda
-#> The latest version of `quanteda` at 2020-01-16 was 1.5.2, which has 64 unique dependencies (34 with no dependencies.)
+#> $`cran::quanteda`
+#> The latest version of `quanteda` [cran] at 2020-01-16 was 1.5.2, which has 63 unique dependencies (33 with no dependencies.)
 ```
 
 ``` r
@@ -76,12 +77,12 @@ graph$r_version
 #> [1] "3.6.2"
 ```
 
-The resolved result is an S3 object called `granlist` and can be
-exported as an installation script. The installation script can be
-execute on a vanilla R installation.
+The resolved result is an S3 object called `rang` and can be exported as
+an installation script. The installation script can be execute on a
+vanilla R installation.
 
 ``` r
-export_granlist(graph, "gran.R")
+export_rang(graph, "rang.R")
 ```
 
 However, the execution of the installation script often fails (now) due
@@ -90,9 +91,9 @@ the approach outlined below should be used.
 
 ## Recreate the computational environment via Rocker
 
-A `granlist` object can be used to recreate the computational
-environment via [Rocker](https://github.com/rocker-org/rocker). Please
-note that the oldest R version one can get from Rocker is R 3.1.0.
+A `rang` object can be used to recreate the computational environment
+via [Rocker](https://github.com/rocker-org/rocker). Please note that the
+oldest R version one can get from Rocker is R 3.1.0.
 
 ``` r
 dockerize(graph, "~/rocker_test")
@@ -102,8 +103,8 @@ Now, you can build and run the Docker container.
 
 ``` bash
 cd ~/rocker_test
-sudo docker build -t gran .
-sudo docker run --rm --name "grantest" -ti gran
+sudo docker build -t rang .
+sudo docker run --rm --name "rangtest" -ti rang
 ```
 
 Using the above example, `sessionInfo()` outputs the following. You have
@@ -172,8 +173,8 @@ dockerize(graph, "~/rocker_test", image = "rstudio")
 
 ``` bash
 cd ~/rocker_test
-sudo docker build -t gran .
-sudo docker run -p 8787:8787 -e PASSWORD=abc123 --rm --name "grantest" -ti gran
+sudo docker build -t rang .
+sudo docker run -p 8787:8787 -e PASSWORD=abc123 --rm --name "rangtest" -ti rang
 ```
 
 With any browser, go to: `local:8787`. The default username is
@@ -181,24 +182,27 @@ With any browser, go to: `local:8787`. The default username is
 
 ## Recreate the computational environment for R \< 3.1.0
 
-`gran` can still be used to recreate computational environments for R \<
+`rang` can still be used to recreate computational environments for R \<
 3.1.0. The Dockerfile generated is based on Debian Woody (3.0) and the
 requested version of R is compiled from source. As of writing, this
 method works for R \< 3.1.0 but not R \< 2.1.0. The `image` parameter is
 ignored in this case.
 
 ``` r
-gran_rio <- resolve("rio", snapshot_date = "2013-08-28") ## R 3.0.1
-dockerize(gran_rio, output_dir = "~/old_renviron")
+rang_rio <- resolve("rio", snapshot_date = "2013-08-28") ## R 3.0.1
+dockerize(rang_rio, output_dir = "~/old_renviron")
 ```
 
 ## Acknowledgment
 
-The logo of gran is a remix of
+The logo of rang is a remix of
 [this](https://commons.wikimedia.org/wiki/File:Flag_of_the_Canary_Islands.svg)
 public domain image. The two dogs should be *Presa Canario*, the native
 dog breed on the islands of Gran Canaria and Tenerife.
 
 -----
 
-1.  Actually, it stands for “GESIS R Archive Network”.
+1.  It stands for “R Archiving Nerds at GESIS”. The package was
+    previously named `gran`, but we decided to rename it to `rang`
+    because there is another package named
+    [gRAN](https://cran.r-project.org/web/packages/GRANBase/vignettes/GRAN_Overview.html).
