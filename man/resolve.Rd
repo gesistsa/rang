@@ -31,7 +31,7 @@ packages are assumed to have no system requirement.}
 \item{verbose}{logical, whether to display messages}
 }
 \value{
-S3 object \code{granlist}
+S3 object \code{rang}
 }
 \description{
 This function recursively queries dependencies of R packages at a specific snapshot time. The dependency graph can then be used to recreate the computational environment. The data on dependencies are provided by R-hub.
