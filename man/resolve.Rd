@@ -15,7 +15,7 @@ resolve(
 )
 }
 \arguments{
-\item{pkgs}{character vector of R packages to resolve}
+\item{pkgs}{character vector of R packages to resolve. \code{pkgs} can be either in shorthands, e.g. "rtoot", "ropensci/readODS", or in package references, e.g. "cran::rtoot", "github::ropensci/readODS". Please refer to the \href{https://r-lib.github.io/pkgdepends/reference/pkg_refs.html}{Package References documentation} of \code{pak} for details. Currently, this package supports only cran and github packages.}
 
 \item{snapshot_date}{Snapshot date, if not specified, assume to be a month ago}
 
@@ -42,8 +42,15 @@ if (interactive()) {
     graph <- resolve(pkgs = c("openNLP", "LDAvis", "topicmodels", "quanteda"),
                 snapshot_date = "2020-01-16")
     graph
+    ## to resolve github packages
+    gh_graph <- resolve(pkgs = c("https://github.com/schochastics/rtoot"),
+                   snapshot_date = "2022-11-28")
+    gh_graph
 }
 }
+}
+\references{
+\href{https://r-lib.github.io/pkgdepends/reference/pkg_refs.html}{Package References}
 }
 \seealso{
 \code{\link[=dockerize]{dockerize()}}

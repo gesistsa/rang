@@ -358,7 +358,7 @@ export_granlist <- function(granlist, path, granlist_as_comment = TRUE, verbose 
 #' @param materials_dir character, path to the directiry containing dditional resources (e.g. analysis scripts) to be copied into `output_dir` and in turn into the Docker container
 #' @param image character, which versioned Rocker image to use. Can only be "r-ver", "rstudio", "tidyverse", "verse", "geospatial"
 #' This applies only to R version <= 3.1
-#' @param cache logical, whether to cache the content from CRAN now. Please note that the system requirements are not cached
+#' @param cache logical, whether to cache the packages now. Please note that the system requirements are not cached. For query with non-CRAN packages, this option is strongly recommended.
 #' @param ... arguments to be passed to `dockerize`
 #' @return `output_dir`, invisibly
 #' @inheritParams export_granlist

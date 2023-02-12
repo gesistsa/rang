@@ -174,7 +174,7 @@ NULL
 #'
 #' This function recursively queries dependencies of R packages at a specific snapshot time. The dependency graph can then be used to recreate the computational environment. The data on dependencies are provided by R-hub.
 #' 
-#' @param pkgs character vector of R packages to resolve
+#' @param pkgs character vector of R packages to resolve. `pkgs` can be either in shorthands, e.g. "rtoot", "ropensci/readODS", or in package references, e.g. "cran::rtoot", "github::ropensci/readODS". Please refer to the [Package References documentation](https://r-lib.github.io/pkgdepends/reference/pkg_refs.html) of `pak` for details. Currently, this package supports only cran and github packages.
 #' @param snapshot_date Snapshot date, if not specified, assume to be a month ago
 #' @param no_enhances logical, whether to ignore packages in the "Enhances" field
 #' @param no_suggests logical, whether to ignore packages in the "Suggests" field
@@ -185,12 +185,18 @@ NULL
 #' @return S3 object `granlist`
 #' @export
 #' @seealso [dockerize()]
+#' @references
+#' [Package References](https://r-lib.github.io/pkgdepends/reference/pkg_refs.html)
 #' @examples
 #' \donttest{
 #' if (interactive()) {
 #'     graph <- resolve(pkgs = c("openNLP", "LDAvis", "topicmodels", "quanteda"),
 #'                 snapshot_date = "2020-01-16")
 #'     graph
+#'     ## to resolve github packages
+#'     gh_graph <- resolve(pkgs = c("https://github.com/schochastics/rtoot"),
+#'                    snapshot_date = "2022-11-28")
+#'     gh_graph
 #' }
 #' }
 resolve <- function(pkgs, snapshot_date, no_enhances = TRUE, no_suggests = TRUE, get_sysreqs = TRUE, os = "ubuntu-20.04", verbose = FALSE) {
