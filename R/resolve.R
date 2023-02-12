@@ -234,7 +234,7 @@ resolve <- function(pkgs, snapshot_date, no_enhances = TRUE, no_suggests = TRUE,
         warning("Some package(s) can't be resolved: ", paste(output$unresolved_pkgrefs, collapse = ", "), call. = FALSE)
     }
     if (isTRUE(get_sysreqs)) {
-        res <- .granlist_query_sysreps(output, os = os)
+        res <- .granlist_query_sysreqs(output, os = os)
         output$deps_sysreqs <- res
         .has_ppa_in_sysreqs(output)
     }
@@ -318,52 +318,63 @@ convert_edgelist <- function(x) {
     output
 }
 
-## extract all the names of deps and pkgs: for .sysdeps
+## extract all the pkgrefs of deps and pkgs: for .sysreqs
 .granlist_extract_all_deps <- function(granlist) {
-    pkgs <- names(granlist$grans)
-    all_deps <- unlist(lapply(granlist$grans, function(x) names(x$deps)))
-    unique(c(pkgs, all_deps))
+    original_pkgrefs <- names(granlist$grans)
+    all_dep_pkgrefs <- unlist(lapply(granlist$grans, function(x) names(x$deps)))
+    unique(c(original_pkgrefs, all_dep_pkgrefs))
 }
 
-.granlist_query_sysreps <- function(granlist, os = "ubuntu-20.04") {
+.granlist_query_sysreqs <- function(granlist, os = "ubuntu-20.04") {
     targets <- .granlist_extract_all_deps(granlist)
     if (length(targets) == 0) {
         warning("No packages to query for system requirements.", call. = FALSE)
         return(NA)
     }
+    any_noncran <- any(vapply(targets, .parse_pkgref, character(1), return_handle = FALSE, USE.NAMES = FALSE) != "cran")
+    if (isTRUE(any_noncran)) {
+        .query_sysreqs_safe(targets, os = os)
+    }
     tryCatch({
-        return(remotes::system_requirements(package = targets, os = os))
+        all_handles <- vapply(targets, .parse_pkgref, character(1), return_handle = TRUE, USE.NAMES = FALSE)
+        return(.system_requirements_cran(package = all_handles, os = os))
     }, error = function(e) {
-        return(.query_sysreps_safe(targets = targets, os = os))
+        return(.query_sysreqs_safe(targets = targets, os = os))
     })
 }
 
-.query_sysreps_safe <- function(targets, os = "ubuntu-20.04") {
-  output <- c()
-  for (pkg in targets) {
-    if(isFALSE(.is_github(pkg))){
-      tryCatch({
-        result <- remotes::system_requirements(package = pkg, os = os)
-        output <- c(output, result)
-      }, error = function(e) {
-        warning(pkg, " can't be queried for System requirements. Assumed to have no requirement.", call. = FALSE)
-      })
-    } else{
-      tryCatch({
-        result <- system_requirements_gh(package = pkg,os = os)
-        output <- c(output, result)
-      }, error = function(e) {
-        warning(pkg, " can't be queried for System requirements. Assumed to have no requirement.", call. = FALSE)
-      })
+.query_sysreqs_safe <- function(targets, os = "ubuntu-20.04") {
+    output <- c()
+    for (pkgref in targets) {
+        source <- .parse_pkgref(pkgref, FALSE)
+        switch(source,
+               "cran" = {
+                   query_fun <- .system_requirements_cran
+               },
+               "github" = {
+                   query_fun <- .system_requirements_gh
+               }
+               )
+        tryCatch({
+            result <- query_fun(handle = .parse_pkgref(pkgref), os = os)
+            output <- c(output, result)
+        }, error = function(e) {
+            warning(pkg, " can't be queried for System requirements. Assumed to have no requirement.", call. = FALSE)
+        })
     }
-  }
-  return(unique(output))
+    return(unique(output))
 }
 
-# get system requirements for github packages
-DEFAULT_RSPM <- "https://packagemanager.rstudio.com"
-DEFAULT_RSPM_REPO_ID <- "1"
-system_requirements_gh <- function(package, os){
+## this is vectorized; and for consistency
+.system_requirements_cran <- function(handle, os) {
+    remotes::system_requirements(package = handle, os = os)
+}
+
+## get system requirements for github packages
+.system_requirements_gh <- function(handle, os){
+  DEFAULT_RSPM <- "https://packagemanager.rstudio.com"
+  DEFAULT_RSPM_REPO_ID <- "1"
+
   curl = Sys.which("curl")
   
   rspm_repo_id <- Sys.getenv("RSPM_REPO_ID", DEFAULT_RSPM_REPO_ID)
@@ -372,8 +383,7 @@ system_requirements_gh <- function(package, os){
   rspm_repo_url <- sprintf("%s/__api__/repos/%s", rspm, rspm_repo_id)
   desc_file <- tempfile()
   # potenital issue: not going back to snapshot time! but the same is true for the remotes approach?
-  repo_descr <- gh::gh(paste0("GET /repos/",package,"/contents/DESCRIPTION")) 
-  
+  repo_descr <- gh::gh(paste0("GET /repos/", handle, "/contents/DESCRIPTION"))   
   writeLines(readLines(repo_descr$download_url),con = desc_file)
   res <- system2(
     curl,
