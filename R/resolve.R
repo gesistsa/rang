@@ -359,7 +359,7 @@ convert_edgelist <- function(x) {
             result <- query_fun(handle = .parse_pkgref(pkgref), os = os)
             output <- c(output, result)
         }, error = function(e) {
-            warning(pkg, " can't be queried for System requirements. Assumed to have no requirement.", call. = FALSE)
+            warning(pkgref, " can't be queried for System requirements. Assumed to have no requirement.", call. = FALSE)
         })
     }
     return(unique(output))
