@@ -182,7 +182,7 @@ NULL
 #' packages are assumed to have no system requirement.
 #' @param os character, which OS to query for system requirements
 #' @param verbose logical, whether to display messages
-#' @return S3 object `granlist`
+#' @return S3 object `rang`
 #' @export
 #' @seealso [dockerize()]
 #' @references
@@ -216,7 +216,7 @@ resolve <- function(pkgs, snapshot_date, no_enhances = TRUE, no_suggests = TRUE,
     pkgrefs <- .normalize_pkgs(pkgs)
     output <- list()
     output$call <- match.call()
-    output$grans <- list()
+    output$ranglets <- list()
     output$snapshot_date <- snapshot_date
     output$no_enhances <- no_enhances
     output$no_suggests <- no_suggests
@@ -228,23 +228,23 @@ resolve <- function(pkgs, snapshot_date, no_enhances = TRUE, no_suggests = TRUE,
         tryCatch({
             res <- .resolve_pkgref(pkgref = pkgref, snapshot_date = snapshot_date, no_enhances = no_enhances,
                                 no_suggests = no_suggests, verbose = verbose)
-            output$grans[[pkgref]] <- res
+            output$ranglets[[pkgref]] <- res
         }, error = function(err) {
             if (isTRUE(verbose)) {
                 cat("Query failed: ", pkgref, "\n")
             }
         })
     }
-    output$unresolved_pkgrefs <- setdiff(pkgrefs, names(output$grans))
+    output$unresolved_pkgrefs <- setdiff(pkgrefs, names(output$ranglets))
     if (length(output$unresolved_pkgrefs) > 0) {
         warning("Some package(s) can't be resolved: ", paste(output$unresolved_pkgrefs, collapse = ", "), call. = FALSE)
     }
     if (isTRUE(get_sysreqs)) {
-        res <- .granlist_query_sysreqs(output, os = os)
+        res <- .rang_query_sysreqs(output, os = os)
         output$deps_sysreqs <- res
         .has_ppa_in_sysreqs(output)
     }
-    attr(output, "class") <- "granlist"
+    attr(output, "class") <- "rang"
     return(output)
 }
 
@@ -281,12 +281,12 @@ resolve <- function(pkgs, snapshot_date, no_enhances = TRUE, no_suggests = TRUE,
             output$unresolved_deps <- c(output$unresolved_deps, current_pkgref)
         })
     }
-    attr(output, "class") <- "gran"
+    attr(output, "class") <- "ranglet"
     return(output)
 }
 
 #' @export
-print.gran <- function(x, ...) {
+print.ranglet <- function(x, ...) {
     total_deps <- length(x$deps)
     if (total_deps != 0) {
         total_terminal_nodes <- sum(unlist(lapply(x$deps, .is_terminal_node, no_enhances = x$no_enhances, no_suggests = x$no_suggests)))
@@ -300,15 +300,15 @@ print.gran <- function(x, ...) {
 }
 
 #' @export
-print.granlist <- function(x, all_pkgs = FALSE, ...) {
-    n_grans <- length(x$grans)
-    cat("resolved:", n_grans, "package(s). Unresolved package(s):", length(x$unresolved_pkgrefs), "\n")
-    if (n_grans > 0) {
-        if (n_grans <= 5 || isTRUE(all_pkgs)) {
-            print(x$grans)
+print.rang <- function(x, all_pkgs = FALSE, ...) {
+    n_ranglets <- length(x$ranglets)
+    cat("resolved:", n_ranglets, "package(s). Unresolved package(s):", length(x$unresolved_pkgrefs), "\n")
+    if (n_ranglets > 0) {
+        if (n_ranglets <= 5 || isTRUE(all_pkgs)) {
+            print(x$ranglets)
         } else {
             cat("First 5 packages are:\n")
-            print(x$grans[seq_len(5)])
+            print(x$ranglets[seq_len(5)])
         }
     }
 }
@@ -325,14 +325,14 @@ convert_edgelist <- function(x) {
 }
 
 ## extract all the pkgrefs of deps and pkgs: for .sysreqs
-.granlist_extract_all_deps <- function(granlist) {
-    original_pkgrefs <- names(granlist$grans)
-    all_dep_pkgrefs <- unlist(lapply(granlist$grans, function(x) names(x$deps)))
+.rang_extract_all_deps <- function(rang) {
+    original_pkgrefs <- names(rang$ranglets)
+    all_dep_pkgrefs <- unlist(lapply(rang$ranglets, function(x) names(x$deps)))
     unique(c(original_pkgrefs, all_dep_pkgrefs))
 }
 
-.granlist_query_sysreqs <- function(granlist, os = "ubuntu-20.04") {
-    targets <- .granlist_extract_all_deps(granlist)
+.rang_query_sysreqs <- function(rang, os = "ubuntu-20.04") {
+    targets <- .rang_extract_all_deps(rang)
     if (length(targets) == 0) {
         warning("No packages to query for system requirements.", call. = FALSE)
         return(NA)

@@ -1,5 +1,3 @@
-##granlist <- readRDS("tests/testdata/graph.RDS")
-
 .safe_get_uid <- function(pkgref, uid) {
     if (is.null(uid$get(pkgref))) {
         return(NA_character_)
@@ -8,28 +6,28 @@
     }
 }
 
-.determine_installation_order <- function(granlist) {
+.determine_installation_order <- function(rang) {
     dep <- fastmap::fastmap()
     version <- fastmap::fastmap()
     uid <- fastmap::fastmap()
     ## package name as per DESCRIPTION, aka. x
     ## can't use x here because it is too generic
     pkgname <- fastmap::fastmap()
-    for (gran in granlist$grans) {
-        current_pkgref <- unique(gran$original$x_pkgref)
-        current_ver <- unique(gran$original$x_version)
-        current_dep <- .keep_queryable_dependencies(dep_df = gran$original, no_enhances = gran$no_enhances, no_suggests = gran$no_suggests)
-        current_pkgname <- unique(gran$original$x)
+    for (ranglet in rang$ranglets) {
+        current_pkgref <- unique(ranglet$original$x_pkgref)
+        current_ver <- unique(ranglet$original$x_version)
+        current_dep <- .keep_queryable_dependencies(dep_df = ranglet$original, no_enhances = ranglet$no_enhances, no_suggests = ranglet$no_suggests)
+        current_pkgname <- unique(ranglet$original$x)
         dep$set(current_pkgref, current_dep)
         version$set(current_pkgref, current_ver)
         pkgname$set(current_pkgref, current_pkgname)
-        if ("x_uid" %in% colnames(gran$original)) {
-            uid$set(current_pkgref, unique(gran$original$x_uid))
+        if ("x_uid" %in% colnames(ranglet$original)) {
+            uid$set(current_pkgref, unique(ranglet$original$x_uid))
         }
-        for (dep_df in gran$deps) {
+        for (dep_df in ranglet$deps) {
             current_pkgref <- unique(dep_df$x_pkgref)
             current_ver <- unique(dep_df$x_version)
-            current_dep <- .keep_queryable_dependencies(dep_df = dep_df, no_enhances = gran$no_enhances, no_suggests = gran$no_suggests)
+            current_dep <- .keep_queryable_dependencies(dep_df = dep_df, no_enhances = ranglet$no_enhances, no_suggests = ranglet$no_suggests)
             current_pkgname <- unique(dep_df$x)
             dep$set(current_pkgref, current_dep)
             version$set(current_pkgref, current_ver)
@@ -94,8 +92,8 @@
 ##     invisible()
 ## }
 
-.has_ppa_in_sysreqs <- function(granlist, warn = TRUE) {
-    res <- isTRUE(any(grepl("add-apt-repository", granlist$deps_sysreqs)))
+.has_ppa_in_sysreqs <- function(rang, warn = TRUE) {
+    res <- isTRUE(any(grepl("add-apt-repository", rang$deps_sysreqs)))
     if (isTRUE(res) && isTRUE(warn)) {
         warning("The command for getting system requirements is likely not going to work for the default Docker images. You might need to requery system requirements with another version of Ubuntu.", call. = FALSE)
     }
@@ -116,41 +114,41 @@
     return(cmd)
 }
 
-.consolidate_sysreqs <- function(granlist) {
-    if (length(granlist$deps_sysreqs) == 0) {
+.consolidate_sysreqs <- function(rang) {
+    if (length(rang$deps_sysreqs) == 0) {
         return("apt-get update -qq")
     }
-    if (isFALSE(.has_ppa_in_sysreqs(granlist))) {
-        cmds <- granlist$deps_sysreqs
+    if (isFALSE(.has_ppa_in_sysreqs(rang))) {
+        cmds <- rang$deps_sysreqs
         prefix <- ""
         cmd <- .group_apt_cmds(cmds, fix_libgit2 = TRUE)
     } else {
-        cmds <- setdiff(granlist$deps_sysreqs, c("apt-get install -y software-properties-common", "apt-get update"))
+        cmds <- setdiff(rang$deps_sysreqs, c("apt-get install -y software-properties-common", "apt-get update"))
         ppa_lines <- c("apt-get install -y software-properties-common",
-                       grep("^add-apt-repository", granlist$deps_sysreqs, value = TRUE),
+                       grep("^add-apt-repository", rang$deps_sysreqs, value = TRUE),
                        "apt-get update")
-        cmds <- setdiff(granlist$deps_sysreqs, ppa_lines)
+        cmds <- setdiff(rang$deps_sysreqs, ppa_lines)
         prefix <- paste0(paste0(ppa_lines, collapse = " && "), " && ")
         cmd <- .group_apt_cmds(cmds, fix_libgit2 = FALSE)
     }
     paste0("apt-get update -qq && ", prefix, cmd)
 }
 
-.write_granlist_as_comment <- function(granlist, con, path, verbose, lib,
+.write_rang_as_comment <- function(rang, con, path, verbose, lib,
                                        cran_mirror, check_cran_mirror) {
     cat("## ## To reconstruct this file, please install version",
-        as.character(utils::packageVersion("gran")), "of `gran` and run:\n", file = con)
-    cat("## granlist <- \n", file = con)
-    tempgrancontent <- tempfile()
-    dput(granlist, file = tempgrancontent)
-    granlist_src <- readLines(tempgrancontent)
-    writeLines(paste("##", granlist_src), con = con)
+        as.character(utils::packageVersion("rang")), "of `rang` and run:\n", file = con)
+    cat("## rang <- \n", file = con)
+    temprangcontent <- tempfile()
+    dput(rang, file = temprangcontent)
+    rang_src <- readLines(temprangcontent)
+    writeLines(paste("##", rang_src), con = con)
     if (is.na(lib)) {
         lib_as_character <- "NA"
     } else {
         lib_as_character <- paste0("\"", lib, "\"")
     }
-    writeLines(paste0("## gran::export_granlist(granlist = granlist, path = \"", path, "\", verbose = ",
+    writeLines(paste0("## rang::export_rang(rang = rang, path = \"", path, "\", verbose = ",
                      as.character(verbose), ", lib = ", lib_as_character,
                      ", cran_mirror = \"", cran_mirror, "\", check_cran_mirror = ",
                      as.character(check_cran_mirror), ")"), con = con)
@@ -226,8 +224,8 @@
     unlink(expected_tarball_path)
 }
 
-.cache_pkgs <- function(granlist, output_dir, cran_mirror, verbose) {
-    install_order <- .determine_installation_order(granlist)
+.cache_pkgs <- function(rang, output_dir, cran_mirror, verbose) {
+    install_order <- .determine_installation_order(rang)
     cache_dir <- file.path(output_dir, "cache")
     if (!dir.exists(cache_dir)) {
         dir.create(cache_dir)
@@ -253,17 +251,17 @@
 }
 
 .insert_cache_dir <- function(basic_docker) {
-    gran_line <- which(basic_docker == "RUN Rscript gran.R")
-    c(basic_docker[1:(gran_line - 1)],
+    rang_line <- which(basic_docker == "RUN Rscript rang.R")
+    c(basic_docker[1:(rang_line - 1)],
       "COPY cache ./cache",
-      basic_docker[gran_line:length(basic_docker)])
+      basic_docker[rang_line:length(basic_docker)])
 }
 
 .insert_materials_dir <- function(basic_docker){
-  gran_line <- which(basic_docker == "COPY gran.R ./gran.R")
-  c(basic_docker[1:gran_line], 
+  rang_line <- which(basic_docker == "COPY rang.R ./rang.R")
+  c(basic_docker[1:rang_line], 
     "COPY materials/ ./materials/",
-    basic_docker[(gran_line + 1):length(basic_docker)])
+    basic_docker[(rang_line + 1):length(basic_docker)])
 }
 
 .generate_pre310_docker <- function(r_version, debian_version = "lenny", lib, sysreqs_cmd, cache) {
@@ -271,7 +269,7 @@
         paste0("FROM debian/eol:", debian_version),
         "ENV TZ UTC",
         "RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && apt-get update -qq && apt-get install wget locales build-essential r-base-dev  -y",
-        "COPY gran.R ./gran.R",
+        "COPY rang.R ./rang.R",
         "COPY compile_r.sh ./compile_r.sh",
         paste("RUN", sysreqs_cmd),
         paste("RUN bash compile_r.sh", r_version),
@@ -288,9 +286,9 @@
 #' Export The Resolved Result As Installation Script
 #'
 #' This function exports the results from [resolve()] to an installation script that can be run in a fresh R environment.
-#' @param granlist output from [resolve()]
+#' @param rang output from [resolve()]
 #' @param path character, path of the exported installation script
-#' @param granlist_as_comment logical, whether to write granlist and the steps to reproduce
+#' @param rang_as_comment logical, whether to write resolved result and the steps to reproduce
 #' the file to `path` as comment
 #' @param verbose logical, pass to [install.packages()], the negated value is also passed as `quiet` to both [install.packages()]
 #' and [download.file()].
@@ -309,13 +307,13 @@
 #' if (interactive()) {
 #'     graph <- resolve(pkgs = c("openNLP", "LDAvis", "topicmodels", "quanteda"),
 #'                     snapshot_date = "2020-01-16")
-#'     export_granlist(graph, "gran.R")
+#'     export_rang(graph, "rang.R")
 #' }
 #' }
-export_granlist <- function(granlist, path, granlist_as_comment = TRUE, verbose = TRUE, lib = NA,
+export_rang <- function(rang, path, rang_as_comment = TRUE, verbose = TRUE, lib = NA,
                             cran_mirror = "https://cran.r-project.org/", check_cran_mirror = TRUE) {
-    if (utils::compareVersion(granlist$r_version, "2.1") == -1) {
-        stop("`export_granlist` doesn't support this R version (yet).")
+    if (utils::compareVersion(rang$r_version, "2.1") == -1) {
+        stop("`export_rang` doesn't support this R version (yet).")
     }
     cran_mirror <- .normalize_url(cran_mirror)
     if (isTRUE(check_cran_mirror)) { ## probably need to stop this also if #17 is implemented
@@ -323,13 +321,13 @@ export_granlist <- function(granlist, path, granlist_as_comment = TRUE, verbose 
             stop(cran_mirror, "does not appear to be a valid CRAN mirror.", call. = FALSE)
         }
     }
-    if (utils::compareVersion(granlist$r_version, "3.3") == -1) { #20
+    if (utils::compareVersion(rang$r_version, "3.3") == -1) { #20
         cran_mirror <- .normalize_url(cran_mirror, https = FALSE)
     }
-    install_order <- .determine_installation_order(granlist)
+    install_order <- .determine_installation_order(rang)
     file.create(path)
     con <- file(path, open="w")
-    writeLines(readLines(system.file("header.R", package = "gran")), con = con)
+    writeLines(readLines(system.file("header.R", package = "rang")), con = con)
     cat("install_order <- ", file = con)
     dput(install_order, file = con)
     cat("\n", file = con)
@@ -340,9 +338,9 @@ export_granlist <- function(granlist, path, granlist_as_comment = TRUE, verbose 
         cat(paste0("lib <- \"", as.character(lib), "\"\n"), file = con)
     }
     cat(paste0("cran_mirror <- \"", cran_mirror, "\"\n"), file = con)    
-    writeLines(readLines(system.file("footer.R", package = "gran")), con = con)
-    if (isTRUE(granlist_as_comment)) {
-        .write_granlist_as_comment(granlist = granlist, con = con, path = path, verbose = verbose,
+    writeLines(readLines(system.file("footer.R", package = "rang")), con = con)
+    if (isTRUE(rang_as_comment)) {
+        .write_rang_as_comment(rang = rang, con = con, path = path, verbose = verbose,
                                    lib = lib, cran_mirror = cran_mirror,
                                    check_cran_mirror = check_cran_mirror)
     }
@@ -361,9 +359,9 @@ export_granlist <- function(granlist, path, granlist_as_comment = TRUE, verbose 
 #' @param cache logical, whether to cache the packages now. Please note that the system requirements are not cached. For query with non-CRAN packages, this option is strongly recommended.
 #' @param ... arguments to be passed to `dockerize`
 #' @return `output_dir`, invisibly
-#' @inheritParams export_granlist
-#' @inherit export_granlist details
-#' @seealso [resolve()], [export_granlist()]
+#' @inheritParams export_rang
+#' @inherit export_rang details
+#' @seealso [resolve()], [export_rang()]
 #' @references
 #' [The Rocker Project](https://rocker-project.org)
 #' Ripley, B. (2005) [Packages and their Management in R 2.1.0.](https://cran.r-project.org/doc/Rnews/Rnews_2005-1.pdf) R News, 5(1):8--11.
@@ -376,45 +374,45 @@ export_granlist <- function(granlist, path, granlist_as_comment = TRUE, verbose 
 #' }
 #' }
 #' @export
-dockerize <- function(granlist, output_dir, materials_dir = NULL, image = c("r-ver", "rstudio", "tidyverse", "verse", "geospatial"),
-                      granlist_as_comment = TRUE, cache = FALSE, verbose = TRUE, lib = NA,
+dockerize <- function(rang, output_dir, materials_dir = NULL, image = c("r-ver", "rstudio", "tidyverse", "verse", "geospatial"),
+                      rang_as_comment = TRUE, cache = FALSE, verbose = TRUE, lib = NA,
                       cran_mirror = "https://cran.r-project.org/", check_cran_mirror = TRUE) {
     if (missing(output_dir)) {
         stop("You must provide `output_dir`.", call. = FALSE)
     }
-    if (!grepl("^ubuntu", granlist$os)) {
-        stop("System dependencies of ", granlist$os, " can't be dockerized.", call. = FALSE)
+    if (!grepl("^ubuntu", rang$os)) {
+        stop("System dependencies of ", rang$os, " can't be dockerized.", call. = FALSE)
     }
-    if (utils::compareVersion(granlist$r_version, "2.1") == -1) {
-        stop("`dockerize` doesn't support this R version (yet):", granlist$r_version, call. = FALSE)
+    if (utils::compareVersion(rang$r_version, "2.1") == -1) {
+        stop("`dockerize` doesn't support this R version (yet):", rang$r_version, call. = FALSE)
     }
     if (!is.null(materials_dir) && !(dir.exists(materials_dir))) {
         stop(paste0("The folder ", materials_dir, " does not exist"), call. = FALSE)
     }
     image <- match.arg(image)
-    sysreqs_cmd <- .consolidate_sysreqs(granlist)
+    sysreqs_cmd <- .consolidate_sysreqs(rang)
     if (!dir.exists(output_dir)) {
         dir.create(output_dir)
     }
-    gran_path <- file.path(output_dir, "gran.R")
-    export_granlist(granlist = granlist, path = gran_path, granlist_as_comment = granlist_as_comment,
+    rang_path <- file.path(output_dir, "rang.R")
+    export_rang(rang = rang, path = rang_path, rang_as_comment = rang_as_comment,
                     verbose = verbose, lib = lib, cran_mirror = cran_mirror,
                     check_cran_mirror = check_cran_mirror)
     if (isTRUE(cache)) {
-        .cache_pkgs(granlist, output_dir, cran_mirror, verbose)
+        .cache_pkgs(rang, output_dir, cran_mirror, verbose)
     }
-    if (utils::compareVersion(granlist$r_version, "3.1") == -1) {
-        file.copy(system.file("compile_r.sh", package = "gran"), file.path(output_dir, "compile_r.sh"),
+    if (utils::compareVersion(rang$r_version, "3.1") == -1) {
+        file.copy(system.file("compile_r.sh", package = "rang"), file.path(output_dir, "compile_r.sh"),
                   overwrite = TRUE)
-        basic_docker <- .generate_pre310_docker(materials_dir, r_version = granlist$r_version,
+        basic_docker <- .generate_pre310_docker(materials_dir, r_version = rang$r_version,
                                                 sysreqs_cmd = sysreqs_cmd, lib = lib,
                                                 cache = cache)
     } else {
-        basic_docker <- c("", "", "COPY gran.R ./gran.R", "RUN Rscript gran.R", "CMD [\"R\"]")
+        basic_docker <- c("", "", "COPY rang.R ./rang.R", "RUN Rscript rang.R", "CMD [\"R\"]")
         if (!is.na(lib)) {
-            basic_docker[4] <- paste0("RUN mkdir ", lib, " && Rscript gran.R")
+            basic_docker[4] <- paste0("RUN mkdir ", lib, " && Rscript rang.R")
         }
-        basic_docker[1] <- paste0("FROM rocker/", image, ":", granlist$r_version)
+        basic_docker[1] <- paste0("FROM rocker/", image, ":", rang$r_version)
         basic_docker[2] <- paste("RUN", sysreqs_cmd)
         if (image == "rstudio") {
             basic_docker[5] <- "EXPOSE 8787"
@@ -440,7 +438,7 @@ dockerize <- function(granlist, output_dir, materials_dir = NULL, image = c("r-v
 
 #' @rdname dockerize
 #' @export
-dockerize_granlist <- function(...) {
+dockerize_rang <- function(...) {
     dockerize(...)
 }
 
@@ -452,6 +450,6 @@ dockerise <- function(...) {
 
 #' @rdname dockerize
 #' @export
-dockerise_granlist <- function(...) {
+dockerise_rang <- function(...) {
     dockerize(...)
 }

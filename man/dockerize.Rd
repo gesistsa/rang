@@ -2,17 +2,17 @@
 % Please edit documentation in R/installation.R
 \name{dockerize}
 \alias{dockerize}
-\alias{dockerize_granlist}
+\alias{dockerize_rang}
 \alias{dockerise}
-\alias{dockerise_granlist}
+\alias{dockerise_rang}
 \title{Dockerize The Resolved Result}
 \usage{
 dockerize(
-  granlist,
+  rang,
   output_dir,
   materials_dir = NULL,
   image = c("r-ver", "rstudio", "tidyverse", "verse", "geospatial"),
-  granlist_as_comment = TRUE,
+  rang_as_comment = TRUE,
   cache = FALSE,
   verbose = TRUE,
   lib = NA,
@@ -20,14 +20,14 @@ dockerize(
   check_cran_mirror = TRUE
 )
 
-dockerize_granlist(...)
+dockerize_rang(...)
 
 dockerise(...)
 
-dockerise_granlist(...)
+dockerise_rang(...)
 }
 \arguments{
-\item{granlist}{output from \code{\link[=resolve]{resolve()}}}
+\item{rang}{output from \code{\link[=resolve]{resolve()}}}
 
 \item{output_dir}{character, where to put the Docker file and associated content}
 
@@ -36,7 +36,7 @@ dockerise_granlist(...)
 \item{image}{character, which versioned Rocker image to use. Can only be "r-ver", "rstudio", "tidyverse", "verse", "geospatial"
 This applies only to R version <= 3.1}
 
-\item{granlist_as_comment}{logical, whether to write granlist and the steps to reproduce
+\item{rang_as_comment}{logical, whether to write resolved result and the steps to reproduce
 the file to \code{path} as comment}
 
 \item{cache}{logical, whether to cache the packages now. Please note that the system requirements are not cached. For query with non-CRAN packages, this option is strongly recommended.}
@@ -78,5 +78,5 @@ if (interactive()) {
 Ripley, B. (2005) \href{https://cran.r-project.org/doc/Rnews/Rnews_2005-1.pdf}{Packages and their Management in R 2.1.0.} R News, 5(1):8--11.
 }
 \seealso{
-\code{\link[=resolve]{resolve()}}, \code{\link[=export_granlist]{export_granlist()}}
+\code{\link[=resolve]{resolve()}}, \code{\link[=export_rang]{export_rang()}}
 }

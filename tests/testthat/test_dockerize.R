@@ -8,105 +8,105 @@ test_that("defensive programming", {
 })
 
 test_that("integration of #13 in dockerize()", {
-    gran_ok <- readRDS("../testdata/gran_ok.RDS")
+    rang_ok <- readRDS("../testdata/rang_ok.RDS")
     temp_dir <- .gen_temp_dir()
-    dockerize(granlist = gran_ok, output_dir = temp_dir) ## granlist_as_comment = TRUE
-    x <- readLines(file.path(temp_dir, "gran.R"))
+    dockerize(rang = rang_ok, output_dir = temp_dir) ## rang_as_comment = TRUE
+    x <- readLines(file.path(temp_dir, "rang.R"))
     expect_true(any(grepl("^## ## To reconstruct this file", x)))
-    dockerize(granlist = gran_ok, output_dir = temp_dir, granlist_as_comment = FALSE)
-    x <- readLines(file.path(temp_dir, "gran.R"))
+    dockerize(rang = rang_ok, output_dir = temp_dir, rang_as_comment = FALSE)
+    x <- readLines(file.path(temp_dir, "rang.R"))
     expect_false(any(grepl("^## ## To reconstruct this file", x)))
 })
 
 test_that("integration of #16 in dockerize()", {
     ## verbose
-    gran_ok <- readRDS("../testdata/gran_ok.RDS")
+    rang_ok <- readRDS("../testdata/rang_ok.RDS")
     temp_dir <- .gen_temp_dir()
-    dockerize(granlist = gran_ok, output_dir = temp_dir) ## verbose = TRUE
-    x <- readLines(file.path(temp_dir, "gran.R"))
+    dockerize(rang = rang_ok, output_dir = temp_dir) ## verbose = TRUE
+    x <- readLines(file.path(temp_dir, "rang.R"))
     expect_true(any(grepl("^verbose <- TRUE", x)))
-    dockerize(granlist = gran_ok, output_dir = temp_dir, verbose = FALSE)
-    x <- readLines(file.path(temp_dir, "gran.R"))
+    dockerize(rang = rang_ok, output_dir = temp_dir, verbose = FALSE)
+    x <- readLines(file.path(temp_dir, "rang.R"))
     expect_true(any(grepl("^verbose <- FALSE", x)))
     ## lib
-    dockerize(granlist = gran_ok, output_dir = temp_dir) ## lib = NA
-    x <- readLines(file.path(temp_dir, "gran.R"))
+    dockerize(rang = rang_ok, output_dir = temp_dir) ## lib = NA
+    x <- readLines(file.path(temp_dir, "rang.R"))
     expect_true(any(grepl("^lib <- NA", x)))
     Dockerfile <- readLines(file.path(temp_dir, "Dockerfile"))
     expect_false(any(grepl("^RUN mkdir", Dockerfile)))
-    dockerize(granlist = gran_ok, output_dir = temp_dir, lib = "abc") ## lib = NA
-    x <- readLines(file.path(temp_dir, "gran.R"))
+    dockerize(rang = rang_ok, output_dir = temp_dir, lib = "abc") ## lib = NA
+    x <- readLines(file.path(temp_dir, "rang.R"))
     expect_true(any(grepl("^lib <- \"abc\"", x)))
     Dockerfile <- readLines(file.path(temp_dir, "Dockerfile"))
     expect_true(any(grepl("^RUN mkdir", Dockerfile)))
 })
 
 test_that("integration of #18 in dockerize()", {
-    gran_ok <- readRDS("../testdata/gran_ok.RDS")
+    rang_ok <- readRDS("../testdata/rang_ok.RDS")
     temp_dir <- .gen_temp_dir()
-    dockerize(granlist = gran_ok, output_dir = temp_dir) ## cran_mirror = "https://cran.r-project.org/"
-    x <- readLines(file.path(temp_dir, "gran.R"))
+    dockerize(rang = rang_ok, output_dir = temp_dir) ## cran_mirror = "https://cran.r-project.org/"
+    x <- readLines(file.path(temp_dir, "rang.R"))
     expect_true(any(grepl("^cran_mirror <- \"https://cran\\.r\\-project\\.org/\"", x)))
-    dockerize(granlist = gran_ok, output_dir = temp_dir, cran_mirror = "cran.r-project.org")
-    x <- readLines(file.path(temp_dir, "gran.R"))
+    dockerize(rang = rang_ok, output_dir = temp_dir, cran_mirror = "cran.r-project.org")
+    x <- readLines(file.path(temp_dir, "rang.R"))
     expect_true(any(grepl("^cran_mirror <- \"https://cran\\.r\\-project\\.org/\"", x)))
-    dockerize(granlist = gran_ok, output_dir = temp_dir, cran_mirror = "https://cloud.r-project.org/")
-    x <- readLines(file.path(temp_dir, "gran.R"))
+    dockerize(rang = rang_ok, output_dir = temp_dir, cran_mirror = "https://cloud.r-project.org/")
+    x <- readLines(file.path(temp_dir, "rang.R"))
     expect_true(any(grepl("^cran_mirror <- \"https://cloud\\.r\\-project\\.org/\"", x)))
-    expect_error(dockerize(granlist = gran_ok, output_dir = temp_dir, cran_mirror = "https://www.chainsawriot.com/"))
-    expect_error(dockerize(granlist = gran_ok, output_dir = temp_dir, cran_mirror = "https://www.chainsawriot.com/", check_cran_mirror = FALSE), NA)
-    x <- readLines(file.path(temp_dir, "gran.R"))
+    expect_error(dockerize(rang = rang_ok, output_dir = temp_dir, cran_mirror = "https://www.chainsawriot.com/"))
+    expect_error(dockerize(rang = rang_ok, output_dir = temp_dir, cran_mirror = "https://www.chainsawriot.com/", check_cran_mirror = FALSE), NA)
+    x <- readLines(file.path(temp_dir, "rang.R"))
     expect_true(any(grepl("^cran_mirror <- \"https://www\\.chainsawriot\\.com/\"", x)))
 })
 
 test_that("integration of #20 to dockerize()", {
-    gran_ok <- readRDS("../testdata/gran_ok.RDS")
-    expect_equal(gran_ok$r_version, "4.2.2")
+    rang_ok <- readRDS("../testdata/rang_ok.RDS")
+    expect_equal(rang_ok$r_version, "4.2.2")
     temp_dir <- .gen_temp_dir()
-    dockerize(gran_ok, output_dir = temp_dir) ## cran_mirror = "https://cran.r-project.org/"
-    x <- readLines(file.path(temp_dir, "gran.R"))
+    dockerize(rang_ok, output_dir = temp_dir) ## cran_mirror = "https://cran.r-project.org/"
+    x <- readLines(file.path(temp_dir, "rang.R"))
     expect_true(any(grepl("^cran_mirror <- \"https://cran\\.r\\-project\\.org/\"", x)))
-    gran_ok <- readRDS("../testdata/gran_ok.RDS")
-    gran_ok$r_version <- "3.3.0"
-    dockerize(gran_ok, output_dir = temp_dir) ## cran_mirror = "https://cran.r-project.org/"
-    x <- readLines(file.path(temp_dir, "gran.R"))
+    rang_ok <- readRDS("../testdata/rang_ok.RDS")
+    rang_ok$r_version <- "3.3.0"
+    dockerize(rang_ok, output_dir = temp_dir) ## cran_mirror = "https://cran.r-project.org/"
+    x <- readLines(file.path(temp_dir, "rang.R"))
     expect_true(any(grepl("^cran_mirror <- \"https://cran\\.r\\-project\\.org/\"", x)))
-    gran_ok <- readRDS("../testdata/gran_ok.RDS")
-    gran_ok$r_version <- "3.2.0"
-    dockerize(gran_ok, output_dir = temp_dir) ## cran_mirror = "https://cran.r-project.org/"
-    x <- readLines(file.path(temp_dir, "gran.R"))
+    rang_ok <- readRDS("../testdata/rang_ok.RDS")
+    rang_ok$r_version <- "3.2.0"
+    dockerize(rang_ok, output_dir = temp_dir) ## cran_mirror = "https://cran.r-project.org/"
+    x <- readLines(file.path(temp_dir, "rang.R"))
     expect_false(any(grepl("^cran_mirror <- \"https://cran\\.r\\-project\\.org/\"", x)))
     expect_true(any(grepl("^cran_mirror <- \"http://cran\\.r\\-project\\.org/\"", x)))
 })
 
 test_that("Dockerize R < 3.1 and >= 2.1", {
-    gran_rio <- readRDS("../testdata/gran_rio_old.RDS")
-    expect_equal(gran_rio$r_version, "3.0.1")
+    rang_rio <- readRDS("../testdata/rang_rio_old.RDS")
+    expect_equal(rang_rio$r_version, "3.0.1")
     temp_dir <- .gen_temp_dir()
-    dockerize(gran_rio, output_dir = temp_dir)
+    dockerize(rang_rio, output_dir = temp_dir)
     expect_true(file.exists(file.path(temp_dir, "compile_r.sh")))
     Dockerfile <- readLines(file.path(temp_dir, "Dockerfile"))
     expect_true(any(grepl("^RUN bash compile_r.sh 3.0.1", Dockerfile)))
     ## lib
-    dockerize(gran_rio, output_dir = temp_dir, lib = "abc")
+    dockerize(rang_rio, output_dir = temp_dir, lib = "abc")
     Dockerfile <- readLines(file.path(temp_dir, "Dockerfile"))
     expect_true(any(grepl("^RUN mkdir", Dockerfile)))
 })
 
 test_that("Docker R < 2.1", {
-    gran_rio <- readRDS("../testdata/gran_rio_old.RDS")
-    gran_rio$r_version <- "2.1.0" ## exactly 2.1.0, no error
+    rang_rio <- readRDS("../testdata/rang_rio_old.RDS")
+    rang_rio$r_version <- "2.1.0" ## exactly 2.1.0, no error
     temp_dir <- .gen_temp_dir()
-    expect_error(dockerize(gran_rio, output_dir = temp_dir), NA)
-    gran_rio <- readRDS("../testdata/gran_rio_old.RDS")
-    gran_rio$r_version <- "2.0.0"
-    expect_error(dockerize(gran_rio, output_dir = temp_dir))
+    expect_error(dockerize(rang_rio, output_dir = temp_dir), NA)
+    rang_rio <- readRDS("../testdata/rang_rio_old.RDS")
+    rang_rio$r_version <- "2.0.0"
+    expect_error(dockerize(rang_rio, output_dir = temp_dir))
 })
 
 test_that(".consolidate_sysreqs and issue #21", {
     graph <- readRDS("../testdata/graph.RDS")
     expect_equal(.consolidate_sysreqs(graph), "apt-get update -qq && apt-get install -y default-jdk libgsl0-dev libicu-dev libpng-dev libxml2-dev make python3 zlib1g-dev liblzma-dev libpcre3-dev libbz2-dev && R CMD javareconf")
-    graph <- readRDS("../testdata/gran_ok.RDS")
+    graph <- readRDS("../testdata/rang_ok.RDS")
     expect_equal(.consolidate_sysreqs(graph), "apt-get update -qq")
     graph <- readRDS("../testdata/issue21.RDS")
     expected_output <- "apt-get update -qq && apt-get install -y software-properties-common && add-apt-repository -y ppa:cran/libgit2 && apt-get update && apt-get install -y cmake git libcurl4-openssl-dev libfontconfig1-dev libfreetype6-dev libfribidi-dev libgit2-dev libgsl0-dev libharfbuzz-dev libicu-dev libjpeg-dev libpng-dev libssh2-1-dev libssl-dev libtiff-dev libxml2-dev make pandoc pari-gp zlib1g-dev"
@@ -125,23 +125,23 @@ test_that("Dockerize warning, issue #21", {
 
 test_that("material_dir, non-existing, #23", {
     ## normal case
-    gran_rio <- readRDS("../testdata/gran_rio_old.RDS")
+    rang_rio <- readRDS("../testdata/rang_rio_old.RDS")
     temp_dir <- .gen_temp_dir()
-    expect_error(dockerize(gran_rio, output_dir = temp_dir, materials_dir = NULL), NA)
+    expect_error(dockerize(rang_rio, output_dir = temp_dir, materials_dir = NULL), NA)
     ## non-existing
     fake_material_dir <- .gen_temp_dir()
     expect_false(dir.exists(fake_material_dir))
-    expect_error(dockerize(gran_rio, output_dir = temp_dir, materials_dir = fake_material_dir))    
+    expect_error(dockerize(rang_rio, output_dir = temp_dir, materials_dir = fake_material_dir))    
 })
 
 test_that("material_dir, existing, no subdir, #23", {
     ## exist, but empty dir
     ## Pre R 3.1.0
-    gran_rio <- readRDS("../testdata/gran_rio_old.RDS")
+    rang_rio <- readRDS("../testdata/rang_rio_old.RDS")
     temp_dir <- .gen_temp_dir()
     fake_material_dir <- .gen_temp_dir()
     dir.create(fake_material_dir)
-    dockerize(gran_rio, output_dir = temp_dir, materials_dir = fake_material_dir)
+    dockerize(rang_rio, output_dir = temp_dir, materials_dir = fake_material_dir)
     expect_true(dir.exists(file.path(temp_dir, "materials")))
     expect_equal(list.files(file.path(temp_dir, "materials")), character(0))
     expect_true(any(readLines(file.path(temp_dir, "Dockerfile")) == "COPY materials/ ./materials/"))
