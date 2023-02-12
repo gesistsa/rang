@@ -296,7 +296,7 @@ print.gran <- function(x, ...) {
 #' @export
 print.granlist <- function(x, all_pkgs = FALSE, ...) {
     n_grans <- length(x$grans)
-    cat("resolved:", n_grans, "package(s). Unresolved package(s):", length(x$unresolved_pkgs), "\n")
+    cat("resolved:", n_grans, "package(s). Unresolved package(s):", length(x$unresolved_pkgrefs), "\n")
     if (n_grans > 0) {
         if (n_grans <= 5 || isTRUE(all_pkgs)) {
             print(x$grans)
@@ -337,7 +337,7 @@ convert_edgelist <- function(x) {
     }
     tryCatch({
         all_handles <- vapply(targets, .parse_pkgref, character(1), return_handle = TRUE, USE.NAMES = FALSE)
-        return(.system_requirements_cran(package = all_handles, os = os))
+        return(.system_requirements_cran(handle = all_handles, os = os))
     }, error = function(e) {
         return(.query_sysreqs_safe(targets = targets, os = os))
     })

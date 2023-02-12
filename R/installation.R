@@ -109,7 +109,7 @@
             debs[debs == "libcurl4-openssl-dev"] <- "libcurl4-gnutls-dev"
         }
     }
-    cmd <- paste("apt-get install -y", paste(debs, collapse = " "))
+    cmd <- paste("apt-get install -y", paste(sort(debs), collapse = " "))
     if ("default-jdk" %in% debs) {
         cmd <- paste(cmd, "liblzma-dev libpcre3-dev libbz2-dev && R CMD javareconf")
     }
@@ -125,9 +125,12 @@
         prefix <- ""
         cmd <- .group_apt_cmds(cmds, fix_libgit2 = TRUE)
     } else {
-        update_index <- which("apt-get update" == granlist$deps_sysreqs)
-        cmds <- granlist$deps_sysreqs[(update_index + 1):length(granlist$deps_sysreqs)]
-        prefix <- paste0(paste(granlist$deps_sysreqs[1:update_index], collapse = " && "), " && ")
+        cmds <- setdiff(granlist$deps_sysreqs, c("apt-get install -y software-properties-common", "apt-get update"))
+        ppa_lines <- c("apt-get install -y software-properties-common",
+                       grep("^add-apt-repository", granlist$deps_sysreqs, value = TRUE),
+                       "apt-get update")
+        cmds <- setdiff(granlist$deps_sysreqs, ppa_lines)
+        prefix <- paste0(paste0(ppa_lines, collapse = " && "), " && ")
         cmd <- .group_apt_cmds(cmds, fix_libgit2 = FALSE)
     }
     paste0("apt-get update -qq && ", prefix, cmd)
@@ -206,9 +209,9 @@
     dest_zip <- tempfile(fileext = ".zip")
     tmp_dir <- .gen_temp_dir()
     ## unlike inside the container, we use zip here because it is less buggy
-    download.file(paste("https://api.github.com/repos/", handle, "/zipball/", sha, sep = ""), destfile = dest_zip,
-                  quiet = !verbose)
-    unzip(dest_zip, exdir = tmp_dir)
+    utils::download.file(paste("https://api.github.com/repos/", handle, "/zipball/", sha, sep = ""), destfile = dest_zip,
+                         quiet = !verbose)
+    utils::unzip(dest_zip, exdir = tmp_dir)
     dlist <- list.dirs(path = tmp_dir, recursive = FALSE)
     pkg_dir <- dlist[grepl(short_sha, dlist)]
     if (length(pkg_dir) != 1) {
@@ -222,7 +225,6 @@
     file.rename(from = expected_tarball_path, to = file.path(cache_dir, expected_tarball_path))
     unlink(expected_tarball_path)
 }
-
 
 .cache_pkgs <- function(granlist, output_dir, cran_mirror, verbose) {
     install_order <- .determine_installation_order(granlist)
