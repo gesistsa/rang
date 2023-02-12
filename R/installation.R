@@ -1,49 +1,78 @@
 ##granlist <- readRDS("tests/testdata/graph.RDS")
 
+.safe_get_uid <- function(pkgref, uid) {
+    if (is.null(uid$get(pkgref))) {
+        return(NA_character_)
+    } else {
+        return(uid$get(pkgref))
+    }
+}
+
 .determine_installation_order <- function(granlist) {
     dep <- fastmap::fastmap()
     version <- fastmap::fastmap()
+    uid <- fastmap::fastmap()
+    ## package name as per DESCRIPTION, aka. x
+    ## can't use x here because it is too generic
+    pkgname <- fastmap::fastmap()
     for (gran in granlist$grans) {
-        current_pkg <- unique(gran$original$x)
+        current_pkgref <- unique(gran$original$x_pkgref)
         current_ver <- unique(gran$original$x_version)
         current_dep <- .keep_queryable_dependencies(dep_df = gran$original, no_enhances = gran$no_enhances, no_suggests = gran$no_suggests)
-        dep$set(current_pkg, current_dep)
-        version$set(current_pkg, current_ver)
+        current_pkgname <- unique(gran$original$x)
+        dep$set(current_pkgref, current_dep)
+        version$set(current_pkgref, current_ver)
+        pkgname$set(current_pkgref, current_pkgname)
+        if ("x_uid" %in% colnames(gran$original)) {
+            uid$set(current_pkgref, unique(gran$original$x_uid))
+        }
         for (dep_df in gran$deps) {
-            current_pkg <- unique(dep_df$x)
+            current_pkgref <- unique(dep_df$x_pkgref)
             current_ver <- unique(dep_df$x_version)
             current_dep <- .keep_queryable_dependencies(dep_df = dep_df, no_enhances = gran$no_enhances, no_suggests = gran$no_suggests)
-            dep$set(current_pkg, current_dep)
-            version$set(current_pkg, current_ver)
+            current_pkgname <- unique(dep_df$x)
+            dep$set(current_pkgref, current_dep)
+            version$set(current_pkgref, current_ver)
+            pkgname$set(current_pkgref, current_pkgname)
+            if ("x_uid" %in% colnames(dep_df)) { ## Not supported, but no harm to add it now
+                uid$set(current_pkgref, unique(dep_df$x_uid))
+            }   
         }
     }
     ## installation simulation
-    installed_packages <- c()
-    noncran_packages <- c()
-    needed_packages <- dep$keys()
+    installed_pkgrefs <- c()
+    noncran_pkgrefs <- c()
+    needed_pkgrefs <- dep$keys()
     ## install all terminal nodes
-    for (package in needed_packages) {
-        if(.is_github(package)){
-          noncran_packages <- c(noncran_packages,package)
+    for (pkgref in needed_pkgrefs) {
+        if(.is_github(pkgref)){
+          noncran_pkgrefs <- c(noncran_pkgrefs, pkgref)
           next()
         }
-        if (is.null(dep$get(package))) {
-            installed_packages <- c(installed_packages, package)
+        if (is.null(dep$get(pkgref))) {
+            installed_pkgrefs <- c(installed_pkgrefs, pkgref)
         }
     }
-    while(length(setdiff(needed_packages, c(installed_packages,noncran_packages))) != 0) {
-        for (package in needed_packages) {
+    while(length(setdiff(needed_pkgrefs, c(installed_pkgrefs, noncran_pkgrefs))) != 0) {
+        for (pkgref in needed_pkgrefs) {
             ##print(package)
-            if (!package %in% installed_packages & !package%in% noncran_packages) {
+            if (!pkgref %in% installed_pkgrefs & !pkgref %in% noncran_pkgrefs) {
                 ## check requirement
-                requirement_fulfilled <- length(setdiff(dep$get(package), installed_packages)) == 0
+                requirement_fulfilled <- length(setdiff(dep$get(pkgref), installed_pkgrefs)) == 0
                 if (requirement_fulfilled) {
-                    installed_packages <- c(installed_packages, package)
+                    installed_pkgrefs <- c(installed_pkgrefs, pkgref)
                 }
             }
         }
     }
-    vapply(c(installed_packages,noncran_packages), function(x) version$get(x), character(1))
+    ordered_pkgrefs <- c(installed_pkgrefs, noncran_pkgrefs)
+    ordered_x <- vapply(ordered_pkgrefs, function(x) pkgname$get(x), character(1), USE.NAMES = FALSE)
+    ordered_version <- vapply(ordered_pkgrefs, function(x) version$get(x), character(1), USE.NAMES = FALSE)
+    ordered_source <- vapply(ordered_pkgrefs, function(x) .parse_pkgref(x, return_handle = FALSE), character(1), USE.NAMES = FALSE)
+    ordered_handle <- vapply(ordered_pkgrefs, function(x) .parse_pkgref(x, return_handle = TRUE), character(1), USE.NAMES = FALSE)
+    ordered_uid <- vapply(ordered_pkgrefs, .safe_get_uid, character(1), uid = uid, USE.NAMES = FALSE)
+    data.frame(x = ordered_x, version = ordered_version, source = ordered_source, handle = ordered_handle,
+               uid = ordered_uid)
 }
 
 ## .install_from_cran <- function(x, lib, path = tempdir()) {
