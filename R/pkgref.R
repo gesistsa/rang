@@ -13,7 +13,7 @@
 
 ## For `dep_df`
 ## compulsory columns
-## `x`, `x_version`  are the information as per DESCRIPTION
+## `x`, `x_version`, `x_pubdate` are the information as per DESCRIPTION
 ## `x_pkgref` is x in pkgref, for internal storage, we don't use @ to indicate version / uid
 
 ## optional columns
