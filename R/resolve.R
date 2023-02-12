@@ -75,10 +75,6 @@ NULL
   on.exit(close(con))
 }
 
-.is_github <- function(pkg){
-  grepl("/",pkg)
-}
-
 # get the commit sha for the commit closest to date
 .get_sha <- function(repo,date){
   commits <- gh::gh(paste0("GET /repos/",repo,"/commits"),per_page = 100)
