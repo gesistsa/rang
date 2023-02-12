@@ -60,86 +60,82 @@ NULL
     }
 }
 
-.get_snapshot_dependencies_gh <- function(pkg = "rtoot", snapshot_date = "2022-12-10"){
-  snapshot_date <- anytime::anytime(snapshot_date, tz = "UTC", asUTC = TRUE)
-  sha <- .get_sha(pkg,snapshot_date)  
-  repo_descr <- gh::gh(paste0("GET /repos/",pkg,"/contents/DESCRIPTION"),ref=sha$sha)
-  con <- url(repo_descr$download_url)
-  descr_df <- as.data.frame(read.dcf(con))
-  pkg_dep_df <- .parse_desc(descr_df,snapshot_date)
-  pkg_dep_df$x <- pkg
-  pkg_dep_df$x_version <- sha$sha
-  pkg_dep_df$x_pubdate <- sha$x_pubdate
-  if("y"%in% names(pkg_dep_df)){
-    return(pkg_dep_df[,c("snapshot_date", "x", "x_version", "x_pubdate", "y", "type", "y_raw_version")])  
-  } else{
-    return(pkg_dep_df)
-  }
-  on.exit(close(con))
+.get_snapshot_dependencies_gh <- function(handle = "schochastics/rtoot", snapshot_date = "2022-12-10"){
+    snapshot_date <- anytime::anytime(snapshot_date, tz = "UTC", asUTC = TRUE)
+    sha <- .get_sha(handle, snapshot_date)
+    repo_descr <- gh::gh(paste0("GET /repos/", handle,"/contents/DESCRIPTION"), ref = sha$sha)
+    con <- url(repo_descr$download_url)
+    descr_df <- as.data.frame(read.dcf(con))
+    close(con)
+    pkg_dep_df <- .parse_desc(descr_df,snapshot_date)
+    pkg_dep_df$x_pkgref <- .normalize_pkgs(handle)
+    pkg_dep_df$x_uid <- sha$sha
+    pkg_dep_df$x_pubdate <- sha$x_pubdate
+    if("y"%in% names(pkg_dep_df)){
+        pkg_dep_df$y_pkgref <- .normalize_pkgs(pkg_dep_df$y)
+        return(pkg_dep_df[,c("snapshot_date", "x", "x_version", "x_pubdate", "x_pkgref", "x_uid", "y", "type", "y_raw_version", "y_pkgref")])  
+    } else{
+        return(pkg_dep_df[,c("snapshot_date", "x", "x_version", "x_pubdate", "x_pkgref", "x_uid")])
+    }
 }
 
 # get the commit sha for the commit closest to date
-.get_sha <- function(repo,date){
-  commits <- gh::gh(paste0("GET /repos/",repo,"/commits"),per_page = 100)
-  dates <- sapply(commits,function(x) x$commit$committer$date)
-  idx <- which(dates<=date)[1]
-  k <- 2
-  while(is.null(idx)){
-    commits <- gh::gh(paste0("GET /repos/",repo,"/commits"),per_page = 100,page = k)  
-    k <- k + 1
-  }
-  list(sha = commits[[idx]]$sha,x_pubdate =  anytime::anytime(dates[[idx]], tz = "UTC", asUTC = TRUE))
+.get_sha <- function(handle, date){
+    commits <- gh::gh(paste0("GET /repos/", handle, "/commits"), per_page = 100)
+    dates <- sapply(commits,function(x) x$commit$committer$date)
+    idx <- which(dates<=date)[1]
+    k <- 2
+    while(is.null(idx)){
+        commits <- gh::gh(paste0("GET /repos/", handle, "/commits"), per_page = 100, page = k)  
+        k <- k + 1
+    }
+    list(sha = commits[[idx]]$sha, x_pubdate =  anytime::anytime(dates[[idx]], tz = "UTC", asUTC = TRUE))
 }
 
 # parse a description file from github repo
-.parse_desc <- function(descr_df,snapshot_date){
-  types <- c("Depends","LinkingTo","Imports","Suggests","Enhances")
-  depends <- descr_df[["Depends"]]
-  imports <- descr_df[["Imports"]]
-  linking <- descr_df[["LinkingTo"]]
-  suggests <- descr_df[["Suggests"]]
-  enhances <- descr_df[["Enhances"]]
-  if(!is.null(imports))  imports <- strsplit(imports,",[\n]*")[[1]]
-  if(!is.null(linking))  linking <- strsplit(linking,",[\n]*")[[1]]
-  if(!is.null(suggests)) suggests <- strsplit(suggests,",[\n]*")[[1]]
-  if(!is.null(enhances)) enhances <- strsplit(enhances,",[\n]*")[[1]]
-  if(!is.null(depends))  depends <- strsplit(depends,",[\n]*")[[1]]
-  
-  raw_deps <- list(
-    depends,linking,imports,suggests,enhances
-  )
-  type <- lapply(seq_along(raw_deps),function(x) rep(types[x],length(raw_deps[[x]])))
-  
-  version <- vapply(unlist(raw_deps),.extract_version,character(1),USE.NAMES = FALSE)
-  deps <- gsub("\\s*\\(.*\\)","",unlist(raw_deps))
-  
-  if(length(deps)!=0){
-    return(data.frame(
-      snapshot_date = snapshot_date,
-      # x = descr_df[["Package"]],
-      # x_version = descr_df[["Version"]],
-      y = deps,
-      type = unlist(type),
-      y_raw_version = unlist(version)
-    ))  
-  } else{
-    return(data.frame(
-      snapshot_date = as.Date(snapshot_date),
-      # x = descr_df[["Package"]],
-      # x_version = descr_df[["Version"]]
-    ))  
-  }
-  
-  
+.parse_desc <- function(descr_df, snapshot_date){
+    types <- c("Depends","LinkingTo","Imports","Suggests","Enhances")
+    depends <- descr_df[["Depends"]]
+    imports <- descr_df[["Imports"]]
+    linking <- descr_df[["LinkingTo"]]
+    suggests <- descr_df[["Suggests"]]
+    enhances <- descr_df[["Enhances"]]
+    if(!is.null(imports))  imports <- strsplit(imports, ",[\n]*")[[1]]
+    if(!is.null(linking))  linking <- strsplit(linking, ",[\n]*")[[1]]
+    if(!is.null(suggests)) suggests <- strsplit(suggests, ",[\n]*")[[1]]
+    if(!is.null(enhances)) enhances <- strsplit(enhances, ",[\n]*")[[1]]
+    if(!is.null(depends))  depends <- strsplit(depends, ",[\n]*")[[1]]
+    raw_deps <- list(
+        depends, linking, imports, suggests, enhances
+    )
+    type <- lapply(seq_along(raw_deps), function(x) rep(types[x], length(raw_deps[[x]])))
+    version <- vapply(unlist(raw_deps), .extract_version, character(1), USE.NAMES = FALSE)
+    deps <- gsub("\\s*\\(.*\\)","",unlist(raw_deps))
+    if(length(deps) != 0) {
+        return(data.frame(
+            snapshot_date = snapshot_date,
+            x = descr_df[["Package"]],
+            x_version = descr_df[["Version"]],
+            y = deps,
+            type = unlist(type),
+            y_raw_version = unlist(version)
+        ))
+    } else{
+        return(data.frame(
+            snapshot_date = as.Date(snapshot_date),
+            x = descr_df[["Package"]],
+            x_version = descr_df[["Version"]]
+        ))
+    }
 }
 
 # extract the required version, if present from description
-.extract_version <- function(x){
-  ver <- regmatches(x,gregexpr("\\(.*\\)",x))[[1]]
-  if(length(ver)==0){
+.extract_version <- function(x) {
+  ver <- regmatches(x, gregexpr("\\(.*\\)",x))[[1]]
+  if (length(ver) == 0) {
     ver <- "*"
   }
-  gsub("\\(|\\)|\\n","",ver)
+  gsub("\\(|\\)|\\n", "", ver)
 }
 
 ## dep_df is a terminal node if
@@ -149,13 +145,7 @@ NULL
 ## getOption("defaultPackages")
 ## "datasets", "utils", "grDevices", "graphics", "stats", "methods"
 
-## dbi <- .get_snapshot_dependencies("DBI")
-## R6 <- .get_snapshot_dependencies("R6")
-## saveRDS(dbi, "tests/testdata/dbi_dep_df.RDS")
-## saveRDS(httr, "tests/testdata/httr_dep_df.RDS")
-## saveRDS(R6, "tests/testdata/R6.RDS")
-
-## We should consider Imports, Depends, LinkingTo, and Enhances
+## We should consider Imports, Depends, LinkingTo, and Enhances in normal cases
 
 .keep_queryable_dependencies <- function(dep_df, no_enhances = TRUE, no_suggests = TRUE) {
     if (!"y" %in% colnames(dep_df)) {
@@ -248,7 +238,7 @@ resolve <- function(pkgs, snapshot_date, no_enhances = TRUE, no_suggests = TRUE,
         output$deps_sysreqs <- res
         .has_ppa_in_sysreqs(output)
     }
-    attr(output, "class") <- "granlist"    
+    attr(output, "class") <- "granlist"
     return(output)
 }
 
@@ -298,7 +288,7 @@ print.gran <- function(x, ...) {
         total_terminal_nodes <- 0
     }
     latest_version <- unique(x$original$x_version)
-    cat("The latest version of `", .parse_pkgref(x$pkgref), "` [", .parse_pkgref(x$pkgref, FALSE),  "] at ",
+    cat("The latest version of `", unique(x$original$x), "` [", .parse_pkgref(x$pkgref, FALSE),  "] at ",
         as.character(x$snapshot_date), " was ", latest_version, ", which has ",
         total_deps, " unique dependencies (", total_terminal_nodes, " with no dependencies.)\n", sep = "")
 }
