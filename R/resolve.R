@@ -31,29 +31,32 @@ NULL
 
 ## get the latest version as of date
 ## let's call this output dep_df; basically is a rough version of edgelist
-.get_snapshot_dependencies <- function(pkg = "rtoot", snapshot_date = "2022-12-10") {
-  if(isFALSE(.is_github(pkg))){
-    return(.get_snapshot_dependencies_cran(pkg = pkg,snapshot_date = snapshot_date))
-  } else{
-    return(.get_snapshot_dependencies_gh(pkg = pkg,snapshot_date = snapshot_date))
-  }
+.get_snapshot_dependencies <- function(pkgref = "cran::rtoot", snapshot_date = "2022-12-10") {
+    source <- .parse_pkgref(pkgref, return_handle = FALSE)
+    switch(source,
+           "cran" = {
+               return(.get_snapshot_dependencies_cran(handle = .parse_pkgref(pkgref) ,snapshot_date = snapshot_date))
+           },
+           "github" = {
+               return(.get_snapshot_dependencies_gh(handle = .parse_pkgref(pkgref), snapshot_date = snapshot_date))
+           })
 }
 
-.get_snapshot_dependencies_cran <- function(pkg = "rtoot", snapshot_date = "2022-12-10") {
+.get_snapshot_dependencies_cran <- function(handle = "rtoot", snapshot_date = "2022-12-10") {
     snapshot_date <- anytime::anytime(snapshot_date, tz = "UTC", asUTC = TRUE)
-    search_res <- .search(pkg)
+    search_res <- .search(handle)
     search_res$pubdate <- anytime::anytime(search_res$crandb_file_date, tz = "UTC", asUTC = TRUE)
     snapshot_versions <- search_res[search_res$pubdate <= snapshot_date,]
     if (nrow(snapshot_versions) == 0) {
-        stop("No snapshot version exists for ", pkg, ".",  call. = FALSE)
+        stop("No snapshot version exists for ", handle, ".",  call. = FALSE)
     }
     latest_version <- utils::tail(snapshot_versions[order(snapshot_versions$pubdate),], n = 1)
     dependencies <- latest_version$dependencies[[1]]
     if (nrow(dependencies != 0)) {
-        return(data.frame(snapshot_date = snapshot_date, x = pkg, x_version = latest_version$Version, x_pubdate = latest_version$pubdate,  y = dependencies$package, type = dependencies$type, y_raw_version = dependencies$version))
+        return(data.frame(snapshot_date = snapshot_date, x = handle, x_version = latest_version$Version, x_pubdate = latest_version$pubdate, x_pkgref = .normalize_pkgs(handle), y = dependencies$package, type = dependencies$type, y_raw_version = dependencies$version, y_pkgref = .normalize_pkgs(dependencies$package)))
     } else {
         ## no y
-        return(data.frame(snapshot_date = snapshot_date, x = pkg, x_version = latest_version$Version, x_pubdate = latest_version$pubdate))
+        return(data.frame(snapshot_date = snapshot_date, x = handle, x_version = latest_version$Version, x_pubdate = latest_version$pubdate, x_pkgref = .normalize_pkgs(handle)))
     }
 }
 
@@ -169,7 +172,7 @@ NULL
     if (nrow(res) == 0) {
         return(NULL)
     } else {
-        return(unique(res$y))
+        return(unique(res$y_pkgref))
     }
 }
 
@@ -214,31 +217,31 @@ resolve <- function(pkgs, snapshot_date, no_enhances = TRUE, no_suggests = TRUE,
     if (snapshot_date >= anytime::anytime(Sys.Date())) {
         stop("We don't know the future.", call. = FALSE)
     }
-
+    pkgrefs <- .normalize_pkgs(pkgs)
     output <- list()
     output$call <- match.call()
     output$grans <- list()
     output$snapshot_date <- snapshot_date
     output$no_enhances <- no_enhances
     output$no_suggests <- no_suggests
-    output$unresolved_pkgs <- character(0)
+    output$unresolved_pkgrefs <- character(0)
     output$deps_sysreqs <- character(0)
     output$r_version <- .get_rver(snapshot_date)
     output$os <- os
-    for (pkg in pkgs) {
+    for (pkgref in pkgrefs) {
         tryCatch({
-            res <- .resolve_pkg(pkg = pkg, snapshot_date = snapshot_date, no_enhances = no_enhances,
+            res <- .resolve_pkgref(pkgref = pkgref, snapshot_date = snapshot_date, no_enhances = no_enhances,
                                 no_suggests = no_suggests, verbose = verbose)
-            output$grans[[pkg]] <- res
+            output$grans[[pkgref]] <- res
         }, error = function(err) {
             if (isTRUE(verbose)) {
-                cat("Query failed: ", pkg, "\n")
+                cat("Query failed: ", pkgref, "\n")
             }
         })
     }
-    output$unresolved_pkgs <- setdiff(pkgs, names(output$grans))
-    if (length(output$unresolved_pkgs) > 0) {
-        warning("Some package(s) can't be resolved: ", paste(output$unresolved_pkgs, collapse = ", "), call. = FALSE)
+    output$unresolved_pkgrefs <- setdiff(pkgrefs, names(output$grans))
+    if (length(output$unresolved_pkgrefs) > 0) {
+        warning("Some package(s) can't be resolved: ", paste(output$unresolved_pkgrefs, collapse = ", "), call. = FALSE)
     }
     if (isTRUE(get_sysreqs)) {
         res <- .granlist_query_sysreps(output, os = os)
@@ -249,10 +252,10 @@ resolve <- function(pkgs, snapshot_date, no_enhances = TRUE, no_suggests = TRUE,
     return(output)
 }
 
-.resolve_pkg <- function(pkg, snapshot_date, no_enhances = TRUE, no_suggests = TRUE, verbose = FALSE) {
-    pkg_dep_df <- .get_snapshot_dependencies(pkg = pkg, snapshot_date = snapshot_date)
+.resolve_pkgref <- function(pkgref, snapshot_date, no_enhances = TRUE, no_suggests = TRUE, verbose = FALSE) {
+    pkg_dep_df <- .get_snapshot_dependencies(pkgref = pkgref, snapshot_date = snapshot_date)
     output <- list()
-    output$pkg <- pkg
+    output$pkgref <- pkgref
     output$no_enhances <- no_enhances
     output$no_suggests <- no_suggests
     output$snapshot_date <- snapshot_date
@@ -265,21 +268,21 @@ resolve <- function(pkgs, snapshot_date, no_enhances = TRUE, no_suggests = TRUE,
     }
     seen_deps <- c()
     while (q$size() != 0) {
-        current_pkg <- q$pop()
+        current_pkgref <- q$pop()
         if (isTRUE(verbose)) {
-            cat("Querying: ", current_pkg, "\n")
+            cat("Querying: ", current_pkgref, "\n")
         }
         tryCatch({
-            pkg_dep_df <- .get_snapshot_dependencies(pkg = current_pkg, snapshot_date = snapshot_date)
-            output$deps[[current_pkg]] <- pkg_dep_df
-            pkgs_need_query <- unique(setdiff(.keep_queryable_dependencies(pkg_dep_df, no_enhances, no_suggests), c(names(output$deps), seen_deps)))
-            seen_deps <- union(seen_deps, pkgs_need_query)
-            for (dep in pkgs_need_query) {
+            pkg_dep_df <- .get_snapshot_dependencies(pkgref = current_pkgref, snapshot_date = snapshot_date)
+            output$deps[[current_pkgref]] <- pkg_dep_df
+            pkgs_to_query <- unique(setdiff(.keep_queryable_dependencies(pkg_dep_df, no_enhances, no_suggests), c(names(output$deps), seen_deps)))
+            seen_deps <- union(seen_deps, pkgs_to_query)
+            for (dep in pkgs_to_query) {
                 q$push(dep)
             }
         }, error = function(e) {
             ## can't query
-            output$unresolved_deps <- c(output$unresolved_deps, current_pkg)
+            output$unresolved_deps <- c(output$unresolved_deps, current_pkgref)
         })
     }
     attr(output, "class") <- "gran"
@@ -295,7 +298,9 @@ print.gran <- function(x, ...) {
         total_terminal_nodes <- 0
     }
     latest_version <- unique(x$original$x_version)
-    cat("The latest version of `", x$pkg, "` at ", as.character(x$snapshot_date), " was ", latest_version, ", which has ", total_deps, " unique dependencies (", total_terminal_nodes, " with no dependencies.)\n", sep = "")
+    cat("The latest version of `", .parse_pkgref(x$pkgref), "` [", .parse_pkgref(x$pkgref, FALSE),  "] at ",
+        as.character(x$snapshot_date), " was ", latest_version, ", which has ",
+        total_deps, " unique dependencies (", total_terminal_nodes, " with no dependencies.)\n", sep = "")
 }
 
 #' @export
