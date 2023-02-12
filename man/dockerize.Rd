@@ -39,7 +39,7 @@ This applies only to R version <= 3.1}
 \item{granlist_as_comment}{logical, whether to write granlist and the steps to reproduce
 the file to \code{path} as comment}
 
-\item{cache}{logical, whether to cache the content from CRAN now. Please note that the system requirements are not cached}
+\item{cache}{logical, whether to cache the packages now. Please note that the system requirements are not cached. For query with non-CRAN packages, this option is strongly recommended.}
 
 \item{verbose}{logical, pass to \code{\link[=install.packages]{install.packages()}}, the negated value is also passed as \code{quiet} to both \code{\link[=install.packages]{install.packages()}}
 and \code{\link[=download.file]{download.file()}}.}

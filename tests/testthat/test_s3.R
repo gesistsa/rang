@@ -3,7 +3,7 @@ test_that("printing with and without resolved packages", {
     gran_ok <- readRDS("../testdata/gran_ok.RDS")
     gran_unresolved <- readRDS("../testdata/gran_unresolved.RDS")
     gran_output <- capture_output(print(gran_ok$grans[[1]]))
-    expect_equal(gran_output, "The latest version of `LDAvis` at 2023-01-01 was 0.3.2, which has 2 unique dependencies (2 with no dependencies.)")
+    expect_equal(gran_output, "The latest version of `LDAvis` [cran] at 2023-01-01 was 0.3.2, which has 2 unique dependencies (2 with no dependencies.)")
     gran_ok_output <- capture_output(print(gran_ok))
     expect_true(grepl("^resolved: 1 package\\(s\\). Unresolved package\\(s\\): 0", gran_ok_output))
     gran_mixture_output <- capture_output(print(gran_mixture))
