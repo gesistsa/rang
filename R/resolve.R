@@ -13,7 +13,11 @@ NULL
 .memo_rver <- memoise::memoise(.rver, cache = cachem::cache_mem(max_age = 120 * 60))
 
 .get_rver <- function(snapshot_date) {
-    allvers <- .memo_rver()
+    if (snapshot_date < attr(cached_rver, "newest_date")) {
+        allvers <- cached_rver
+    } else {
+        allvers <- .memo_rver()
+    }
     allvers$date <- anytime::anytime(allvers$date, tz = "UTC", asUTC = TRUE)
     utils::tail(allvers[allvers$date < snapshot_date,], 1)$version
 }
@@ -436,4 +440,6 @@ convert_edgelist <- function(x) {
 ## os <- names(remotes:::supported_os_versions())
 ## supported_os <- unlist(mapply(function(x, y) paste(x,"-", y, sep = ""), os, remotes:::supported_os_versions()))
 ## names(supported_os) <- NULL
-## usethis::use_data(supported_os, internal = TRUE)
+## cached_rver <- .rver()
+## attr(cached_rver, "newest_date") <- anytime::anytime(tail(cached_rver, n = 1)$date, tz = "UTC", asUTC = TRUE)
+## usethis::use_data(supported_os, cached_rver, internal = TRUE, overwrite = TRUE)
