@@ -88,9 +88,12 @@ test_that("cache for R < 3.1 and R >= 2.1", {
     expect_true(file.exists(file.path(temp_dir, "cache", "testthat_0.7.1.tar.gz")))
 })
 
-test_that("gh correct querying", {
-    x <- resolve(c("cran/sna"), snapshot_date = "2020-05-01")
+test_that("github correct querying", {
+    x <- resolve(c("cran/sna"), snapshot_date = "2020-05-01", get_sysreqs = FALSE)
     expect_equal(length(x$ranglets[[1]]$deps), 19)
+    x <- resolve("schochastics/netUtils", snapshot_date = "2020-06-01", get_sysreqs = FALSE)
+    expect_equal(x$ranglets[[1]]$pkgref, "github::schochastics/netUtils")
+    expect_equal(unique(x$ranglets[[1]]$original$x), "igraphUtils")
 })
 
 test_that("Non-cran must enforce caching ref #22", {
