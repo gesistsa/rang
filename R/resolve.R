@@ -160,7 +160,7 @@ NULL
     if (isTRUE(no_enhances)) {
         disabled_types <- c(disabled_types, "Enhances")
     }
-    res <- dep_df[!dep_df$type %in% disabled_types & dep_df$y != "R" & !(dep_df$y %in% c("datasets", "utils", "grDevices", "graphics", "stats", "methods", "tools", "grid", "splines", "Rgraphviz", "parallel", "stats4", "tcltk", "MASS", "nnet", "class")),]
+    res <- dep_df[!dep_df$type %in% disabled_types & dep_df$y != "R" & !(dep_df$y %in% c("datasets", "utils", "grDevices", "graphics", "stats", "methods", "tools", "grid", "splines", "Rgraphviz", "parallel", "stats4", "tcltk", "MASS", "nnet", "class", "spatial")),]
     if (nrow(res) == 0) {
         return(NULL)
     } else {
