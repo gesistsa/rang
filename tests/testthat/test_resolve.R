@@ -92,6 +92,20 @@ test_that("gh correct querying", {
     x <- resolve(c("cran/sna"), snapshot_date = "2020-05-01")
     expect_equal(length(x$ranglets[[1]]$deps), 19)
 })
+
+test_that("Non-cran must enforce caching ref #22", {
+    temp_dir <- .gen_temp_dir()
+    graph <- readRDS("../testdata/ancientsna.RDS")
+    expect_equal(graph$ranglets[[1]]$pkgref, "github::cran/sna")
+    expect_error(dockerize(graph, output_dir = temp_dir, verbose = FALSE)) ## cache = FALSE
+    expect_error(dockerize(graph, output_dir = temp_dir, cache = TRUE, verbose = FALSE), NA)
+    temp_dir <- .gen_temp_dir()
+    graph <- readRDS("../testdata/anciente1071.RDS")
+    expect_equal(graph$ranglets[[1]]$pkgref, "cran::e1071")
+    expect_error(dockerize(graph, output_dir = temp_dir, verbose = FALSE), NA)
+    expect_error(dockerize(graph, output_dir = temp_dir, cache = TRUE, verbose = FALSE), NA)
+})
+
 ## This should be tested. But this takes too long without cache.
 ## test_that("issue #21", {
 ##     skip_if_offline()
