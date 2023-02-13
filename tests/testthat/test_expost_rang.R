@@ -108,3 +108,8 @@ test_that("Docker R < 2.1", {
     rang_rio$r_version <- "2.0.0"
     expect_error(export_rang(rang_rio, path = temp_r))
 })
+
+test_that("issue #38", {
+    issue38 <- readRDS("../testdata/issue38.RDS")
+    expect_error(export_rang(issue38, tempfile(fileext = ".R")), NA)
+})

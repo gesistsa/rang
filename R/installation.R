@@ -43,7 +43,7 @@
     needed_pkgrefs <- dep$keys()
     ## install all terminal nodes
     for (pkgref in needed_pkgrefs) {
-        if(.is_github(pkgref)){
+        if(.is_github(pkgref)) {
           noncran_pkgrefs <- c(noncran_pkgrefs, pkgref)
           next()
         }
@@ -54,7 +54,7 @@
     while(length(setdiff(needed_pkgrefs, c(installed_pkgrefs, noncran_pkgrefs))) != 0) {
         for (pkgref in needed_pkgrefs) {
             ##print(package)
-            if (!pkgref %in% installed_pkgrefs & !pkgref %in% noncran_pkgrefs) {
+            if (!pkgref %in% installed_pkgrefs && !pkgref %in% noncran_pkgrefs) {
                 ## check requirement
                 requirement_fulfilled <- length(setdiff(dep$get(pkgref), installed_pkgrefs)) == 0
                 if (requirement_fulfilled) {
