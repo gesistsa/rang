@@ -37,10 +37,14 @@ remotes::install_github("chainsawriot/rang")
 
 ## Example
 
-To obtain the dependency graph of an R package, use `resolve`
+To obtain the dependency graph of R packages, use `resolve`. Currently, this package supports both CRAN and Github packages.
 
 ```r
 library(rang)
+resolve(pkgs = c("sna", "schochastics/rtoot"), snapshot_date = "2022-11-30")
+```
+
+```r
 graph <- resolve(pkgs = c("openNLP", "LDAvis", "topicmodels", "quanteda"),
                  snapshot_date = "2020-01-16")
 ```

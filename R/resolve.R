@@ -118,7 +118,7 @@ NULL
             type = unlist(type),
             y_raw_version = unlist(version)
         ))
-    } else{
+    } else {
         return(data.frame(
             snapshot_date = as.Date(snapshot_date),
             x = descr_df[["Package"]],

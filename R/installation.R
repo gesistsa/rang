@@ -262,11 +262,11 @@
       basic_docker[rang_line:length(basic_docker)])
 }
 
-.insert_materials_dir <- function(basic_docker){
-  rang_line <- which(basic_docker == "COPY rang.R ./rang.R")
-  c(basic_docker[1:rang_line], 
-    "COPY materials/ ./materials/",
-    basic_docker[(rang_line + 1):length(basic_docker)])
+.insert_materials_dir <- function(basic_docker) {
+    rang_line <- which(basic_docker == "COPY rang.R ./rang.R")
+    c(basic_docker[1:rang_line], 
+      "COPY materials/ ./materials/",
+      basic_docker[(rang_line + 1):length(basic_docker)])
 }
 
 .generate_pre310_docker <- function(r_version, lib, sysreqs_cmd, cache, debian_version = "lenny") {
@@ -361,7 +361,7 @@ export_rang <- function(rang, path, rang_as_comment = TRUE, verbose = TRUE, lib 
 #' @param materials_dir character, path to the directiry containing dditional resources (e.g. analysis scripts) to be copied into `output_dir` and in turn into the Docker container
 #' @param image character, which versioned Rocker image to use. Can only be "r-ver", "rstudio", "tidyverse", "verse", "geospatial"
 #' This applies only to R version <= 3.1
-#' @param cache logical, whether to cache the packages now. Please note that the system requirements are not cached. For query with non-CRAN packages, this option is strongly recommended.
+#' @param cache logical, whether to cache the packages now. Please note that the system requirements are not cached. For query with non-CRAN packages, this option is strongly recommended. For R version < 3.1, this must be TRUE if there is any non-CRAN packages.
 #' @param ... arguments to be passed to `dockerize`
 #' @return `output_dir`, invisibly
 #' @inheritParams export_rang
