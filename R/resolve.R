@@ -329,22 +329,39 @@ convert_edgelist <- function(x) {
     unique(c(original_pkgrefs, all_dep_pkgrefs))
 }
 
+.group_pkgrefs_by_source <- function(pkgrefs) {
+    sources <- vapply(pkgrefs, .parse_pkgref, character(1), return_handle = FALSE, USE.NAMES = FALSE)
+    handles <- vapply(pkgrefs, .parse_pkgref, character(1), return_handle = TRUE, USE.NAMES = FALSE)
+    res <- list()
+    for (source in unique(sources)) {
+        res[[source]] <- handles[sources == source]
+    }
+    return(res)
+}
+
 .rang_query_sysreqs <- function(rang, os = "ubuntu-20.04") {
     targets <- .rang_extract_all_deps(rang)
     if (length(targets) == 0) {
         warning("No packages to query for system requirements.", call. = FALSE)
         return(NA)
     }
-    any_noncran <- any(vapply(targets, .parse_pkgref, character(1), return_handle = FALSE, USE.NAMES = FALSE) != "cran")
-    if (isTRUE(any_noncran)) {
-        .query_sysreqs_safe(targets, os = os)
-    }
     tryCatch({
-        all_handles <- vapply(targets, .parse_pkgref, character(1), return_handle = TRUE, USE.NAMES = FALSE)
-        return(.system_requirements_cran(handle = all_handles, os = os))
+        return(.query_sysreqs_smart(targets = targets, os = os))
     }, error = function(e) {
         return(.query_sysreqs_safe(targets = targets, os = os))
     })
+}
+
+.query_sysreqs_smart <- function(targets, os = "ubuntu-20.04") {
+    output <- list()
+    grouped_targets <- .group_pkgrefs_by_source(targets)
+    if ("github" %in% names(grouped_targets)) {
+        output[["github"]] <- .system_requirements_github(grouped_targets[["github"]], os = os)
+    }
+    if ("cran" %in% names(grouped_targets)) {
+        output[["cran"]] <- .system_requirements_cran(grouped_targets[["cran"]], os = os)
+    }
+    unique(unlist(output))
 }
 
 .query_sysreqs_safe <- function(targets, os = "ubuntu-20.04") {
@@ -374,8 +391,13 @@ convert_edgelist <- function(x) {
     remotes::system_requirements(package = handle, os = os)
 }
 
-## get system requirements for github packages
 .system_requirements_github <- function(handle, os) {
+    res <- lapply(handle, .system_requirements_github_single, os = os)
+    unique(unlist(res))
+}
+
+## get system requirements for github packages
+.system_requirements_github_single <- function(handle, os) {
     os_info <- strsplit(os, "-")[[1]]
     DEFAULT_RSPM <- "https://packagemanager.rstudio.com"
     DEFAULT_RSPM_REPO_ID <- "1"
