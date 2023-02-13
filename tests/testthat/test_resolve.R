@@ -101,7 +101,7 @@ test_that(".system_requirements_github", {
     expect_true(all(grepl("^dnf", res)))
 })
 
-test_that("github correct querying", {
+test_that("github correct querying; also #25", {
     skip_if_offline()
     skip_on_cran()
     x <- resolve(c("cran/sna"), snapshot_date = "2020-05-01", get_sysreqs = FALSE)
@@ -111,6 +111,10 @@ test_that("github correct querying", {
     expect_equal(unique(x$ranglets[[1]]$original$x), "igraphUtils")
     x <- resolve("tidyverse/stringr", snapshot_date = "2022-12-31")
     expect_true(all(grepl("^apt-get", x$deps_sysreqs)))
+    x2 <- resolve("tidyverse/stringr", snapshot_date = "2022-12-31", get_sysreqs = FALSE)
+    expect_equal(x2$deps_sysreqs, character(0))
+    x2 <- query_sysreqs(x2)
+    expect_equal(x2$deps_sysreqs, x$deps_sysreqs)
 })
 
 test_that("Non-cran must enforce caching ref #22", {

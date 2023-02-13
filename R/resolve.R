@@ -343,6 +343,30 @@ convert_edgelist <- function(x) {
     return(res)
 }
 
+#' Query for System Requirements
+#'
+#' This function takes an S3 object returned from [resolve()] and (re)queries the System Requirements.
+#' @inheritParams export_rang
+#' @inheritParams resolve
+#' @inherit resolve return
+#' @export
+#' @seealso [resolve()]
+#' @examples
+#' \donttest{
+#' if (interactive()) {
+#'     graph <- resolve(pkgs = c("openNLP", "LDAvis", "topicmodels", "quanteda"),
+#'                 snapshot_date = "2020-01-16", get_sysreqs = FALSE)
+#'     graph$deps_sysreqs
+#'     graph2 <- query_sysreqs(graph, os = "ubuntu-20.04")
+#'     graph2$deps_sysreqs
+#' }
+#' }
+query_sysreqs <- function(rang, os = "ubuntu-20.04") {
+    rang$os <- os
+    rang$deps_sysreqs <- .rang_query_sysreqs(rang = rang, os = os)
+    return(rang)
+}
+
 .rang_query_sysreqs <- function(rang, os = "ubuntu-20.04") {
     targets <- .rang_extract_all_deps(rang)
     if (length(targets) == 0) {
