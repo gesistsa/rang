@@ -204,24 +204,28 @@
 .cache_github <- function(x, version, handle, source, uid, cache_dir, verbose) {
     sha <- uid
     short_sha <- substr(sha, 1, 7)
-    dest_zip <- tempfile(fileext = ".zip")
+    tarball_path <- file.path(cache_dir, paste("raw_", x, "_", version, ".tar.gz", sep = ""))
     tmp_dir <- .gen_temp_dir()
     ## unlike inside the container, we use zip here because it is less buggy
-    utils::download.file(paste("https://api.github.com/repos/", handle, "/zipball/", sha, sep = ""), destfile = dest_zip,
+    utils::download.file(paste("https://api.github.com/repos/", handle, "/tarball/", sha, sep = ""), destfile = tarball_path,
                          quiet = !verbose)
-    utils::unzip(dest_zip, exdir = tmp_dir)
-    dlist <- list.dirs(path = tmp_dir, recursive = FALSE)
-    pkg_dir <- dlist[grepl(short_sha, dlist)]
-    if (length(pkg_dir) != 1) {
-        stop(paste0("couldn't uniquely locate the unzipped package source in ", tmp_dir))
+    if (!file.exists(tarball_path)) {
+        warning(names(x), "(", x,") can't be cache.")
     }
-    res <- system(command = paste("R", "CMD", "build", pkg_dir), intern = TRUE)
-    expected_tarball_path <- paste(x, "_", version, ".tar.gz", sep = "")
-    if (!file.exists(expected_tarball_path)) {
-        stop("Cannot locate the built tarball.")
-    }
-    file.rename(from = expected_tarball_path, to = file.path(cache_dir, expected_tarball_path))
-    unlink(expected_tarball_path)
+
+    ## utils::unzip(dest_zip, exdir = tmp_dir)
+    ## dlist <- list.dirs(path = tmp_dir, recursive = FALSE)
+    ## pkg_dir <- dlist[grepl(short_sha, dlist)]
+    ## if (length(pkg_dir) != 1) {
+    ##     stop(paste0("couldn't uniquely locate the unzipped package source in ", tmp_dir))
+    ## }
+    ## res <- system(command = paste("R", "CMD", "build", pkg_dir), intern = TRUE)
+    ## expected_tarball_path <- paste(x, "_", version, ".tar.gz", sep = "")
+    ## if (!file.exists(expected_tarball_path)) {
+    ##     stop("Cannot locate the built tarball.")
+    ## }
+    ## file.rename(from = expected_tarball_path, to = file.path(cache_dir, expected_tarball_path))
+    ## unlink(expected_tarball_path)
 }
 
 .cache_pkgs <- function(rang, output_dir, cran_mirror, verbose) {
@@ -241,6 +245,7 @@
                         cran_mirror = cran_mirror, verbose = verbose)
         }
         if (source == "github") {
+            ## please note that these cached packages are not built
             .cache_github(x = x, version = version, handle = handle,
                           source = source, uid = uid,
                           cache_dir = cache_dir, verbose = verbose)

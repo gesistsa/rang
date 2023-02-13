@@ -32,12 +32,39 @@
     invisible(tarball_path)
 }
 
+.tempfile <- function(tmpdir = tempdir(), fileext = ".tar.gz") {
+    file.path(tmpdir,
+    paste(paste(sample(c(LETTERS, letters), 20, replace = TRUE), collapse = "")),
+    fileext)
+}
+
+.build_raw_tarball <- function(raw_tarball_path, x, version, tarball_path) {
+    tmp_dir <- .tempfile(fileext = "")
+    dir.create(tmp_dir)
+    system(command = paste("tar", "-zxf ", raw_tarball_path, "-C", tmp_dir))
+    pkg_dir <- list.files(path = tmp_dir, full.names = TRUE)[1]
+    new_pkg_dir <- file.path(tmp_dir, x)
+    file.rename(pkg_dir, new_pkg_dir)
+    res <- system(command = paste("R", "CMD", "build", new_pkg_dir))
+    expected_tarball_path <- paste(x, "_", version, ".tar.gz", sep = "")
+    stopifnot(file.exists(expected_tarball_path))
+    file.rename(expected_tarball_path, tarball_path)
+    return(tarball_path)
+}
+
 .install_from_source <- function(x, version, handle, source, uid, lib,
                                  path = tempdir(), verbose, cran_mirror, current_r_version) {
     tarball_path <- file.path(path, paste(x, "_", version, ".tar.gz", sep = ""))
-    if (!file.exists(tarball_path)) {
+    raw_tarball_path <- file.path(path, paste("raw_", x, "_", version, ".tar.gz", sep = ""))
+    if (!file.exists(tarball_path) && !file.exists(raw_tarball_path)) {
         .download_package(tarball_path = tarball_path, x = x, version = version, handle = handle, source = source,
                           uid = uid, verbose = verbose)
+    }
+    if (file.exists(raw_tarball_path)) {
+        tarball_path <- .build_raw_tarball(raw_tarball_path, x = x, version = version, tarball_path)
+        if (!file.exists(tarball_path)) {
+            stop("building failed.")
+        }
     }
     .install_packages(tarball_path, lib, verbose, current_r_version)
     ## check and error
@@ -62,10 +89,16 @@
     )
 }
 
+.tempfile <- function(tmpdir = tempdir(), fileext = ".tar.gz") {
+    file.path(tmpdir,
+    paste(paste(sample(c(LETTERS, letters), 20, replace = TRUE), collapse = "")),
+    fileext)
+}
+
 .download_package_from_github <- function(tarball_path, x, version, handle, source, uid) {
     sha <- uid
     short_sha <- substr(sha, 1, 7)
-    dest_tar <- tempfile(fileext = ".tar.gz")
+    dest_tar <- .tempfile(fileext = ".tar.gz")
     tmp_dir <- tempdir()
     tryCatch(
         download.file(paste("https://api.github.com/repos/", handle, "/tarball/", sha, sep = ""), destfile = dest_tar),
