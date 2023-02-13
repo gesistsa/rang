@@ -60,7 +60,7 @@ NULL
     }
 }
 
-.get_snapshot_dependencies_gh <- function(handle = "schochastics/rtoot", snapshot_date = "2022-12-10"){
+.get_snapshot_dependencies_gh <- function(handle = "schochastics/rtoot", snapshot_date = "2022-12-10") {
     snapshot_date <- anytime::anytime(snapshot_date, tz = "UTC", asUTC = TRUE)
     sha <- .get_sha(handle, snapshot_date)
     repo_descr <- gh::gh(paste0("GET /repos/", handle,"/contents/DESCRIPTION"), ref = sha$sha)
@@ -71,21 +71,21 @@ NULL
     pkg_dep_df$x_pkgref <- .normalize_pkgs(handle)
     pkg_dep_df$x_uid <- sha$sha
     pkg_dep_df$x_pubdate <- sha$x_pubdate
-    if("y"%in% names(pkg_dep_df)){
+    if("y"%in% names(pkg_dep_df)) {
         pkg_dep_df$y_pkgref <- .normalize_pkgs(pkg_dep_df$y)
         return(pkg_dep_df[,c("snapshot_date", "x", "x_version", "x_pubdate", "x_pkgref", "x_uid", "y", "type", "y_raw_version", "y_pkgref")])  
-    } else{
+    } else {
         return(pkg_dep_df[,c("snapshot_date", "x", "x_version", "x_pubdate", "x_pkgref", "x_uid")])
     }
 }
 
 # get the commit sha for the commit closest to date
-.get_sha <- function(handle, date){
+.get_sha <- function(handle, date) {
     commits <- gh::gh(paste0("GET /repos/", handle, "/commits"), per_page = 100)
     dates <- sapply(commits,function(x) x$commit$committer$date)
     idx <- which(dates<=date)[1]
     k <- 2
-    while(is.null(idx)){
+    while(is.null(idx)) {
         commits <- gh::gh(paste0("GET /repos/", handle, "/commits"), per_page = 100, page = k)  
         k <- k + 1
     }
@@ -93,18 +93,18 @@ NULL
 }
 
 # parse a description file from github repo
-.parse_desc <- function(descr_df, snapshot_date){
+.parse_desc <- function(descr_df, snapshot_date) {
     types <- c("Depends","LinkingTo","Imports","Suggests","Enhances")
     depends <- descr_df[["Depends"]]
     imports <- descr_df[["Imports"]]
     linking <- descr_df[["LinkingTo"]]
     suggests <- descr_df[["Suggests"]]
     enhances <- descr_df[["Enhances"]]
-    if(!is.null(imports))  imports <- strsplit(imports, ",[\n]*")[[1]]
-    if(!is.null(linking))  linking <- strsplit(linking, ",[\n]*")[[1]]
-    if(!is.null(suggests)) suggests <- strsplit(suggests, ",[\n]*")[[1]]
-    if(!is.null(enhances)) enhances <- strsplit(enhances, ",[\n]*")[[1]]
-    if(!is.null(depends))  depends <- strsplit(depends, ",[\n]*")[[1]]
+    if(!is.null(imports))  imports <- trimws(strsplit(imports, ",[\n]*")[[1]])
+    if(!is.null(linking))  linking <- trimws(strsplit(linking, ",[\n]*")[[1]])
+    if(!is.null(suggests)) suggests <- trimws(strsplit(suggests, ",[\n]*")[[1]])
+    if(!is.null(enhances)) enhances <- trimws(strsplit(enhances, ",[\n]*")[[1]])
+    if(!is.null(depends))  depends <- trimws(strsplit(depends, ",[\n]*")[[1]])
     raw_deps <- list(
         depends, linking, imports, suggests, enhances
     )

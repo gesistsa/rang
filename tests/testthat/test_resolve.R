@@ -88,6 +88,10 @@ test_that("cache for R < 3.1 and R >= 2.1", {
     expect_true(file.exists(file.path(temp_dir, "cache", "testthat_0.7.1.tar.gz")))
 })
 
+test_that("gh correct querying", {
+    x <- resolve(c("cran/sna"), snapshot_date = "2020-05-01")
+    expect_equal(length(x$ranglets[[1]]$deps), 19)
+})
 ## This should be tested. But this takes too long without cache.
 ## test_that("issue #21", {
 ##     skip_if_offline()

@@ -91,8 +91,7 @@
 
 .tempfile <- function(tmpdir = tempdir(), fileext = ".tar.gz") {
     file.path(tmpdir,
-    paste(paste(sample(c(LETTERS, letters), 20, replace = TRUE), collapse = "")),
-    fileext)
+    paste(paste(sample(c(LETTERS, letters), 20, replace = TRUE), collapse = ""), fileext, sep = ""))
 }
 
 .download_package_from_github <- function(tarball_path, x, version, handle, source, uid) {
