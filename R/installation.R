@@ -404,7 +404,7 @@ dockerize <- function(rang, output_dir, materials_dir = NULL, image = c("r-ver",
     if (utils::compareVersion(rang$r_version, "3.1") == -1) {
         file.copy(system.file("compile_r.sh", package = "rang"), file.path(output_dir, "compile_r.sh"),
                   overwrite = TRUE)
-        basic_docker <- .generate_pre310_docker(materials_dir, r_version = rang$r_version,
+        basic_docker <- .generate_pre310_docker(r_version = rang$r_version,
                                                 sysreqs_cmd = sysreqs_cmd, lib = lib,
                                                 cache = cache)
     } else {
