@@ -88,6 +88,44 @@ test_that("cache for R < 3.1 and R >= 2.1", {
     expect_true(file.exists(file.path(temp_dir, "cache", "testthat_0.7.1.tar.gz")))
 })
 
+test_that(".system_requirements_github", {
+    skip_if_offline()
+    skip_on_cran()
+    res <- .system_requirements_github("schochastics/rtoot", os = "ubuntu-20.04")
+    expect_true(all(grepl("^apt-get", res)))
+    res <- .system_requirements_github("schochastics/rtoot", "opensuse-42.3")
+    expect_true(all(grepl("^zypper", res)))
+    res <- .system_requirements_github("schochastics/rtoot", "centos-8")
+    expect_true(all(grepl("^dnf", res)))
+})
+
+test_that("github correct querying", {
+    skip_if_offline()
+    skip_on_cran()
+    x <- resolve(c("cran/sna"), snapshot_date = "2020-05-01", get_sysreqs = FALSE)
+    expect_equal(length(x$ranglets[[1]]$deps), 19)
+    x <- resolve("schochastics/netUtils", snapshot_date = "2020-06-01", get_sysreqs = FALSE)
+    expect_equal(x$ranglets[[1]]$pkgref, "github::schochastics/netUtils")
+    expect_equal(unique(x$ranglets[[1]]$original$x), "igraphUtils")
+    x <- resolve("tidyverse/stringr", snapshot_date = "2022-12-31")
+    expect_true(all(grepl("^apt-get", x$deps_sysreqs)))
+})
+
+test_that("Non-cran must enforce caching ref #22", {
+    skip_if_offline()
+    skip_on_cran()
+    temp_dir <- .gen_temp_dir()
+    graph <- readRDS("../testdata/ancientsna.RDS")
+    expect_equal(graph$ranglets[[1]]$pkgref, "github::cran/sna")
+    expect_error(dockerize(graph, output_dir = temp_dir, verbose = FALSE)) ## cache = FALSE
+    expect_error(dockerize(graph, output_dir = temp_dir, cache = TRUE, verbose = FALSE), NA)
+    temp_dir <- .gen_temp_dir()
+    graph <- readRDS("../testdata/anciente1071.RDS")
+    expect_equal(graph$ranglets[[1]]$pkgref, "cran::e1071")
+    expect_error(dockerize(graph, output_dir = temp_dir, verbose = FALSE), NA)
+    expect_error(dockerize(graph, output_dir = temp_dir, cache = TRUE, verbose = FALSE), NA)
+})
+
 ## This should be tested. But this takes too long without cache.
 ## test_that("issue #21", {
 ##     skip_if_offline()

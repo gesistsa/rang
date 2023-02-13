@@ -19,4 +19,4 @@ make install
 
 cd /
 
-Rscript gran.R
+Rscript rang.R

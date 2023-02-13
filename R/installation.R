@@ -204,24 +204,28 @@
 .cache_github <- function(x, version, handle, source, uid, cache_dir, verbose) {
     sha <- uid
     short_sha <- substr(sha, 1, 7)
-    dest_zip <- tempfile(fileext = ".zip")
+    tarball_path <- file.path(cache_dir, paste("raw_", x, "_", version, ".tar.gz", sep = ""))
     tmp_dir <- .gen_temp_dir()
     ## unlike inside the container, we use zip here because it is less buggy
-    utils::download.file(paste("https://api.github.com/repos/", handle, "/zipball/", sha, sep = ""), destfile = dest_zip,
+    utils::download.file(paste("https://api.github.com/repos/", handle, "/tarball/", sha, sep = ""), destfile = tarball_path,
                          quiet = !verbose)
-    utils::unzip(dest_zip, exdir = tmp_dir)
-    dlist <- list.dirs(path = tmp_dir, recursive = FALSE)
-    pkg_dir <- dlist[grepl(short_sha, dlist)]
-    if (length(pkg_dir) != 1) {
-        stop(paste0("couldn't uniquely locate the unzipped package source in ", tmp_dir))
+    if (!file.exists(tarball_path)) {
+        warning(names(x), "(", x,") can't be cache.")
     }
-    res <- system(command = paste("R", "CMD", "build", pkg_dir), intern = TRUE)
-    expected_tarball_path <- paste(x, "_", version, ".tar.gz", sep = "")
-    if (!file.exists(expected_tarball_path)) {
-        stop("Cannot locate the built tarball.")
-    }
-    file.rename(from = expected_tarball_path, to = file.path(cache_dir, expected_tarball_path))
-    unlink(expected_tarball_path)
+
+    ## utils::unzip(dest_zip, exdir = tmp_dir)
+    ## dlist <- list.dirs(path = tmp_dir, recursive = FALSE)
+    ## pkg_dir <- dlist[grepl(short_sha, dlist)]
+    ## if (length(pkg_dir) != 1) {
+    ##     stop(paste0("couldn't uniquely locate the unzipped package source in ", tmp_dir))
+    ## }
+    ## res <- system(command = paste("R", "CMD", "build", pkg_dir), intern = TRUE)
+    ## expected_tarball_path <- paste(x, "_", version, ".tar.gz", sep = "")
+    ## if (!file.exists(expected_tarball_path)) {
+    ##     stop("Cannot locate the built tarball.")
+    ## }
+    ## file.rename(from = expected_tarball_path, to = file.path(cache_dir, expected_tarball_path))
+    ## unlink(expected_tarball_path)
 }
 
 .cache_pkgs <- function(rang, output_dir, cran_mirror, verbose) {
@@ -241,6 +245,7 @@
                         cran_mirror = cran_mirror, verbose = verbose)
         }
         if (source == "github") {
+            ## please note that these cached packages are not built
             .cache_github(x = x, version = version, handle = handle,
                           source = source, uid = uid,
                           cache_dir = cache_dir, verbose = verbose)
@@ -264,7 +269,7 @@
     basic_docker[(rang_line + 1):length(basic_docker)])
 }
 
-.generate_pre310_docker <- function(r_version, debian_version = "lenny", lib, sysreqs_cmd, cache) {
+.generate_pre310_docker <- function(r_version, lib, sysreqs_cmd, cache, debian_version = "lenny") {
     basic_docker <- c(
         paste0("FROM debian/eol:", debian_version),
         "ENV TZ UTC",
@@ -389,6 +394,11 @@ dockerize <- function(rang, output_dir, materials_dir = NULL, image = c("r-ver",
     if (!is.null(materials_dir) && !(dir.exists(materials_dir))) {
         stop(paste0("The folder ", materials_dir, " does not exist"), call. = FALSE)
     }
+    if (isFALSE(all(grepl("^cran::", .rang_extract_all_deps(rang)))) &&
+        utils::compareVersion(rang$r_version, "3.1") == -1 &&
+        isFALSE(cache)) {
+        stop("Non-CRAN packages must be cached for this R version: ", rang$r_version, ". Please set `cache` = TRUE.", call. = FALSE)
+    }
     image <- match.arg(image)
     sysreqs_cmd <- .consolidate_sysreqs(rang)
     if (!dir.exists(output_dir)) {
@@ -404,7 +414,7 @@ dockerize <- function(rang, output_dir, materials_dir = NULL, image = c("r-ver",
     if (utils::compareVersion(rang$r_version, "3.1") == -1) {
         file.copy(system.file("compile_r.sh", package = "rang"), file.path(output_dir, "compile_r.sh"),
                   overwrite = TRUE)
-        basic_docker <- .generate_pre310_docker(materials_dir, r_version = rang$r_version,
+        basic_docker <- .generate_pre310_docker(r_version = rang$r_version,
                                                 sysreqs_cmd = sysreqs_cmd, lib = lib,
                                                 cache = cache)
     } else {
