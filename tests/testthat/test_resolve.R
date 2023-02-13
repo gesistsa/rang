@@ -15,6 +15,7 @@ test_that("normal", {
     expect_silent(x <- resolve("LDAvis", snapshot_date = "2023-01-01"))
     expect_equal(x$unresolved_pkgrefs, character(0))
     expect_equal(x$deps_sysreqs, character(0))
+    expect_equal(x$r_version, "4.2.2")
 })
 
 test_that("unresolved", {
@@ -23,6 +24,7 @@ test_that("unresolved", {
     skip_on_cran()
     expect_error(res <- .get_snapshot_dependencies("cran::LDAvis", snapshot_date = "2001-10-01"))
     warns <- capture_warnings(x <- resolve("LDAvis", snapshot_date = "2000-10-01"))
+    expect_equal(x$r_version, "1.1.1")    
     expect_true(length(warns) == 2)
     expect_true(any(grepl("^Some package", warns)))
     expect_true(any(grepl("^No packages to query", warns)))
