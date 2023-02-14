@@ -229,17 +229,17 @@
 }
 
 .cache_pkgs <- function(rang, output_dir, cran_mirror, verbose) {
-    install_order <- .determine_installation_order(rang)
+    installation_order <- .determine_installation_order(rang)
     cache_dir <- file.path(output_dir, "cache")
     if (!dir.exists(cache_dir)) {
         dir.create(cache_dir)
     }
-    for (i in seq(from = 1, to = nrow(install_order), by = 1)) {
-        x <- install_order$x[i]
-        source <- install_order$source[i]
-        version <- install_order$version[i]
-        handle <- install_order$handle[i]
-        uid <- install_order$uid[i]
+    for (i in seq(from = 1, to = nrow(installation_order), by = 1)) {
+        x <- installation_order$x[i]
+        source <- installation_order$source[i]
+        version <- installation_order$version[i]
+        handle <- installation_order$handle[i]
+        uid <- installation_order$uid[i]
         if (source == "cran") {
             .cache_cran(x = x, version = version, cache_dir = cache_dir,
                         cran_mirror = cran_mirror, verbose = verbose)
@@ -255,22 +255,22 @@
     invisible(output_dir)
 }
 
-.insert_cache_dir <- function(basic_docker) {
-    rang_line <- which(basic_docker == "RUN Rscript rang.R")
-    c(basic_docker[1:(rang_line - 1)],
+.insert_cache_dir <- function(dockerfile_content) {
+    rang_line <- which(dockerfile_content == "RUN Rscript rang.R")
+    c(dockerfile_content[1:(rang_line - 1)],
       "COPY cache ./cache",
-      basic_docker[rang_line:length(basic_docker)])
+      dockerfile_content[rang_line:length(dockerfile_content)])
 }
 
-.insert_materials_dir <- function(basic_docker) {
-    rang_line <- which(basic_docker == "COPY rang.R ./rang.R")
-    c(basic_docker[1:rang_line], 
+.insert_materials_dir <- function(dockerfile_content) {
+    rang_line <- which(dockerfile_content == "COPY rang.R ./rang.R")
+    c(dockerfile_content[1:rang_line], 
       "COPY materials/ ./materials/",
-      basic_docker[(rang_line + 1):length(basic_docker)])
+      dockerfile_content[(rang_line + 1):length(dockerfile_content)])
 }
 
 .generate_pre310_docker <- function(r_version, lib, sysreqs_cmd, cache, debian_version = "lenny") {
-    basic_docker <- c(
+    dockerfile_content <- c(
         paste0("FROM debian/eol:", debian_version),
         "ENV TZ UTC",
         "RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && apt-get update -qq && apt-get install wget locales build-essential r-base-dev  -y",
@@ -280,12 +280,12 @@
         paste("RUN bash compile_r.sh", r_version),
         "CMD [\"R\"]")
     if (!is.na(lib)) {
-        basic_docker[7] <- paste0("RUN mkdir ", lib, " && bash compile_r.sh ", r_version)
+        dockerfile_content[7] <- paste0("RUN mkdir ", lib, " && bash compile_r.sh ", r_version)
     }
     if (isTRUE(cache)) {
-        basic_docker <- c(basic_docker[1:5], "COPY cache ./cache", basic_docker[6:8])
+        dockerfile_content <- c(dockerfile_content[1:5], "COPY cache ./cache", dockerfile_content[6:8])
     }
-    return(basic_docker)
+    return(dockerfile_content)
 }
 
 #' Export The Resolved Result As Installation Script
@@ -329,12 +329,12 @@ export_rang <- function(rang, path, rang_as_comment = TRUE, verbose = TRUE, lib 
     if (utils::compareVersion(rang$r_version, "3.3") == -1) { #20
         cran_mirror <- .normalize_url(cran_mirror, https = FALSE)
     }
-    install_order <- .determine_installation_order(rang)
+    installation_order <- .determine_installation_order(rang)
     file.create(path)
     con <- file(path, open="w")
     writeLines(readLines(system.file("header.R", package = "rang")), con = con)
-    cat("install_order <- ", file = con)
-    dput(install_order, file = con)
+    cat("installation_order <- ", file = con)
+    dput(installation_order, file = con)
     cat("\n", file = con)
     cat(paste0("verbose <- ", as.character(verbose), "\n"), file = con)
     if (is.na(lib)) {
@@ -414,35 +414,35 @@ dockerize <- function(rang, output_dir, materials_dir = NULL, image = c("r-ver",
     if (utils::compareVersion(rang$r_version, "3.1") == -1) {
         file.copy(system.file("compile_r.sh", package = "rang"), file.path(output_dir, "compile_r.sh"),
                   overwrite = TRUE)
-        basic_docker <- .generate_pre310_docker(r_version = rang$r_version,
+        dockerfile_content <- .generate_pre310_docker(r_version = rang$r_version,
                                                 sysreqs_cmd = sysreqs_cmd, lib = lib,
                                                 cache = cache)
     } else {
-        basic_docker <- c("", "", "COPY rang.R ./rang.R", "RUN Rscript rang.R", "CMD [\"R\"]")
+        dockerfile_content <- c("", "", "COPY rang.R ./rang.R", "RUN Rscript rang.R", "CMD [\"R\"]")
         if (!is.na(lib)) {
-            basic_docker[4] <- paste0("RUN mkdir ", lib, " && Rscript rang.R")
+            dockerfile_content[4] <- paste0("RUN mkdir ", lib, " && Rscript rang.R")
         }
-        basic_docker[1] <- paste0("FROM rocker/", image, ":", rang$r_version)
-        basic_docker[2] <- paste("RUN", sysreqs_cmd)
+        dockerfile_content[1] <- paste0("FROM rocker/", image, ":", rang$r_version)
+        dockerfile_content[2] <- paste("RUN", sysreqs_cmd)
         if (image == "rstudio") {
-            basic_docker[5] <- "EXPOSE 8787"
-            basic_docker[6] <- "CMD [\"/init\"]"
+            dockerfile_content[5] <- "EXPOSE 8787"
+            dockerfile_content[6] <- "CMD [\"/init\"]"
         }
         if (isTRUE(cache)) {
-            basic_docker <- .insert_cache_dir(basic_docker)
+            dockerfile_content <- .insert_cache_dir(dockerfile_content)
         }
     }
     if (!(is.null(materials_dir))) {
-        out_mat_dir <- file.path(output_dir, "materials")
-        if (isFALSE(dir.exists(out_mat_dir))) {
-            dir.create(out_mat_dir)
+        materials_subdir_in_output_dir <- file.path(output_dir, "materials")
+        if (isFALSE(dir.exists(materials_subdir_in_output_dir))) {
+            dir.create(materials_subdir_in_output_dir)
         }
         file.copy(list.files(materials_dir, full.names = TRUE), 
-                  out_mat_dir, 
+                  materials_subdir_in_output_dir, 
                   recursive = TRUE)
-        basic_docker <- .insert_materials_dir(basic_docker)
+        dockerfile_content <- .insert_materials_dir(dockerfile_content)
     }
-    writeLines(basic_docker, file.path(output_dir, "Dockerfile"))
+    writeLines(dockerfile_content, file.path(output_dir, "Dockerfile"))
     invisible(output_dir)
 }
 
