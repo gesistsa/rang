@@ -444,7 +444,7 @@ query_sysreqs <- function(rang, os = "ubuntu-20.04") {
             "--silent",
             "--data-binary",
             shQuote(paste0("@", desc_file)),
-            shQuote(sprintf("%s/sysreqs?distribution=%s&release=%s&suggests=true",
+            shQuote(sprintf("%s/sysreqs?distribution=%s&release=%s&suggests=false",
                             rspm_repo_url,
                             os_info[1],
                             os_info[2])

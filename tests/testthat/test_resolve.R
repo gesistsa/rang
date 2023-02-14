@@ -95,6 +95,7 @@ test_that(".system_requirements_github", {
     skip_on_cran()
     res <- .system_requirements_github("schochastics/rtoot", os = "ubuntu-20.04")
     expect_true(all(grepl("^apt-get", res)))
+    expect_true(length(res) == 2) ## issue #45
     res <- .system_requirements_github("schochastics/rtoot", "opensuse-42.3")
     expect_true(all(grepl("^zypper", res)))
     res <- .system_requirements_github("schochastics/rtoot", "centos-8")
