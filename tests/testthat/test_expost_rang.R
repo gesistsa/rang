@@ -53,10 +53,10 @@ test_that(".normalize_url https issue #20", {
     expect_equal(x, "http://cran.r-project.org/")
 })
 
-test_that(".check_mirror", {
-    expect_true(.check_mirror("https://cran.r-project.org/"))
-    expect_true(.check_mirror("https://cloud.r-project.org/"))
-    expect_false(.check_mirror("https://www.chainsawriot.com/"))
+test_that(".query_mirror_validity", {
+    expect_true(.query_mirror_validity("https://cran.r-project.org/"))
+    expect_true(.query_mirror_validity("https://cloud.r-project.org/"))
+    expect_false(.query_mirror_validity("https://www.chainsawriot.com/"))
 })
 
 test_that("integration of mirror selection to `export_rang` #18", {

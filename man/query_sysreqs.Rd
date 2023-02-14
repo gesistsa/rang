@@ -21,10 +21,10 @@ This function takes an S3 object returned from \code{\link[=resolve]{resolve()}}
 \donttest{
 if (interactive()) {
     graph <- resolve(pkgs = c("openNLP", "LDAvis", "topicmodels", "quanteda"),
-                snapshot_date = "2020-01-16", get_sysreqs = FALSE)
-    graph$deps_sysreqs
+                snapshot_date = "2020-01-16", query_sysreqs = FALSE)
+    graph$sysreqs
     graph2 <- query_sysreqs(graph, os = "ubuntu-20.04")
-    graph2$deps_sysreqs
+    graph2$sysreqs
 }
 }
 }
