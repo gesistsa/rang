@@ -1,18 +1,4 @@
-#' @importFrom memoise memoise
-#' @importFrom pkgsearch cran_package_history
-NULL
-
-## one hr
-
-.search <- memoise::memoise(pkgsearch::cran_package_history, cache = cachem::cache_mem(max_age = 60 * 60))
-
-.rver <- function() {
-    suppressWarnings(jsonlite::fromJSON(readLines("https://api.r-hub.io/rversions/r-versions"), simplifyVector = TRUE))
-}
-
-.memo_rver <- memoise::memoise(.rver, cache = cachem::cache_mem(max_age = 120 * 60))
-
-.get_rver <- function(snapshot_date) {
+.query_rver <- function(snapshot_date) {
     if (snapshot_date < attr(cached_rver, "newest_date")) {
         allvers <- cached_rver
     } else {
@@ -33,20 +19,20 @@ NULL
 
 ## get the latest version as of date
 ## let's call this output dep_df; basically is a rough version of edgelist
-.get_snapshot_dependencies <- function(pkgref = "cran::rtoot", snapshot_date = "2022-12-10") {
+.query_snapshot_dependencies <- function(pkgref = "cran::rtoot", snapshot_date = "2022-12-10") {
     source <- .parse_pkgref(pkgref, return_handle = FALSE)
     switch(source,
            "cran" = {
-               return(.get_snapshot_dependencies_cran(handle = .parse_pkgref(pkgref) ,snapshot_date = snapshot_date))
+               return(.query_snapshot_dependencies_cran(handle = .parse_pkgref(pkgref) ,snapshot_date = snapshot_date))
            },
            "github" = {
-               return(.get_snapshot_dependencies_github(handle = .parse_pkgref(pkgref), snapshot_date = snapshot_date))
+               return(.query_snapshot_dependencies_github(handle = .parse_pkgref(pkgref), snapshot_date = snapshot_date))
            })
 }
 
-.get_snapshot_dependencies_cran <- function(handle = "rtoot", snapshot_date = "2022-12-10") {
+.query_snapshot_dependencies_cran <- function(handle = "rtoot", snapshot_date = "2022-12-10") {
     snapshot_date <- anytime::anytime(snapshot_date, tz = "UTC", asUTC = TRUE)
-    search_res <- .search(handle)
+    search_res <- .memo_search(handle)
     search_res$pubdate <- anytime::anytime(search_res$crandb_file_date, tz = "UTC", asUTC = TRUE)
     snapshot_versions <- search_res[search_res$pubdate <= snapshot_date,]
     if (nrow(snapshot_versions) == 0) {
@@ -62,9 +48,9 @@ NULL
     }
 }
 
-.get_snapshot_dependencies_github <- function(handle = "schochastics/rtoot", snapshot_date = "2022-12-10") {
+.query_snapshot_dependencies_github <- function(handle = "schochastics/rtoot", snapshot_date = "2022-12-10") {
     snapshot_date <- anytime::anytime(snapshot_date, tz = "UTC", asUTC = TRUE)
-    sha <- .get_sha(handle, snapshot_date)
+    sha <- .query_sha(handle, snapshot_date)
     repo_descr <- gh::gh(paste0("GET /repos/", handle,"/contents/DESCRIPTION"), ref = sha$sha)
     con <- url(repo_descr$download_url)
     descr_df <- as.data.frame(read.dcf(con))
@@ -82,7 +68,7 @@ NULL
 }
 
 # get the commit sha for the commit closest to date
-.get_sha <- function(handle, date) {
+.query_sha <- function(handle, date) {
     commits <- gh::gh(paste0("GET /repos/", handle, "/commits"), per_page = 100)
     dates <- sapply(commits,function(x) x$commit$committer$date)
     idx <- which(dates<=date)[1]
@@ -133,11 +119,11 @@ NULL
 
 # extract the required version, if present from description
 .extract_version <- function(x) {
-  ver <- regmatches(x, gregexpr("\\(.*\\)",x))[[1]]
-  if (length(ver) == 0) {
-    ver <- "*"
-  }
-  gsub("\\(|\\)|\\n", "", ver)
+    ver <- regmatches(x, gregexpr("\\(.*\\)",x))[[1]]
+    if (length(ver) == 0) {
+        ver <- "*"
+    }
+    gsub("\\(|\\)|\\n", "", ver)
 }
 
 ## dep_df is a terminal node if
@@ -149,7 +135,7 @@ NULL
 
 ## We should consider Imports, Depends, LinkingTo, and Enhances in normal cases
 
-.keep_queryable_dependencies <- function(dep_df, no_enhances = TRUE, no_suggests = TRUE) {
+.extract_queryable_dependencies <- function(dep_df, no_enhances = TRUE, no_suggests = TRUE) {
     if (!"y" %in% colnames(dep_df)) {
         return(NULL)
     }
@@ -169,7 +155,7 @@ NULL
 }
 
 .is_terminal_node <- function(dep_df, no_enhances = TRUE, no_suggests = TRUE) {
-    length(.keep_queryable_dependencies(dep_df, no_enhances, no_suggests)) == 0
+    length(.extract_queryable_dependencies(dep_df, no_enhances, no_suggests)) == 0
 }
 
 #' Resolve Dependencies Of R Packages
@@ -180,7 +166,7 @@ NULL
 #' @param snapshot_date Snapshot date, if not specified, assume to be a month ago
 #' @param no_enhances logical, whether to ignore packages in the "Enhances" field
 #' @param no_suggests logical, whether to ignore packages in the "Suggests" field
-#' @param get_sysreqs logical, whether to query for System Requirements. Important: Archived CRAN can't be queried for system requirements. Those
+#' @param query_sysreqs logical, whether to query for System Requirements. Important: Archived CRAN can't be queried for system requirements. Those
 #' packages are assumed to have no system requirement.
 #' @param os character, which OS to query for system requirements
 #' @param verbose logical, whether to display messages
@@ -201,7 +187,7 @@ NULL
 #'     gh_graph
 #' }
 #' }
-resolve <- function(pkgs, snapshot_date, no_enhances = TRUE, no_suggests = TRUE, get_sysreqs = TRUE, os = "ubuntu-20.04", verbose = FALSE) {
+resolve <- function(pkgs, snapshot_date, no_enhances = TRUE, no_suggests = TRUE, query_sysreqs = TRUE, os = "ubuntu-20.04", verbose = FALSE) {
     if (!os %in% supported_os) {
         stop("Don't know how to resolve ", os, ". Supported OSes are: ", paste(supported_os, collapse = ", "))
     }
@@ -223,8 +209,8 @@ resolve <- function(pkgs, snapshot_date, no_enhances = TRUE, no_suggests = TRUE,
     output$no_enhances <- no_enhances
     output$no_suggests <- no_suggests
     output$unresolved_pkgrefs <- character(0)
-    output$deps_sysreqs <- character(0)
-    output$r_version <- .get_rver(snapshot_date)
+    output$sysreqs <- character(0)
+    output$r_version <- .query_rver(snapshot_date)
     output$os <- os
     for (pkgref in pkgrefs) {
         tryCatch({
@@ -241,17 +227,17 @@ resolve <- function(pkgs, snapshot_date, no_enhances = TRUE, no_suggests = TRUE,
     if (length(output$unresolved_pkgrefs) > 0) {
         warning("Some package(s) can't be resolved: ", paste(output$unresolved_pkgrefs, collapse = ", "), call. = FALSE)
     }
-    if (isTRUE(get_sysreqs)) {
-        res <- .rang_query_sysreqs(output, os = os)
-        output$deps_sysreqs <- res
-        .has_ppa_in_sysreqs(output)
+    if (isTRUE(query_sysreqs)) {
+        res <- .query_sysreqs(output, os = os)
+        output$sysreqs <- res
+        .is_ppa_in_sysreqs(output)
     }
     attr(output, "class") <- "rang"
     return(output)
 }
 
 .resolve_pkgref <- function(pkgref, snapshot_date, no_enhances = TRUE, no_suggests = TRUE, verbose = FALSE) {
-    pkg_dep_df <- .get_snapshot_dependencies(pkgref = pkgref, snapshot_date = snapshot_date)
+    pkg_dep_df <- .query_snapshot_dependencies(pkgref = pkgref, snapshot_date = snapshot_date)
     output <- list()
     output$pkgref <- pkgref
     output$no_enhances <- no_enhances
@@ -261,7 +247,7 @@ resolve <- function(pkgs, snapshot_date, no_enhances = TRUE, no_suggests = TRUE,
     output$deps <- list()
     output$unresolved_deps <- character(0)
     q <- fastmap::faststack()
-    for (dep in .keep_queryable_dependencies(pkg_dep_df, no_enhances, no_suggests)) {
+    for (dep in .extract_queryable_dependencies(pkg_dep_df, no_enhances, no_suggests)) {
         q$push(dep)
     }
     seen_deps <- c()
@@ -271,9 +257,9 @@ resolve <- function(pkgs, snapshot_date, no_enhances = TRUE, no_suggests = TRUE,
             cat("Querying: ", current_pkgref, "\n")
         }
         tryCatch({
-            pkg_dep_df <- .get_snapshot_dependencies(pkgref = current_pkgref, snapshot_date = snapshot_date)
+            pkg_dep_df <- .query_snapshot_dependencies(pkgref = current_pkgref, snapshot_date = snapshot_date)
             output$deps[[current_pkgref]] <- pkg_dep_df
-            pkgs_to_query <- unique(setdiff(.keep_queryable_dependencies(pkg_dep_df, no_enhances, no_suggests), c(names(output$deps), seen_deps)))
+            pkgs_to_query <- unique(setdiff(.extract_queryable_dependencies(pkg_dep_df, no_enhances, no_suggests), c(names(output$deps), seen_deps)))
             seen_deps <- union(seen_deps, pkgs_to_query)
             for (dep in pkgs_to_query) {
                 q$push(dep)
@@ -316,10 +302,10 @@ print.rang <- function(x, all_pkgs = FALSE, ...) {
 }
 
 convert_edgelist <- function(x) {
-    output <- data.frame(x = x$pkg, y = .keep_queryable_dependencies(x$original, x$no_enhances, x$no_suggests))
+    output <- data.frame(x = x$pkg, y = .extract_queryable_dependencies(x$original, x$no_enhances, x$no_suggests))
     for (dep in x$deps) {
         if (!.is_terminal_node(dep, x$no_enhances)) {
-            el <- data.frame(x = unique(dep$x), y = .keep_queryable_dependencies(dep, x$no_enhances, x$no_suggests))
+            el <- data.frame(x = unique(dep$x), y = .extract_queryable_dependencies(dep, x$no_enhances, x$no_suggests))
             output <- rbind(output, el)
         }
     }
@@ -327,12 +313,13 @@ convert_edgelist <- function(x) {
 }
 
 ## extract all the pkgrefs of deps and pkgs: for .sysreqs
-.rang_extract_all_deps <- function(rang) {
+.extract_pkgrefs <- function(rang) {
     original_pkgrefs <- names(rang$ranglets)
     all_dep_pkgrefs <- unlist(lapply(rang$ranglets, function(x) names(x$deps)))
     unique(c(original_pkgrefs, all_dep_pkgrefs))
 }
 
+## returns handles grouped by sources
 .group_pkgrefs_by_source <- function(pkgrefs) {
     sources <- vapply(pkgrefs, .parse_pkgref, character(1), return_handle = FALSE, USE.NAMES = FALSE)
     handles <- vapply(pkgrefs, .parse_pkgref, character(1), return_handle = TRUE, USE.NAMES = FALSE)
@@ -355,53 +342,53 @@ convert_edgelist <- function(x) {
 #' \donttest{
 #' if (interactive()) {
 #'     graph <- resolve(pkgs = c("openNLP", "LDAvis", "topicmodels", "quanteda"),
-#'                 snapshot_date = "2020-01-16", get_sysreqs = FALSE)
-#'     graph$deps_sysreqs
+#'                 snapshot_date = "2020-01-16", query_sysreqs = FALSE)
+#'     graph$sysreqs
 #'     graph2 <- query_sysreqs(graph, os = "ubuntu-20.04")
-#'     graph2$deps_sysreqs
+#'     graph2$sysreqs
 #' }
 #' }
 query_sysreqs <- function(rang, os = "ubuntu-20.04") {
     rang$os <- os
-    rang$deps_sysreqs <- .rang_query_sysreqs(rang = rang, os = os)
+    rang$sysreqs <- .query_sysreqs(rang = rang, os = os)
     return(rang)
 }
 
-.rang_query_sysreqs <- function(rang, os = "ubuntu-20.04") {
-    targets <- .rang_extract_all_deps(rang)
-    if (length(targets) == 0) {
+.query_sysreqs <- function(rang, os = "ubuntu-20.04") {
+    pkgrefs <- .extract_pkgrefs(rang)
+    if (length(pkgrefs) == 0) {
         warning("No packages to query for system requirements.", call. = FALSE)
         return(NA)
     }
     tryCatch({
-        return(.query_sysreqs_smart(targets = targets, os = os))
+        return(.query_sysreqs_smart(pkgrefs = pkgrefs, os = os))
     }, error = function(e) {
-        return(.query_sysreqs_safe(targets = targets, os = os))
+        return(.query_sysreqs_safe(pkgrefs = pkgrefs, os = os))
     })
 }
 
-.query_sysreqs_smart <- function(targets, os = "ubuntu-20.04") {
+.query_sysreqs_smart <- function(pkgrefs, os = "ubuntu-20.04") {
     output <- list()
-    grouped_targets <- .group_pkgrefs_by_source(targets)
-    if ("github" %in% names(grouped_targets)) {
-        output[["github"]] <- .system_requirements_github(grouped_targets[["github"]], os = os)
+    grouped_handles <- .group_pkgrefs_by_source(pkgrefs)
+    if ("github" %in% names(grouped_handles)) {
+        output[["github"]] <- .query_sysreqs_github(grouped_handles[["github"]], os = os)
     }
-    if ("cran" %in% names(grouped_targets)) {
-        output[["cran"]] <- .system_requirements_cran(grouped_targets[["cran"]], os = os)
+    if ("cran" %in% names(grouped_handles)) {
+        output[["cran"]] <- .query_sysreqs_cran(grouped_handles[["cran"]], os = os)
     }
     unique(unlist(output))
 }
 
-.query_sysreqs_safe <- function(targets, os = "ubuntu-20.04") {
+.query_sysreqs_safe <- function(pkgrefs, os = "ubuntu-20.04") {
     output <- c()
-    for (pkgref in targets) {
+    for (pkgref in pkgrefs) {
         source <- .parse_pkgref(pkgref, FALSE)
         switch(source,
                "cran" = {
-                   query_fun <- .system_requirements_cran
+                   query_fun <- .query_sysreqs_cran
                },
                "github" = {
-                   query_fun <- .system_requirements_github
+                   query_fun <- .query_sysreqs_github
                }
                )
         tryCatch({
@@ -415,17 +402,17 @@ query_sysreqs <- function(rang, os = "ubuntu-20.04") {
 }
 
 ## this is vectorized; and for consistency
-.system_requirements_cran <- function(handle, os) {
+.query_sysreqs_cran <- function(handle, os) {
     remotes::system_requirements(package = handle, os = os)
 }
 
-.system_requirements_github <- function(handle, os) {
-    res <- lapply(handle, .system_requirements_github_single, os = os)
+.query_sysreqs_github <- function(handle, os) {
+    res <- lapply(handle, .query_sysreqs_github_single, os = os)
     unique(unlist(res))
 }
 
 ## get system requirements for github packages
-.system_requirements_github_single <- function(handle, os) {
+.query_sysreqs_github_single <- function(handle, os) {
     os_info <- strsplit(os, "-")[[1]]
     DEFAULT_RSPM <- "https://packagemanager.rstudio.com"
     DEFAULT_RSPM_REPO_ID <- "1"
@@ -461,9 +448,3 @@ query_sysreqs <- function(rang, os = "ubuntu-20.04") {
                     lapply(res[["dependencies"]], `[[`, "install_scripts"))))
 }
 
-## os <- names(remotes:::supported_os_versions())
-## supported_os <- unlist(mapply(function(x, y) paste(x,"-", y, sep = ""), os, remotes:::supported_os_versions()))
-## names(supported_os) <- NULL
-## cached_rver <- .rver()
-## attr(cached_rver, "newest_date") <- anytime::anytime(tail(cached_rver, n = 1)$date, tz = "UTC", asUTC = TRUE)
-## usethis::use_data(supported_os, cached_rver, internal = TRUE, overwrite = TRUE)

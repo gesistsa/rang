@@ -27,9 +27,6 @@ assumes only the availability of source packages on CRAN. The
 reconstruction procedures have been tested in several vintage versions
 of R.
 
-**Important:** This package is in a very early stage. API might still
-change.
-
 ## Installation
 
 You can install the development version of rang like so:
@@ -45,7 +42,7 @@ this package supports both CRAN and Github packages.
 
 ``` r
 library(rang)
-resolve(pkgs = c("sna", "schochastics/rtoot"), snapshot_date = "2022-11-30")
+x <- resolve(pkgs = c("sna", "schochastics/rtoot"), snapshot_date = "2022-11-30")
 ```
 
 ``` r
@@ -70,7 +67,7 @@ graph
 ```
 
 ``` r
-graph$deps_sysreqs
+graph$sysreqs
 #> [1] "apt-get install -y default-jdk" "apt-get install -y libxml2-dev"
 #> [3] "apt-get install -y make"        "apt-get install -y zlib1g-dev" 
 #> [5] "apt-get install -y libpng-dev"  "apt-get install -y libgsl0-dev"
