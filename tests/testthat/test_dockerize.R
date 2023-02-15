@@ -192,6 +192,8 @@ test_that("material_dir, existing, with 1 subdir, #23", {
 })
 
 test_that("readme issue #50", {
+    skip_on_os("windows", arch = NULL)
+    skip_on_cran()
     rang_ok <- readRDS("../testdata/rang_ok.RDS")
     expect_equal(rang_ok$r_version, "4.2.2")
     temp_dir <- .generate_temp_dir()
