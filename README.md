@@ -105,8 +105,8 @@ Now, you can build and run the Docker container.
 
 ``` bash
 cd ~/rocker_test
-sudo docker build -t rang .
-sudo docker run --rm --name "rangtest" -ti rang
+docker build -t rang .
+docker run --rm --name "rangtest" -ti rang
 ```
 
 Using the above example, `sessionInfo()` outputs the following. You have
@@ -152,10 +152,10 @@ loaded via a namespace (and not attached):
 
 ### Caching R packages
 
-One can also cache (or archive) the R packages from CRAN at the time
-`dockerize` is executed. The cached R packages will then transfer to the
-container. Please note that system requirements (i.e. `deb` packages)
-are not cached.
+One can also cache (or archive) the R packages from CRAN and Github at
+the time `dockerize` is executed. The cached R packages will then
+transfer to the container. Please note that system requirements
+(i.e. `deb` packages) are not cached.
 
 ``` r
 dockerize(graph, "~/rocker_test", cache = TRUE)
@@ -175,8 +175,8 @@ dockerize(graph, "~/rocker_test", image = "rstudio")
 
 ``` bash
 cd ~/rocker_test
-sudo docker build -t rang .
-sudo docker run -p 8787:8787 -e PASSWORD=abc123 --rm --name "rangtest" -ti rang
+docker build -t rang .
+docker run -p 8787:8787 -e PASSWORD=abc123 --rm --name "rangtest" -ti rang
 ```
 
 With any browser, go to: `local:8787`. The default username is
