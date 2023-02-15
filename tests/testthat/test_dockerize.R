@@ -190,3 +190,13 @@ test_that("material_dir, existing, with 1 subdir, #23", {
     expect_equal(content[1], "831721")
     expect_equal(content[2], "GESIS")
 })
+
+test_that("readme issue #50", {
+    rang_ok <- readRDS("../testdata/rang_ok.RDS")
+    expect_equal(rang_ok$r_version, "4.2.2")
+    temp_dir <- .generate_temp_dir()
+    dockerize(rang_ok, output_dir = temp_dir)
+    expect_true(file.exists(file.path(temp_dir, "README")))
+    content <- readLines(file.path(temp_dir, "README"))
+    expect_true(any(grepl(temp_dir, content)))
+})
