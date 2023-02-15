@@ -12,7 +12,16 @@ query_sysreqs(rang, os = "ubuntu-20.04")
 \item{os}{character, which OS to query for system requirements}
 }
 \value{
-S3 object \code{rang}
+a \code{rang} S3 object with the following items
+\item{call}{original function call}
+\item{ranglets}{List of dependency graphs of all packages in \code{pkgs}}
+\item{snapshot_date}{\code{snapshot_date}}
+\item{no_enhances}{\code{no_enhances}}
+\item{no_suggests}{\code{no_suggests}}
+\item{unresolved_pkgsrefs}{Packages that can't be resolved}
+\item{sysreqs}{System requirements as Linux commands}
+\item{r_version}{The latest R version as of \code{snapshot_date}}
+\item{os}{\code{os}}
 }
 \description{
 This function takes an S3 object returned from \code{\link[=resolve]{resolve()}} and (re)queries the System Requirements.

@@ -170,7 +170,16 @@
 #' packages are assumed to have no system requirement.
 #' @param os character, which OS to query for system requirements
 #' @param verbose logical, whether to display messages
-#' @return S3 object `rang`
+#' @return a `rang` S3 object with the following items
+#' \item{call}{original function call}
+#' \item{ranglets}{List of dependency graphs of all packages in `pkgs`}
+#' \item{snapshot_date}{`snapshot_date`}
+#' \item{no_enhances}{`no_enhances`}
+#' \item{no_suggests}{`no_suggests`}
+#' \item{unresolved_pkgsrefs}{Packages that can't be resolved}
+#' \item{sysreqs}{System requirements as Linux commands}
+#' \item{r_version}{The latest R version as of `snapshot_date`}
+#' \item{os}{`os`}
 #' @export
 #' @seealso [dockerize()]
 #' @references

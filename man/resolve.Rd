@@ -31,7 +31,16 @@ packages are assumed to have no system requirement.}
 \item{verbose}{logical, whether to display messages}
 }
 \value{
-S3 object \code{rang}
+a \code{rang} S3 object with the following items
+\item{call}{original function call}
+\item{ranglets}{List of dependency graphs of all packages in \code{pkgs}}
+\item{snapshot_date}{\code{snapshot_date}}
+\item{no_enhances}{\code{no_enhances}}
+\item{no_suggests}{\code{no_suggests}}
+\item{unresolved_pkgsrefs}{Packages that can't be resolved}
+\item{sysreqs}{System requirements as Linux commands}
+\item{r_version}{The latest R version as of \code{snapshot_date}}
+\item{os}{\code{os}}
 }
 \description{
 This function recursively queries dependencies of R packages at a specific snapshot time. The dependency graph can then be used to recreate the computational environment. The data on dependencies are provided by R-hub.
