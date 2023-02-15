@@ -206,7 +206,7 @@ We want to emphasize here that launching a container with `--name` is useful bec
 docker save rangtest | gzip > rangtest.tar.gz
 ```
 
-You can also share the back up gzipped tarball file (usually < 1G, depending on the size of `materials_dir`, thus sharable on Zenodo).
+You can also share the back up gzipped tarball file (usually < 1G, depending on the size of `materials_dir`, thus shareable on Zenodo).
 
 To restore the backup image:
 

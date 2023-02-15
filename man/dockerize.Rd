@@ -31,7 +31,7 @@ dockerise_rang(...)
 
 \item{output_dir}{character, where to put the Docker file and associated content}
 
-\item{materials_dir}{character, path to the directiry containing dditional resources (e.g. analysis scripts) to be copied into \code{output_dir} and in turn into the Docker container}
+\item{materials_dir}{character, path to the directory containing additional resources (e.g. analysis scripts) to be copied into \code{output_dir} and in turn into the Docker container}
 
 \item{image}{character, which versioned Rocker image to use. Can only be "r-ver", "rstudio", "tidyverse", "verse", "geospatial"
 This applies only to R version <= 3.1}
