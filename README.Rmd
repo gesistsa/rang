@@ -169,4 +169,4 @@ The logo of rang is a remix of [this](https://commons.wikimedia.org/wiki/File:Fl
 
 ---
 
-[^gesis]: It stands for "R Archiving Nerds at GESIS". The package was previously named `gran`, but we decided to rename it to `rang` because there is another package named [gRAN](https://cran.r-project.org/web/packages/GRANBase/vignettes/GRAN_Overview.html).
+[^gesis]: It stands for "R Archiving Nerds at GESIS". The package was previously named `gran`, but we decided to rename it to `rang` because there is another package named [gRAN](https://CRAN.R-project.org/package=GRANBase).

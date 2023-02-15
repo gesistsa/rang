@@ -207,4 +207,4 @@ dog breed on the islands of Gran Canaria and Tenerife.
 1.  It stands for “R Archiving Nerds at GESIS”. The package was
     previously named `gran`, but we decided to rename it to `rang`
     because there is another package named
-    [gRAN](https://cran.r-project.org/web/packages/GRANBase/vignettes/GRAN_Overview.html).
+    [gRAN](https://CRAN.R-project.org/package=GRANBase).

@@ -153,7 +153,7 @@ library(papaja)
 print(containerit::dockerfile(from = utils::sessionInfo()))
 ```
 
-* Using [dockerfiler](https://cran.r-project.org/web/packages/dockerfiler/index.html)
+* Using [dockerfiler](https://CRAN.R-project.org/package=dockerfiler)
 
 ```r
 library(dockerfiler)

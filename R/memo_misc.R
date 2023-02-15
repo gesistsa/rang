@@ -1,5 +1,6 @@
 #' @importFrom memoise memoise
 #' @importFrom pkgsearch cran_package_history
+#' @importFrom remotes system_requirements
 NULL
 
 ## one hr
