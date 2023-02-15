@@ -53,7 +53,7 @@ dockerize(graph, output_dir = "docker")
 
 There are two features of `dockerize()` that are important for future reproducibility. 
 
-1. By default, the container building process downloads source packages from CRAN and then compiles them from source. This step depends on the future availability of R packages on CRAN (which is extremely likely to be the case in the near future, given the continous availability since 1997-04-23) [^1]. However, it is possible also to cache (or archive) the source packages now. The archived R packages can then be used instead during the building process.
+1. By default, the container building process downloads source packages from CRAN and then compiles them from source. This step depends on the future availability of R packages on CRAN (which is extremely likely to be the case in the near future, given the continuous availability since 1997-04-23) [^1]. However, it is also possible to cache (or archive) the source packages now. The archived R packages can then be used instead during the building process.
 
 [^1]: https://stat.ethz.ch/pipermail/r-announce/1997/000001.html
 
