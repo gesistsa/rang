@@ -249,6 +249,18 @@
     return(dockerfile_content)
 }
 
+.generate_docker_readme <- function(output_dir,image){
+  file.create(file.path(output_dir,"README"))
+  con <- file(file.path(output_dir,"README"), open="w")
+  readme <- readLines(system.file("readme_template.txt", package = "rang"))
+  readme <- gsub("__DATE__",Sys.Date(),readme)
+  readme <- gsub("__OUTPUT__",output_dir,readme)
+  readme <- gsub("__IMAGE__",image,readme)
+  writeLines(readme,file.path(output_dir,"README"))
+  close(con)
+  invisible(readme)
+}
+
 #' Export The Resolved Result As Installation Script
 #'
 #' This function exports the results from [resolve()] to an installation script that can be run in a fresh R environment.
@@ -404,6 +416,9 @@ dockerize <- function(rang, output_dir, materials_dir = NULL, image = c("r-ver",
         dockerfile_content <- .insert_materials_dir(dockerfile_content)
     }
     writeLines(dockerfile_content, file.path(output_dir, "Dockerfile"))
+    
+    .generate_docker_readme(output_dir = output_dir,image = image)
+    
     invisible(output_dir)
 }
 
