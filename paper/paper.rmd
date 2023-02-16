@@ -125,16 +125,50 @@ knitr::include_graphics("quanteda_rstudio.png", dpi = 300)
 
 ## Psychological Science
 
-@cruewell:2023:WB evaluate the computational reproducibility of 14 articles published in **Psyhocological Science**. Among these articles, the paper by @hilgard:2019:NEG has been rated as having "package dependency issues".
+ @cruewell:2023:WB evaluate the computational reproducibility of 14 articles published in *Psyhocological Science*. Among these articles, the paper by @hilgard:2019:NEG has been rated as having "package dependency issues".
 
-All data and computer code are available from Github with the last commit on 2019-01-17. The R code contains a list of R packages used in the project, included an R package on Github that is written by the main author of that paper.
+All data and computer code are available from Github with the last commit on 2019-01-17 [^hilgard]. The R code contains a list of R packages used in the project as `library()` statements, included an R package on Github that is written by the main author of that paper. However, we identified one package (`compute.es`) that was not written in those `library()` statements but used with the namespace operator, i.e. `compute.es::tes()`. This undocumented package can be detected by `renv::dependencies()`.
 
-Based on the shared, one can run `rang` to obtain the dependecy graph of all R packages on 2019-01-17.
+[^hilgard]: https://github.com/Joe-Hilgard/vvg-2d4d
+
+Based on the above information, one can run `resolve()` to obtain the dependency graph of all R packages on 2019-01-17.
 
 ```r
-graph <- resolve(c("readxl", "rms", "ordinal", "tidyverse", "lubridate", "MBESS", "censReg",
-                   "BayesFactor", "psych", "Joe-Hilgard/hilgard", "lsmeans"),
+graph <- resolve(c("readxl", "rms", "ordinal", "tidyverse", "lubridate", "MBESS",
+                   "censReg", "BayesFactor", "psych", "Joe-Hilgard/hilgard", "lsmeans",
+                   "compute.es"),
                  snapshot_date = "2019-01-17")
 ```
+
+When running `dockerize()`, one can take advantage of the `materials_dir` parameter to transfer the shared materials from @hilgard:2019:NEG into the Docker image.
+
+```r
+dockerize(graph, "hilgard", materials_dir = "vvg-2d4d", cache = TRUE)
+```
+
+We then built the Docker and launch a Docker container. For this container, we changed the entry point from R to bash so that the container goes to the Linux command shell instead.
+
+```r
+cd hilgard
+docker build -t hilgard .
+docker run --rm --name "hilgardcontainer" --entrypoint bash -ti hilgard
+```
+
+Inside the container, the materials is located in the `materials` directory. We used the following shell script to test the reproducibility of all R scripts.
+
+```sh
+rfiles=(0_data_aggregation.R 1_data_cleaning.R 2_analysis.R 3_plotting.R)
+for i in ${rfiles[@]}
+do
+	Rscript $i
+	code=$?
+	if [ $code != 0 ]
+	then
+		exit 1
+	fi
+done   
+```
+
+All R scripts ran fine inside the container and the figures generated are the same as the ones in @hilgard:2019:NEG.
 
 # References
