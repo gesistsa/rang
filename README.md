@@ -35,6 +35,12 @@ You can install the development version of rang like so:
 remotes::install_github("chainsawriot/rang")
 ```
 
+Or the stable CRAN version
+
+``` r
+install.packages("rang")
+```
+
 ## Example
 
 To obtain the dependency graph of R packages, use `resolve`. Currently,
