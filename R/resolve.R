@@ -15,7 +15,7 @@
     # allvers <- .memo_rver() #TODO
   }
   allvers$date <- anytime::anytime(allvers$date, tz = "UTC", asUTC = TRUE)
-  utils::tail(allvers[allvers$date < snapshot_date,], 1)$version
+  utils::tail(allvers[allvers$date < snapshot_date,], 1)[,1:2]
 }
 
 ## .msysreps <- memoise::memoise(.raw_sysreqs, cache = cachem::cache_mem(max_age = 60 * 60))
@@ -37,6 +37,9 @@
            },
            "github" = {
                return(.query_snapshot_dependencies_github(handle = .parse_pkgref(pkgref), snapshot_date = snapshot_date))
+           },
+           "bioc" = {
+              return(.query_snapshot_dependencies_bioc(handle = .parse_pkgref(pkgref), snapshot_date = snapshot_date))
            })
 }
 
@@ -74,6 +77,30 @@
         return(pkg_dep_df[,c("snapshot_date", "x", "x_version", "x_pubdate", "x_pkgref", "x_uid", "y", "type", "y_raw_version", "y_pkgref")])  
     } else {
         return(pkg_dep_df[,c("snapshot_date", "x", "x_version", "x_pubdate", "x_pkgref", "x_uid")])
+    }
+}
+
+.query_snapshot_dependencies_bioc <- function(handle = "BiocGenerics", snapshot_date = "2022-01-10") {
+    snapshot_date <- anytime::anytime(snapshot_date, tz = "UTC", asUTC = TRUE)
+    bioc_version <- .query_biocver(snapshot_date)
+    search_res <- .memo_search_bioc(bioc_version$version)
+    search_res$pubdate <- anytime::anytime(bioc_version$date, tz = "UTC", asUTC = TRUE)
+    
+    latest_version <- search_res[search_res$Package==handle,]
+    
+    if (nrow(latest_version) == 0) {
+        stop("No snapshot version exists for ", handle, ".",  call. = FALSE)
+    }
+    pkg_dep_df <- .parse_desc(descr_df = latest_version,snapshot_date = snapshot_date)
+    pkg_dep_df$x_bioc_ver <- bioc_version$version
+    pkg_dep_df <- pkg_dep_df[!is.na(pkg_dep_df$y),]
+    pkg_dep_df$x_pubdate <- bioc_version$date
+    pkg_dep_df$x_pkgref <- .normalize_pkgs(handle,bioc_version = bioc_version$version)
+    if("y"%in% names(pkg_dep_df)) {
+        pkg_dep_df$y_pkgref <- .normalize_pkgs(pkg_dep_df$y,bioc_version = bioc_version$version)
+        return(pkg_dep_df[,c("snapshot_date", "x", "x_version", "x_pubdate", "x_pkgref", "x_bioc_ver", "y", "type", "y_raw_version", "y_pkgref")])  
+    } else {
+        return(pkg_dep_df[,c("snapshot_date", "x", "x_version", "x_pubdate", "x_pkgref", "x_bioc_ver")])
     }
 }
 
@@ -178,6 +205,7 @@
 #' @param no_suggests logical, whether to ignore packages in the "Suggests" field
 #' @param query_sysreqs logical, whether to query for System Requirements. Important: Archived CRAN can't be queried for system requirements. Those
 #' packages are assumed to have no system requirement.
+#' @param query_bioc Logical, whether to query for packages from Bioconductor
 #' @param os character, which OS to query for system requirements
 #' @param verbose logical, whether to display messages
 #' @return a `rang` S3 object with the following items
@@ -206,7 +234,7 @@
 #'     gh_graph
 #' }
 #' }
-resolve <- function(pkgs, snapshot_date, no_enhances = TRUE, no_suggests = TRUE, query_sysreqs = TRUE, os = "ubuntu-20.04", verbose = FALSE) {
+resolve <- function(pkgs, snapshot_date, no_enhances = TRUE, no_suggests = TRUE, query_sysreqs = TRUE, query_bioc = FALSE, os = "ubuntu-20.04", verbose = FALSE) {
     if (!os %in% supported_os) {
         stop("Don't know how to resolve ", os, ". Supported OSes are: ", paste(supported_os, collapse = ", "))
     }
@@ -220,7 +248,12 @@ resolve <- function(pkgs, snapshot_date, no_enhances = TRUE, no_suggests = TRUE,
     if (snapshot_date >= anytime::anytime(Sys.Date())) {
         stop("We don't know the future.", call. = FALSE)
     }
-    pkgrefs <- .normalize_pkgs(pkgs)
+    if(isTRUE(query_bioc)){
+      bioc_version <- .query_biocver(snapshot_date)$version
+    } else{
+      bioc_version <- NULL
+    }
+    pkgrefs <- .normalize_pkgs(pkgs, bioc_version = bioc_version)
     output <- list()
     output$call <- match.call()
     output$ranglets <- list()
@@ -230,6 +263,9 @@ resolve <- function(pkgs, snapshot_date, no_enhances = TRUE, no_suggests = TRUE,
     output$unresolved_pkgrefs <- character(0)
     output$sysreqs <- character(0)
     output$r_version <- .query_rver(snapshot_date)
+    if(isTRUE(query_bioc)){
+        output$bioc_version <- bioc_version
+    }
     output$os <- os
     for (pkgref in pkgrefs) {
         tryCatch({
