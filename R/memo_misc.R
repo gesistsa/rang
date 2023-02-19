@@ -14,14 +14,14 @@ NULL
 .memo_rver <- memoise::memoise(.rver, cache = cachem::cache_mem(max_age = 120 * 60))
 
 .bioc_package_history <- function(bioc_version){
-  if(bioc_version>="2.0"){
-    con <- url(paste0("http://bioconductor.org/packages/",bioc_version,"/bioc/VIEWS"))
-    pkgs <- read.dcf(con)
-    close(con)
-  } else{
-    stop("Bioconductor versions <2.0 are not supported")
-  }
-  as.data.frame(pkgs)
+    if(bioc_version>="2.0"){
+        con <- url(paste0("http://bioconductor.org/packages/",bioc_version,"/bioc/VIEWS"))
+        pkgs <- read.dcf(con)
+        close(con)
+    } else{
+        stop("Bioconductor versions <2.0 are not supported")
+    }
+    as.data.frame(pkgs)
 }
 
 .memo_search_bioc <- memoise::memoise(.bioc_package_history, cache = cachem::cache_mem(max_age = 60 * 60)) 
