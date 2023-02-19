@@ -35,6 +35,17 @@ NULL
 ## attr(cached_rver, "newest_date") <- anytime::anytime(tail(cached_rver, n = 1)$date, tz = "UTC", asUTC = TRUE)
 ## usethis::use_data(supported_os, cached_rver, internal = TRUE, overwrite = TRUE)
 
+##library(rvest)
+##doc <- read_html("https://www.bioconductor.org/about/release-announcements/")
+##cached_biocver <- html_table(doc)[[1]]
+##cached_biocver$Date <- anytime::anytime(cached_biocver$Date, tz = "UTC", asUTC = TRUE)
+##cached_biocver$`Software packages` <- NULL
+##names(cached_biocver) <- c("version","date","rver")
+##cached_biocver <- cached_biocver[order(cached_biocver$date),]
+##cached_biocver <- as.data.frame(cached_biocver)
+
+
+
 ## test data upgrade
 ## ---
 ## devtools::load_all()
