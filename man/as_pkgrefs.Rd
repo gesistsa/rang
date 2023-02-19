@@ -13,7 +13,7 @@ as_pkgrefs(x, ...)
 \method{as_pkgrefs}{sessionInfo}(x, ...)
 }
 \arguments{
-\item{x, }{currently supported data structure(s) are: output from \code{\link[=sessionInfo]{sessionInfo()}}}
+\item{x, }{currently supported data structure(s) are: output from \code{\link[=sessionInfo]{sessionInfo()}}, a character vector of package names}
 
 \item{..., }{not used}
 }

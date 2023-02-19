@@ -3,7 +3,7 @@
 #' This generic function converts several standard data structures into a vector of package references, which in turn
 #' can be used as the first argument of the function [resolve()]. This function guessimates the possible sources of the
 #' packages. But we strongly recommend manually reviewing the detected packages before using them for [resolve()].
-#' @param x, currently supported data structure(s) are: output from [sessionInfo()]
+#' @param x, currently supported data structure(s) are: output from [sessionInfo()], a character vector of package names
 #' @param ..., not used
 #' @return a vector of package references
 #' @export
@@ -21,7 +21,11 @@ as_pkgrefs <- function(x, ...) {
 #' @rdname as_pkgrefs
 #' @export
 as_pkgrefs.default <- function(x, ...) {
-    return(invisible(NULL))
+    ## an exported version of .normalize_pkgs
+    if (is.numeric(x) || is.logical(x) || is.integer(x)) {
+        stop("Don't know how to convert this to package references.", call. = FALSE)
+    }
+    return(.normalize_pkgs(x))
 }
 
 #' @rdname as_pkgrefs

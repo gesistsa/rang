@@ -75,6 +75,14 @@ test_that(".extract_pkgref_packageDescription", {
     expect_equal(.extract_pkgref_packageDescription(si$otherPkgs[[4]]), "cran::testthat")
 })
 
+test_that("as_pkgrefs dispatch", {
+    expect_error(as_pkgrefs(TRUE))
+    expect_error(as_pkgrefs(7.21))
+    expect_error(as_pkgrefs(1L))
+    expect_equal(as_pkgrefs("rtoot"), "cran::rtoot")
+    expect_equal(as_pkgrefs(c("rtoot", "sna")), c("cran::rtoot", "cran::sna"))
+})
+
 test_that("as_pkgrefs_packageDescription", {
     si <- readRDS("../testdata/sessionInfo1.RDS")
     res <- as_pkgrefs(si)
