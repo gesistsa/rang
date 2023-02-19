@@ -58,6 +58,11 @@
     grepl("/", pkg)
 }
 
+.is_bioc <- function(pkg,bioc_version){
+  bioc_pkgs <- .memo_search_bioc(bioc_version)
+  pkg%in%bioc_pkgs$Package
+}
+
 .is_pkgref <- function(pkg) {
     grepl("::", pkg)
 }
