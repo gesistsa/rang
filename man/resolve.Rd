@@ -16,7 +16,7 @@ resolve(
 )
 }
 \arguments{
-\item{pkgs}{character vector of R packages to resolve. \code{pkgs} can be either in shorthands, e.g. "rtoot", "ropensci/readODS", or in package references, e.g. "cran::rtoot", "github::ropensci/readODS". Please refer to the \href{https://r-lib.github.io/pkgdepends/reference/pkg_refs.html}{Package References documentation} of \code{pak} for details. Currently, this package supports only cran and github packages.}
+\item{pkgs}{\code{pkgs} can be 1) a character vector of R packages to resolve, or 2) a data structure that \code{\link[=as_pkgrefs]{as_pkgrefs()}} can convert to a character vector of package references. For 1) \code{pkgs} can be either in shorthands, e.g. "rtoot", "ropensci/readODS", or in package references, e.g. "cran::rtoot", "github::ropensci/readODS". Please refer to the \href{https://r-lib.github.io/pkgdepends/reference/pkg_refs.html}{Package References documentation} of \code{pak} for details. Currently, this package supports only cran and github packages. For 2) \code{\link[=as_pkgrefs]{as_pkgrefs()}} support the output of \code{\link[=sessionInfo]{sessionInfo()}}.}
 
 \item{snapshot_date}{Snapshot date, if not specified, assume to be a month ago}
 

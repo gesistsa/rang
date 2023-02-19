@@ -24,7 +24,7 @@ test_that("unresolved", {
     skip_on_cran()
     expect_error(res <- .query_snapshot_dependencies("cran::LDAvis", snapshot_date = "2001-10-01"))
     warns <- capture_warnings(x <- resolve("LDAvis", snapshot_date = "2000-10-01"))
-    expect_equal(x$r_version, "1.1.1")    
+    expect_equal(x$r_version, "1.1.1")
     expect_true(length(warns) == 2)
     expect_true(any(grepl("^Some package", warns)))
     expect_true(any(grepl("^No packages to query", warns)))
@@ -140,3 +140,10 @@ test_that("Non-cran must enforce caching ref #22", {
 ##     expect_warning(x <- resolve("devtools", os = "ubuntu-18.04"))
 ##     expect_warning(x <- resolve("devtools", os = "ubuntu-20.04"), NA)
 ## })
+
+test_that("Integration of as_pkgrefs() in resolve() for sessionInfo()", {
+    x <- resolve(c("cran::sna"), snapshot_date = "2020-05-01", query_sysreqs = FALSE)
+    si <- readRDS("../testdata/sessionInfo2.RDS")
+    expect_error(graph <- resolve(si, snapshot_date = "2020-05-01", query_sysreqs = FALSE), NA)
+    expect_equal(graph$ranglets[["cran::sna"]], x$ranglets[["cran::sna"]])
+})

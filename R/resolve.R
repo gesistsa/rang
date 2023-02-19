@@ -74,7 +74,7 @@
     pkg_dep_df$x_pubdate <- sha$x_pubdate
     if("y"%in% names(pkg_dep_df)) {
         pkg_dep_df$y_pkgref <- .normalize_pkgs(pkg_dep_df$y)
-        return(pkg_dep_df[,c("snapshot_date", "x", "x_version", "x_pubdate", "x_pkgref", "x_uid", "y", "type", "y_raw_version", "y_pkgref")])  
+        return(pkg_dep_df[,c("snapshot_date", "x", "x_version", "x_pubdate", "x_pkgref", "x_uid", "y", "type", "y_raw_version", "y_pkgref")])
     } else {
         return(pkg_dep_df[,c("snapshot_date", "x", "x_version", "x_pubdate", "x_pkgref", "x_uid")])
     }
@@ -111,7 +111,7 @@
     idx <- which(dates<=date)[1]
     k <- 2
     while(is.null(idx)) {
-        commits <- gh::gh(paste0("GET /repos/", handle, "/commits"), per_page = 100, page = k)  
+        commits <- gh::gh(paste0("GET /repos/", handle, "/commits"), per_page = 100, page = k)
         k <- k + 1
     }
     list(sha = commits[[idx]]$sha, x_pubdate =  anytime::anytime(dates[[idx]], tz = "UTC", asUTC = TRUE))
@@ -198,8 +198,8 @@
 #' Resolve Dependencies Of R Packages
 #'
 #' This function recursively queries dependencies of R packages at a specific snapshot time. The dependency graph can then be used to recreate the computational environment. The data on dependencies are provided by R-hub.
-#' 
-#' @param pkgs character vector of R packages to resolve. `pkgs` can be either in shorthands, e.g. "rtoot", "ropensci/readODS", or in package references, e.g. "cran::rtoot", "github::ropensci/readODS". Please refer to the [Package References documentation](https://r-lib.github.io/pkgdepends/reference/pkg_refs.html) of `pak` for details. Currently, this package supports only cran and github packages.
+#'
+#' @param pkgs `pkgs` can be 1) a character vector of R packages to resolve, or 2) a data structure that [as_pkgrefs()] can convert to a character vector of package references. For 1) `pkgs` can be either in shorthands, e.g. "rtoot", "ropensci/readODS", or in package references, e.g. "cran::rtoot", "github::ropensci/readODS". Please refer to the [Package References documentation](https://r-lib.github.io/pkgdepends/reference/pkg_refs.html) of `pak` for details. Currently, this package supports only cran and github packages. For 2) [as_pkgrefs()] support the output of [sessionInfo()].
 #' @param snapshot_date Snapshot date, if not specified, assume to be a month ago
 #' @param no_enhances logical, whether to ignore packages in the "Enhances" field
 #' @param no_suggests logical, whether to ignore packages in the "Suggests" field
@@ -248,12 +248,16 @@ resolve <- function(pkgs, snapshot_date, no_enhances = TRUE, no_suggests = TRUE,
     if (snapshot_date >= anytime::anytime(Sys.Date())) {
         stop("We don't know the future.", call. = FALSE)
     }
-    if(isTRUE(query_bioc)){
-      bioc_version <- .query_biocver(snapshot_date)$version
-    } else{
-      bioc_version <- NULL
+    if (class(pkgs) %in% c("sessionInfo")) {
+        pkgrefs <- as_pkgrefs(pkgs)
+    } else {
+        if(isTRUE(query_bioc)){
+            bioc_version <- .query_biocver(snapshot_date)$version
+      } else{
+            bioc_version <- NULL
+      }
+      pkgrefs <- .normalize_pkgs(pkgs, bioc_version = bioc_version)
     }
-    pkgrefs <- .normalize_pkgs(pkgs, bioc_version = bioc_version)
     output <- list()
     output$call <- match.call()
     output$ranglets <- list()
@@ -486,7 +490,7 @@ query_sysreqs <- function(rang, os = "ubuntu-20.04") {
     curl <- Sys.which("curl")
     rspm_repo_id <- Sys.getenv("RSPM_REPO_ID", DEFAULT_RSPM_REPO_ID)
     rspm <- Sys.getenv("RSPM_ROOT", DEFAULT_RSPM)
-  
+
     rspm_repo_url <- sprintf("%s/__api__/repos/%s", rspm, rspm_repo_id)
     desc_file <- tempfile()
     ## potential issue: not going back to snapshot time! but the same is true for the remotes approach?
@@ -511,7 +515,6 @@ query_sysreqs <- function(rang, os = "ubuntu-20.04") {
     if (!is.null(res$error)) {
         stop(res$error)
     }
-    unique(unlist(c(res[["install_scripts"]], 
+    unique(unlist(c(res[["install_scripts"]],
                     lapply(res[["dependencies"]], `[[`, "install_scripts"))))
 }
-
