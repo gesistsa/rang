@@ -20,7 +20,12 @@
     if (source == "github") {
         .download_package_from_github(tarball_path, x, version, handle, source, uid)
     } else {
-        url <- paste(cran_mirror, "src/contrib/Archive/", x, "/", x, "_", version, ".tar.gz", sep = "")
+        if(source=="bioc"){
+          url <- paste(bioc_mirror, "bioc/src/contrib/", x, "/", x, "_", version, ".tar.gz", sep = "")
+        } else{
+          url <- paste(cran_mirror, "src/contrib/Archive/", x, "/", x, "_", version, ".tar.gz", sep = "")  
+        }
+        
         tryCatch({
             suppressWarnings(download.file(url, destfile = tarball_path, quiet = !verbose))
         }, error = function(e) {

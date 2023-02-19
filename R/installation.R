@@ -315,7 +315,11 @@ export_rang <- function(rang, path, rang_as_comment = TRUE, verbose = TRUE, lib 
     } else {
         cat(paste0("lib <- \"", as.character(lib), "\"\n"), file = con)
     }
-    cat(paste0("cran_mirror <- \"", cran_mirror, "\"\n"), file = con)    
+    cat(paste0("cran_mirror <- \"", cran_mirror, "\"\n"), file = con)   
+    if(!is.null(rang$bioc_version)){
+        cat(paste0("bioc_mirror <- \"", "https://bioconductor.org/packages/",rang$bioc_version,"/", "\"\n"), file = con)      
+    }
+    
     writeLines(readLines(system.file("footer.R", package = "rang")), con = con)
     if (isTRUE(rang_as_comment)) {
         .write_rang_as_comment(rang = rang, con = con, path = path, verbose = verbose,
