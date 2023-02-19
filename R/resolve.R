@@ -12,7 +12,7 @@
   if (snapshot_date < attr(cached_biocver, "newest_date")) {
     allvers <- cached_biocver
   } else {
-    # allvers <- .memo_rver() #TODO
+    return(data.frame(version="3.16",date = "2022-11-02",rver = 4.2)) # TODO realtime check
   }
   allvers$date <- anytime::anytime(allvers$date, tz = "UTC", asUTC = TRUE)
   utils::tail(allvers[allvers$date < snapshot_date,], 1)[,1:2]
@@ -431,6 +431,9 @@ query_sysreqs <- function(rang, os = "ubuntu-20.04") {
     if ("cran" %in% names(grouped_handles)) {
         output[["cran"]] <- .query_sysreqs_cran(grouped_handles[["cran"]], os = os)
     }
+    if ("bioc" %in% names(grouped_handles)) {
+        output[["bioc"]] <- .query_sysreqs_bioc(grouped_handles[["bioc"]], os = os)
+    }
     unique(unlist(output))
 }
 
@@ -444,8 +447,10 @@ query_sysreqs <- function(rang, os = "ubuntu-20.04") {
                },
                "github" = {
                    query_fun <- .query_sysreqs_github
-               }
-               )
+               },
+               "bioc" = {
+                   query_fun <- .query_sysreqs_bioc
+               })
         tryCatch({
             result <- query_fun(handle = .parse_pkgref(pkgref), os = os)
             output <- c(output, result)
@@ -466,6 +471,13 @@ query_sysreqs <- function(rang, os = "ubuntu-20.04") {
     unique(unlist(res))
 }
 
+.query_sysreqs_bioc <- function(handle, os) {
+  # TODO 
+  # pkgs <- .memo_search_bioc("release") 
+  # pkgs$SystemRequirements[pkgs$Package%in%handle] Sys Reqs are not in the form of apt-get
+  character(0)
+}
+
 ## get system requirements for github packages
 .query_sysreqs_github_single <- function(handle, os) {
     os_info <- strsplit(os, "-")[[1]]
@@ -477,7 +489,7 @@ query_sysreqs <- function(rang, os = "ubuntu-20.04") {
   
     rspm_repo_url <- sprintf("%s/__api__/repos/%s", rspm, rspm_repo_id)
     desc_file <- tempfile()
-    ## potenital issue: not going back to snapshot time! but the same is true for the remotes approach?
+    ## potential issue: not going back to snapshot time! but the same is true for the remotes approach?
     repo_descr <- gh::gh(paste0("GET /repos/", handle, "/contents/DESCRIPTION"))   
     writeLines(readLines(repo_descr$download_url),con = desc_file)
     res <- system2(
