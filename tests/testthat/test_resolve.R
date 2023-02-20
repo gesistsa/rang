@@ -147,3 +147,12 @@ test_that("Integration of as_pkgrefs() in resolve() for sessionInfo()", {
     expect_error(graph <- resolve(si, snapshot_date = "2020-05-01", query_sysreqs = FALSE), NA)
     expect_equal(graph$ranglets[["cran::sna"]], x$ranglets[["cran::sna"]])
 })
+
+test_that("resolving packages from bioconductor", {
+  skip_if_offline()
+  skip_on_cran()
+  expect_silent(x <- resolve("BiocGenerics", snapshot_date = "2022-10-20", query_bioc = TRUE))
+  expect_equal(x$unresolved_pkgrefs, character(0))
+  expect_equal(x$sysreqs, character(0))
+  expect_equal(x$r_version, "4.2.1")
+})
