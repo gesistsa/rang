@@ -480,7 +480,11 @@ query_sysreqs <- function(rang, os = "ubuntu-20.04") {
     pkgs <- .memo_search_bioc(bioc_version = "release") 
     sys_reqs <- .clean_sys_reqs_bioc(pkgs$SystemRequirements[pkgs$Package%in%handle])
     sys_reqs <- sys_reqs[sys_reqs%in%sys_reqs_all]
-    paste("apt-get install -y", sys_reqs)
+    if(length(sys_reqs)!=0){
+        return(paste("apt-get install -y", sys_reqs))
+    } else{
+        return(charachter(0))
+    }
 }
 
 .clean_sys_reqs_bioc <- function(sys_reqs){
