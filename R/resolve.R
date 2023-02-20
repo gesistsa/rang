@@ -270,9 +270,7 @@ resolve <- function(pkgs, snapshot_date, no_enhances = TRUE, no_suggests = TRUE,
     output$unresolved_pkgrefs <- character(0)
     output$sysreqs <- character(0)
     output$r_version <- .query_rver(snapshot_date)
-    if(isTRUE(query_bioc)){
-        output$bioc_version <- bioc_version
-    }
+    output$bioc_version <- bioc_version
     output$os <- os
     for (pkgref in pkgrefs) {
         tryCatch({

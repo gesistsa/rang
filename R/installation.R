@@ -392,9 +392,11 @@ dockerize <- function(rang, output_dir, materials_dir = NULL, image = c("r-ver",
     if (!is.null(materials_dir) && !(dir.exists(materials_dir))) {
         stop(paste0("The folder ", materials_dir, " does not exist"), call. = FALSE)
     }
-    if (isFALSE(all(grepl("^cran::", .extract_pkgrefs(rang)))) &&
-        utils::compareVersion(rang$r_version, "3.1") == -1 &&
-        isFALSE(cache)) {
+    need_cache <- (isTRUE(any(grepl("^github::", .extract_pkgrefs(rang)))) &&
+                   utils::compareVersion(rang$r_version, "3.1") == -1) ||
+        (isTRUE(any(grepl("^bioc::", .extract_pkgrefs(rang)))) &&
+         utils::compareVersion(rang$r_version, "3.3") == -1)
+    if (isTRUE(need_cache) && isFALSE(cache)) {
         stop("Non-CRAN packages must be cached for this R version: ", rang$r_version, ". Please set `cache` = TRUE.", call. = FALSE)
     }
     image <- match.arg(image)
