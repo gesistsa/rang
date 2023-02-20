@@ -483,7 +483,7 @@ query_sysreqs <- function(rang, os = "ubuntu-20.04") {
     if(length(sys_reqs)!=0){
         return(paste("apt-get install -y", sys_reqs))
     } else{
-        return(charachter(0))
+        return(character(0))
     }
 }
 
