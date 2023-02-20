@@ -476,10 +476,21 @@ query_sysreqs <- function(rang, os = "ubuntu-20.04") {
 }
 
 .query_sysreqs_bioc <- function(handle, os) {
-  # TODO 
-  # pkgs <- .memo_search_bioc("release") 
-  # pkgs$SystemRequirements[pkgs$Package%in%handle] Sys Reqs are not in the form of apt-get
-  character(0)
+    sys_reqs_all <- .memo_query_sysreqs_rhub()
+    pkgs <- .memo_search_bioc(bioc_version = "release") 
+    sys_reqs <- .clean_sys_reqs_bioc(pkgs$SystemRequirements[pkgs$Package%in%handle])
+    sys_reqs <- sys_reqs[sys_reqs%in%sys_reqs_all]
+    paste("apt-get install -y", sys_reqs)
+}
+
+.clean_sys_reqs_bioc <- function(sys_reqs){
+  sys_reqs <- unlist(strsplit(sys_reqs,split = ",\\s*|\\n"),use.names = FALSE)
+  sys_reqs <- tolower(sys_reqs)
+  sys_reqs <- gsub("\\s*\\(.*\\)","",sys_reqs)
+  sys_reqs <- gsub("GNU make","gnumake",sys_reqs)
+  sys_reqs <- gsub("^gsl$","libgsl",sys_reqs)
+  sys_reqs <- gsub("^pandoc.*","pandoc",sys_reqs)
+  sys_reqs <- gsub("^xml2$","libxml2",sys_reqs)
 }
 
 ## get system requirements for github packages
