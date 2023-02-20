@@ -202,9 +202,24 @@ The same file can also be "rescued" by `rang`.
 
 [^groundhog]: http://datacolada.org/100
 
-## Resuscitate a discontinued reproducible format
+## Recover a removed R package
 
-cacher
+The R package `maxent` introduces a machine learning algorithm with a small memory footprint and was available on CRAN until 2019. A software paper was published by the original authors in 2012 [@jurka:2012]. The R package was also used in some subsequent automated content analytic papers [e.g. @loercher:2017:D].
+
+Despite the covert editing of the package by a staffer of CRAN [^evidence], the package was removed from CRAN in 2019 [^checkerror]. We attempted to install the second last (the original submitted version) and last (with covert editing) versions of `maxent` on R 4.2.2. Both of them didn't work.
+
+Using `rang`, we are able to reconstruct a computational environment with R 2.15.0 (2012-03-30) to run all code snippets published in @jurka:2012 [^speed]. For removed CRAN packages, we strongly recommend querying the Github read-only mirror of CRAN instead (https://github.com/cran). It is because in this way, the resolved system requirements have a higher chance of being correct.
+
+```r
+maxent <- resolve("cran/maxent", "2012-06-10")
+dockerize(maxent, "maxentdir", cache = TRUE)
+```
+
+[^checkerror]: https://cran-archive.r-project.org/web/checks/2019/2019-03-05_check_results_maxent.html
+
+[^evidence]: https://github.com/cran/maxent/commit/9d46c6aad27a1f41a78907b170ddd9a586192be9
+
+[^speed]: On an interesting historical note: The original paper reported, based on a benchmark, that "the algorithm is very fast; `maxent` uses only 135.4 megabytes of RAM and finishes in 53.3 seconds." On a modest computer in 2023 with a dockerized R 2.15.0, the benchmark finishes in 4 seconds.
 
 # References
 
