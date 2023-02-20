@@ -115,5 +115,5 @@ test_that("issue #38", {
 })
 
 test_that("Bioconductor <2.0",{
-  expect_error(bioc_package_history(bioc_version = "1.9"))
+  expect_error(.bioc_package_history(bioc_version = "1.9"))
 })
