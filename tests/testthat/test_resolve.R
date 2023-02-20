@@ -156,3 +156,20 @@ test_that("resolving packages from bioconductor", {
   expect_equal(x$sysreqs, character(0))
   expect_equal(x$r_version, "4.2.1")
 })
+
+test_that("cache bioc pkgs", {
+  skip_if_offline()
+  skip_on_cran()
+  rang_bioc <- readRDS("../testdata/rang_bioc.RDS")
+  temp_dir <- .generate_temp_dir()
+  dockerize(rang_bioc, output_dir = temp_dir) ## cache = FALSE
+  x <- readLines(file.path(temp_dir, "Dockerfile"))
+  expect_false(any(grepl("^COPY cache", x)))
+  expect_false(dir.exists(file.path(temp_dir, "cache")))
+  expect_false(file.exists(file.path(temp_dir, "cache", "BiocGenerics_0.44.0.tar.gz")))
+  expect_silent(dockerize(rang_bioc, output_dir = temp_dir, cache = TRUE, verbose = FALSE))
+  x <- readLines(file.path(temp_dir, "Dockerfile"))
+  expect_true(any(grepl("^COPY cache", x)))
+  expect_true(dir.exists(file.path(temp_dir, "cache")))
+  expect_true(file.exists(file.path(temp_dir, "cache", "BiocGenerics_0.44.0.tar.gz")))
+})
