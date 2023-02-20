@@ -202,3 +202,11 @@ test_that("readme issue #50", {
     content <- readLines(file.path(temp_dir, "README"))
     expect_true(any(grepl(temp_dir, content)))
 })
+
+test_that("dockerize with bioc #58", {
+  rang_bioc <- readRDS("../testdata/rang_bioc.RDS")
+  temp_dir <- .generate_temp_dir()
+  dockerize(rang = rang_bioc, output_dir = temp_dir) ## verbose = TRUE
+  x <- readLines(file.path(temp_dir, "rang.R"))
+  expect_true(any(grepl("bioc_mirror",x)))
+})
