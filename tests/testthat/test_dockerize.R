@@ -105,11 +105,11 @@ test_that("Docker R < 2.1", {
 
 test_that(".group_sysreqs and issue #21", {
     graph <- readRDS("../testdata/graph.RDS")
-    expect_equal(.group_sysreqs(graph), "apt-get update -qq && apt-get install -y default-jdk libgsl0-dev libicu-dev libpng-dev libxml2-dev make python3 zlib1g-dev liblzma-dev libpcre3-dev libbz2-dev && R CMD javareconf")
+    expect_equal(.group_sysreqs(graph), "apt-get update -qq && apt-get install -y libpcre3-dev zlib1g-dev pkg-config && apt-get install -y default-jdk libgsl0-dev libicu-dev libpng-dev libxml2-dev make python3 zlib1g-dev liblzma-dev libpcre3-dev libbz2-dev && R CMD javareconf")
     graph <- readRDS("../testdata/rang_ok.RDS")
-    expect_equal(.group_sysreqs(graph), "apt-get update -qq")
+    expect_equal(.group_sysreqs(graph), "apt-get update -qq && apt-get install -y libpcre3-dev zlib1g-dev pkg-config")
     graph <- readRDS("../testdata/issue21.RDS")
-    expected_output <- "apt-get update -qq && apt-get install -y software-properties-common && add-apt-repository -y ppa:cran/libgit2 && apt-get update && apt-get install -y cmake git libcurl4-openssl-dev libfontconfig1-dev libfreetype6-dev libfribidi-dev libgit2-dev libgsl0-dev libharfbuzz-dev libicu-dev libjpeg-dev libpng-dev libssh2-1-dev libssl-dev libtiff-dev libxml2-dev make pandoc pari-gp zlib1g-dev"
+    expected_output <- "apt-get update -qq && apt-get install -y libpcre3-dev zlib1g-dev pkg-config && apt-get install -y software-properties-common && add-apt-repository -y ppa:cran/libgit2 && apt-get update && apt-get install -y cmake git libcurl4-openssl-dev libfontconfig1-dev libfreetype6-dev libfribidi-dev libgit2-dev libgsl0-dev libharfbuzz-dev libicu-dev libjpeg-dev libpng-dev libssh2-1-dev libssl-dev libtiff-dev libxml2-dev make pandoc pari-gp zlib1g-dev"
     expect_warning(output <- .group_sysreqs(graph))
     expect_equal(output, expected_output)
     graph <- readRDS("../testdata/issue21_ubuntu2004.RDS")
@@ -131,7 +131,7 @@ test_that("material_dir, non-existing, #23", {
     ## non-existing
     fake_material_dir <- .generate_temp_dir()
     expect_false(dir.exists(fake_material_dir))
-    expect_error(dockerize(rang_rio, output_dir = temp_dir, materials_dir = fake_material_dir))    
+    expect_error(dockerize(rang_rio, output_dir = temp_dir, materials_dir = fake_material_dir))
 })
 
 test_that("material_dir, existing, no subdir, #23", {
