@@ -16,19 +16,24 @@
     }
 }
 
-.download_package <- function(tarball_path, x, version, handle, source, uid, verbose) {
+.download_package <- function(tarball_path, x, version, handle, source, uid, verbose, cran_mirror, bioc_mirror) {
     if (source == "github") {
-        .download_package_from_github(tarball_path, x, version, handle, source, uid)
-    } else {
-        url <- paste(cran_mirror, "src/contrib/Archive/", x, "/", x, "_", version, ".tar.gz", sep = "")
-        tryCatch({
-            suppressWarnings(download.file(url, destfile = tarball_path, quiet = !verbose))
-        }, error = function(e) {
-            ## is the current latest
-            url <- paste(cran_mirror, "src/contrib/", x, "_", version, ".tar.gz", sep = "")
-            download.file(url, destfile = tarball_path, quiet = !verbose)
-        })
+        return(.download_package_from_github(tarball_path, x, version, handle, source, uid))
     }
+    if (source == "bioc") {
+        url <- paste(bioc_mirror, "bioc/src/contrib/", x, "_", version, ".tar.gz", sep = "")
+    }
+    if (source == "cran") {
+        url <- paste(cran_mirror, "src/contrib/Archive/", x, "/", x, "_", version, ".tar.gz", sep = "")  
+    }
+    
+    tryCatch({
+        suppressWarnings(download.file(url, destfile = tarball_path, quiet = !verbose))
+    }, error = function(e) {
+        ## is the current latest
+        url <- paste(cran_mirror, "src/contrib/", x, "_", version, ".tar.gz", sep = "")
+        download.file(url, destfile = tarball_path, quiet = !verbose)
+    })
     invisible(tarball_path)
 }
 
@@ -53,12 +58,12 @@
 }
 
 .install_from_source <- function(x, version, handle, source, uid, lib,
-                                 path = tempdir(), verbose, cran_mirror, current_r_version) {
+                                 path = tempdir(), verbose, cran_mirror, bioc_mirror, current_r_version) {
     tarball_path <- file.path(path, paste(x, "_", version, ".tar.gz", sep = ""))
     raw_tarball_path <- file.path(path, paste("raw_", x, "_", version, ".tar.gz", sep = ""))
     if (!file.exists(tarball_path) && !file.exists(raw_tarball_path)) {
         .download_package(tarball_path = tarball_path, x = x, version = version, handle = handle, source = source,
-                          uid = uid, verbose = verbose)
+                          uid = uid, verbose = verbose, cran_mirror = cran_mirror, bioc_mirror = bioc_mirror)
     }
     if (file.exists(raw_tarball_path)) {
         tarball_path <- .build_raw_tarball(raw_tarball_path, x = x, version = version, tarball_path)

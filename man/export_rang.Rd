@@ -11,7 +11,8 @@ export_rang(
   verbose = TRUE,
   lib = NA,
   cran_mirror = "https://cran.r-project.org/",
-  check_cran_mirror = TRUE
+  check_cran_mirror = TRUE,
+  bioc_mirror = "https://bioconductor.org/packages/"
 )
 }
 \arguments{
@@ -30,6 +31,8 @@ and \code{\link[=download.file]{download.file()}}.}
 \item{cran_mirror}{character, which CRAN mirror to use}
 
 \item{check_cran_mirror}{logical, whether to check the CRAN mirror}
+
+\item{bioc_mirror}{character, which Bioconductor mirror to use}
 }
 \value{
 \code{path}, invisibly

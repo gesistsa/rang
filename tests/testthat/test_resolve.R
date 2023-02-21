@@ -147,3 +147,29 @@ test_that("Integration of as_pkgrefs() in resolve() for sessionInfo()", {
     expect_error(graph <- resolve(si, snapshot_date = "2020-05-01", query_sysreqs = FALSE), NA)
     expect_equal(graph$ranglets[["cran::sna"]], x$ranglets[["cran::sna"]])
 })
+
+test_that("resolving packages from bioconductor", {
+  skip_if_offline()
+  skip_on_cran()
+  expect_silent(x <- resolve("BiocGenerics", snapshot_date = "2022-10-20", query_bioc = TRUE))
+  expect_equal(x$unresolved_pkgrefs, character(0))
+  expect_equal(x$sysreqs, character(0))
+  expect_equal(x$r_version, "4.2.1")
+})
+
+test_that("cache bioc pkgs", {
+  skip_if_offline()
+  skip_on_cran()
+  rang_bioc <- readRDS("../testdata/rang_bioc.RDS")
+  temp_dir <- .generate_temp_dir()
+  dockerize(rang_bioc, output_dir = temp_dir) ## cache = FALSE
+  x <- readLines(file.path(temp_dir, "Dockerfile"))
+  expect_false(any(grepl("^COPY cache", x)))
+  expect_false(dir.exists(file.path(temp_dir, "cache")))
+  expect_false(file.exists(file.path(temp_dir, "cache", "BiocGenerics_0.44.0.tar.gz")))
+  expect_silent(dockerize(rang_bioc, output_dir = temp_dir, cache = TRUE, verbose = FALSE))
+  x <- readLines(file.path(temp_dir, "Dockerfile"))
+  expect_true(any(grepl("^COPY cache", x)))
+  expect_true(dir.exists(file.path(temp_dir, "cache")))
+  expect_true(file.exists(file.path(temp_dir, "cache", "BiocGenerics_0.44.0.tar.gz")))
+})

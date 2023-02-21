@@ -117,7 +117,7 @@
 }
 
 .write_rang_as_comment <- function(rang, con, path, verbose, lib,
-                                       cran_mirror, check_cran_mirror) {
+                                       cran_mirror, check_cran_mirror, bioc_mirror) {
     cat("## ## To reconstruct this file, please install version",
         as.character(utils::packageVersion("rang")), "of `rang` and run:\n", file = con)
     cat("## rang <- \n", file = con)
@@ -130,10 +130,15 @@
     } else {
         lib_as_character <- paste0("\"", lib, "\"")
     }
+    if(!is.null(rang$bioc_version)){
+      bioc_txt <- paste0(", bioc_mirror = \"", bioc_mirror,rang$bioc_version,"/","\"")
+    } else{
+      bioc_txt <- NULL
+    }
     writeLines(paste0("## rang::export_rang(rang = rang, path = \"", path, "\", verbose = ",
                      as.character(verbose), ", lib = ", lib_as_character,
                      ", cran_mirror = \"", cran_mirror, "\", check_cran_mirror = ",
-                     as.character(check_cran_mirror), ")"), con = con)
+                     as.character(check_cran_mirror), bioc_txt ,")"), con = con)
 }
 
 .query_mirror_validity <- function(mirror) {
@@ -179,6 +184,15 @@
     }
 }
 
+.cache_pkg_bioc <- function(x, version, cache_dir, bioc_mirror, bioc_version, verbose) {
+    url <- paste(bioc_mirror, bioc_version, "/bioc/src/contrib/", x, "_", version, ".tar.gz", sep = "")
+    tarball_path <- file.path(cache_dir, paste(x, "_", version, ".tar.gz", sep = ""))
+    suppressWarnings(utils::download.file(url, destfile = tarball_path, quiet = !verbose))
+    if (!file.exists(tarball_path)) {
+      warning(names(x), "(", x,") can't be cache.")
+    }
+}
+
 .cache_pkg_github <- function(x, version, handle, source, uid, cache_dir, verbose) {
     sha <- uid
     tarball_path <- file.path(cache_dir, paste("raw_", x, "_", version, ".tar.gz", sep = ""))
@@ -189,7 +203,7 @@
     }
 }
 
-.cache_pkgs <- function(rang, output_dir, cran_mirror, verbose) {
+.cache_pkgs <- function(rang, output_dir, cran_mirror, bioc_mirror, verbose) {
     installation_order <- .generate_installation_order(rang)
     cache_dir <- file.path(output_dir, "cache")
     if (!dir.exists(cache_dir)) {
@@ -210,6 +224,10 @@
             .cache_pkg_github(x = x, version = version, handle = handle,
                           source = source, uid = uid,
                           cache_dir = cache_dir, verbose = verbose)
+        }
+        if(source == "bioc"){
+            .cache_pkg_bioc(x = x, version = version, cache_dir = cache_dir,
+                            bioc_mirror = bioc_mirror,bioc_version = rang$bioc_version, verbose = verbose)
         }
     }
     ## For #14, cache R source in the future here
@@ -273,6 +291,7 @@
 #' @param lib character, pass to [install.packages()]. By default, it is NA (to install the packages to the default location)
 #' @param cran_mirror character, which CRAN mirror to use
 #' @param check_cran_mirror logical, whether to check the CRAN mirror
+#' @param bioc_mirror character, which Bioconductor mirror to use
 #' @return `path`, invisibly
 #' @details The idea behind this is to determine the installation order of R packages locally. Then, the installation script can be depolyed to another
 #' fresh R session to install R packages. [dockerize()] is a more reasonable way because a fresh R session with all system requirements
@@ -289,7 +308,8 @@
 #' }
 #' }
 export_rang <- function(rang, path, rang_as_comment = TRUE, verbose = TRUE, lib = NA,
-                            cran_mirror = "https://cran.r-project.org/", check_cran_mirror = TRUE) {
+                            cran_mirror = "https://cran.r-project.org/", check_cran_mirror = TRUE,
+                            bioc_mirror = "https://bioconductor.org/packages/") {
     if (utils::compareVersion(rang$r_version, "2.1") == -1) {
         stop("`export_rang` doesn't support this R version (yet).")
     }
@@ -315,12 +335,16 @@ export_rang <- function(rang, path, rang_as_comment = TRUE, verbose = TRUE, lib 
     } else {
         cat(paste0("lib <- \"", as.character(lib), "\"\n"), file = con)
     }
-    cat(paste0("cran_mirror <- \"", cran_mirror, "\"\n"), file = con)    
+    cat(paste0("cran_mirror <- \"", cran_mirror, "\"\n"), file = con)   
+    if(!is.null(rang$bioc_version)){
+        cat(paste0("bioc_mirror <- \"", "https://bioconductor.org/packages/",rang$bioc_version,"/", "\"\n"), file = con)      
+    }
+    
     writeLines(readLines(system.file("footer.R", package = "rang")), con = con)
     if (isTRUE(rang_as_comment)) {
         .write_rang_as_comment(rang = rang, con = con, path = path, verbose = verbose,
                                    lib = lib, cran_mirror = cran_mirror,
-                                   check_cran_mirror = check_cran_mirror)
+                                   check_cran_mirror = check_cran_mirror,bioc_mirror = bioc_mirror)
     }
     close(con)
     invisible(path)
@@ -354,7 +378,8 @@ export_rang <- function(rang, path, rang_as_comment = TRUE, verbose = TRUE, lib 
 #' @export
 dockerize <- function(rang, output_dir, materials_dir = NULL, image = c("r-ver", "rstudio", "tidyverse", "verse", "geospatial"),
                       rang_as_comment = TRUE, cache = FALSE, verbose = TRUE, lib = NA,
-                      cran_mirror = "https://cran.r-project.org/", check_cran_mirror = TRUE) {
+                      cran_mirror = "https://cran.r-project.org/", check_cran_mirror = TRUE,
+                      bioc_mirror = "https://bioconductor.org/packages/") {
     if (missing(output_dir)) {
         stop("You must provide `output_dir`.", call. = FALSE)
     }
@@ -367,9 +392,11 @@ dockerize <- function(rang, output_dir, materials_dir = NULL, image = c("r-ver",
     if (!is.null(materials_dir) && !(dir.exists(materials_dir))) {
         stop(paste0("The folder ", materials_dir, " does not exist"), call. = FALSE)
     }
-    if (isFALSE(all(grepl("^cran::", .extract_pkgrefs(rang)))) &&
-        utils::compareVersion(rang$r_version, "3.1") == -1 &&
-        isFALSE(cache)) {
+    need_cache <- (isTRUE(any(grepl("^github::", .extract_pkgrefs(rang)))) &&
+                   utils::compareVersion(rang$r_version, "3.1") == -1) ||
+        (isTRUE(any(grepl("^bioc::", .extract_pkgrefs(rang)))) &&
+         utils::compareVersion(rang$r_version, "3.3") == -1)
+    if (isTRUE(need_cache) && isFALSE(cache)) {
         stop("Non-CRAN packages must be cached for this R version: ", rang$r_version, ". Please set `cache` = TRUE.", call. = FALSE)
     }
     image <- match.arg(image)
@@ -380,9 +407,9 @@ dockerize <- function(rang, output_dir, materials_dir = NULL, image = c("r-ver",
     rang_path <- file.path(output_dir, "rang.R")
     export_rang(rang = rang, path = rang_path, rang_as_comment = rang_as_comment,
                     verbose = verbose, lib = lib, cran_mirror = cran_mirror,
-                    check_cran_mirror = check_cran_mirror)
+                    check_cran_mirror = check_cran_mirror, bioc_mirror = bioc_mirror)
     if (isTRUE(cache)) {
-        .cache_pkgs(rang, output_dir, cran_mirror, verbose)
+        .cache_pkgs(rang, output_dir, cran_mirror, bioc_mirror, verbose)
     }
     if (utils::compareVersion(rang$r_version, "3.1") == -1) {
         file.copy(system.file("compile_r.sh", package = "rang"), file.path(output_dir, "compile_r.sh"),

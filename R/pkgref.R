@@ -58,6 +58,11 @@
     grepl("/", pkg)
 }
 
+.is_bioc <- function(pkg,bioc_version){
+    bioc_pkgs <- .memo_search_bioc(bioc_version)
+    pkg%in%bioc_pkgs$Package
+}
+
 .is_pkgref <- function(pkg) {
     grepl("::", pkg)
 }
@@ -79,13 +84,30 @@
 }
 
 ## to normalize a pkg to pkgref
-.normalize_pkg <- function(pkg) {
+# .normalize_pkg <- function(pkg) {
+#     if (pkg == "" || is.na(pkg)) {
+#         stop("Invalid `pkg`.", call. = FALSE)
+#     }
+#     if (isTRUE(.is_github(pkg))) {
+#         if (isTRUE(grepl("github\\.com", pkg))) {
+#             pkg <- .extract_github_handle(pkg)
+#         }
+#     }
+#     if (isTRUE(.is_pkgref(pkg))) {
+#         return(.clean_suffixes(pkg))
+#     }
+#     if (isTRUE(.is_github(pkg))) {
+#         return(paste0("github::", .clean_suffixes(pkg)))
+#     }
+#     return(paste0("cran::", .clean_suffixes(pkg)))
+# }
+.normalize_pkg <- function(pkg,bioc_version=NULL) {
     if (pkg == "" || is.na(pkg)) {
         stop("Invalid `pkg`.", call. = FALSE)
     }
     if (isTRUE(.is_github(pkg))) {
         if (isTRUE(grepl("github\\.com", pkg))) {
-            pkg <- .extract_github_handle(pkg)
+          pkg <- .extract_github_handle(pkg)
         }
     }
     if (isTRUE(.is_pkgref(pkg))) {
@@ -94,10 +116,17 @@
     if (isTRUE(.is_github(pkg))) {
         return(paste0("github::", .clean_suffixes(pkg)))
     }
-    return(paste0("cran::", .clean_suffixes(pkg)))
+    if(is.null(bioc_version)){
+        return(paste0("cran::", .clean_suffixes(pkg)))
+    } else{
+        if(isTRUE(.is_bioc(pkg,bioc_version))){
+            return(paste0("bioc::", .clean_suffixes(pkg)))
+        } else{
+            return(paste0("cran::", .clean_suffixes(pkg)))
+        }
+    }
 }
-
 ## vectorize
-.normalize_pkgs <- function(pkgs) {
-    vapply(X = pkgs, FUN = .normalize_pkg, FUN.VALUE = character(1), USE.NAMES = FALSE)
+.normalize_pkgs <- function(pkgs,bioc_version = NULL) {
+    vapply(X = pkgs, bioc_version = bioc_version ,FUN = .normalize_pkg, FUN.VALUE = character(1), USE.NAMES = FALSE)
 }

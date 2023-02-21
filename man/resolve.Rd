@@ -10,6 +10,7 @@ resolve(
   no_enhances = TRUE,
   no_suggests = TRUE,
   query_sysreqs = TRUE,
+  query_bioc = FALSE,
   os = "ubuntu-20.04",
   verbose = FALSE
 )
@@ -25,6 +26,8 @@ resolve(
 
 \item{query_sysreqs}{logical, whether to query for System Requirements. Important: Archived CRAN can't be queried for system requirements. Those
 packages are assumed to have no system requirement.}
+
+\item{query_bioc}{Logical, whether to query for packages from Bioconductor}
 
 \item{os}{character, which OS to query for system requirements}
 

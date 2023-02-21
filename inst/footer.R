@@ -17,6 +17,7 @@ if (nrow(installation_order) >= 1) {
         uid <- installation_order$uid[i]
         .install_from_source(x = x, version = version, handle = handle, source = source, uid = uid,
                              lib = lib, path = path, verbose = verbose,
-                             cran_mirror = cran_mirror, current_r_version = current_r_version) 
+                             cran_mirror = cran_mirror, bioc_mirror = bioc_mirror,
+                             current_r_version = current_r_version) 
     }
 }
