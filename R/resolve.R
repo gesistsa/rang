@@ -12,7 +12,7 @@
   if (snapshot_date < attr(cached_biocver, "newest_date")) {
     allvers <- cached_biocver
   } else {
-    return(data.frame(version="3.16",date = "2022-11-02",rver = 4.2)) # TODO realtime check
+    allvers <- .memo_biocver()
   }
   allvers$date <- anytime::anytime(allvers$date, tz = "UTC", asUTC = TRUE)
   utils::tail(allvers[allvers$date < snapshot_date,], 1)[,1:2]

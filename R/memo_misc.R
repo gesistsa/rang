@@ -13,6 +13,25 @@ NULL
 
 .memo_rver <- memoise::memoise(.rver, cache = cachem::cache_mem(max_age = 120 * 60))
 
+.biocver <- function(){
+    url <- "https://bioconductor.org/config.yaml"
+    tag <- "release_dates"
+    txt <- readLines(url)
+    grps <- grep("^[^[:blank:]]", txt)
+    
+    start <- match(grep(tag, txt), grps)
+    end <- ifelse(length(grps) < start + 1, length(txt), grps[start + 1] - 1)
+    map <- txt[seq(grps[start] + 1, end)]
+    map <- trimws(gsub("\"", "", sub(" #.*", "", map)))
+    pattern <- "(.*): (.*)"
+    bioc_ver <- sub(pattern, "\\1", map)
+    bioc_date <- anytime::anytime(sub(pattern, "\\2", map), tz = "UTC", asUTC = TRUE)
+    data.frame(version = bioc_ver,date=bioc_date)
+}
+
+.memo_biocver <- memoise::memoise(.biocver, cache = cachem::cache_mem(max_age = 120 * 60))
+
+
 .bioc_package_history <- function(bioc_version){
     if(bioc_version>="2.0"){
         con <- url(paste0("http://bioconductor.org/packages/",bioc_version,"/bioc/VIEWS"))
