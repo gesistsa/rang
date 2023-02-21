@@ -462,7 +462,7 @@ query_sysreqs <- function(rang, os = "ubuntu-20.04") {
                    query_fun <- .query_sysreqs_bioc
                })
         tryCatch({
-            result <- query_fun(handle = .parse_pkgref(pkgref), os = os)
+            result <- query_fun(handles = .parse_pkgref(pkgref), os = os)
             output <- c(output, result)
         }, error = function(e) {
             warning(pkgref, " can't be queried for System requirements. Assumed to have no requirement.", call. = FALSE)
@@ -472,16 +472,16 @@ query_sysreqs <- function(rang, os = "ubuntu-20.04") {
 }
 
 ## this is vectorized; and for consistency
-.query_sysreqs_cran <- function(handle, os) {
-    remotes::system_requirements(package = handle, os = os)
+.query_sysreqs_cran <- function(handles, os) {
+    remotes::system_requirements(package = handles, os = os)
 }
 
-.query_sysreqs_github <- function(handle, os) {
-    res <- lapply(handle, .query_sysreqs_github_single, os = os)
+.query_sysreqs_github <- function(handles, os) {
+    res <- lapply(handles, .query_sysreqs_github_single, os = os)
     unique(unlist(res))
 }
 
-.query_sysreqs_bioc <- function(handle, os) {
+.query_sysreqs_bioc <- function(handles, os) {
     if (grepl("^ubuntu|^debian", os)) {
         arch <- "DEB"
     }
@@ -490,7 +490,7 @@ query_sysreqs <- function(rang, os = "ubuntu-20.04") {
     }
     sys_reqs_all <- .memo_query_sysreqs_rhub()
     pkgs <- .memo_search_bioc(bioc_version = "release")
-    raw_sys_reqs <- pkgs$SystemRequirements[pkgs$Package %in% handle]
+    raw_sys_reqs <- pkgs$SystemRequirements[pkgs$Package %in% handles]
     baseurl <- "https://sysreqs.r-hub.io/map/"
     url <- utils::URLencode(paste0(baseurl, paste0(raw_sys_reqs, collapse = ", ")))
     vapply(jsonlite::read_json(url), .extract_sys_package, character(1), arch = arch)
