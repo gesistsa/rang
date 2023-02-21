@@ -85,9 +85,9 @@
     bioc_version <- .query_biocver(snapshot_date)
     search_res <- .memo_search_bioc(bioc_version$version)
     search_res$pubdate <- anytime::anytime(bioc_version$date, tz = "UTC", asUTC = TRUE)
-    
+
     latest_version <- search_res[search_res$Package==handle,]
-    
+
     if (nrow(latest_version) == 0) {
         stop("No snapshot version exists for ", handle, ".",  call. = FALSE)
     }
@@ -98,7 +98,7 @@
     pkg_dep_df$x_pkgref <- .normalize_pkgs(handle,bioc_version = bioc_version$version)
     if("y"%in% names(pkg_dep_df)) {
         pkg_dep_df$y_pkgref <- .normalize_pkgs(pkg_dep_df$y,bioc_version = bioc_version$version)
-        return(pkg_dep_df[,c("snapshot_date", "x", "x_version", "x_pubdate", "x_pkgref", "x_bioc_ver", "y", "type", "y_raw_version", "y_pkgref")])  
+        return(pkg_dep_df[,c("snapshot_date", "x", "x_version", "x_pubdate", "x_pkgref", "x_bioc_ver", "y", "type", "y_raw_version", "y_pkgref")])
     } else {
         return(pkg_dep_df[,c("snapshot_date", "x", "x_version", "x_pubdate", "x_pkgref", "x_bioc_ver")])
     }
@@ -482,47 +482,75 @@ query_sysreqs <- function(rang, os = "ubuntu-20.04") {
 }
 
 .query_sysreqs_bioc <- function(handle, os) {
+    if (grepl("^ubuntu|^debian", os)) {
+        arch <- "DEB"
+    }
+    if (grepl("^centos|^fedora|^redhat", os)) {
+        arch <- "RPM"
+    }
     sys_reqs_all <- .memo_query_sysreqs_rhub()
-    pkgs <- .memo_search_bioc(bioc_version = "release") 
-    sys_reqs <- .clean_sys_reqs_bioc(pkgs$SystemRequirements[pkgs$Package%in%handle])
-    sys_reqs <- sys_reqs[sys_reqs%in%sys_reqs_all]
-    if(length(sys_reqs)!=0){
-        return(paste("apt-get install -y", sys_reqs))
-    } else{
-        return(character(0))
+    pkgs <- .memo_search_bioc(bioc_version = "release")
+    raw_sys_reqs <- pkgs$SystemRequirements[pkgs$Package %in% handle]
+    baseurl <- "https://sysreqs.r-hub.io/map/"
+    url <- utils::URLencode(paste0(baseurl, paste0(raw_sys_reqs, collapse = ", ")))
+    vapply(jsonlite::read_json(url), .extract_sys_package, character(1), arch = arch)
+}
+
+## .write_pony_description_file <- function(raw_sys_reqs) {
+##     description_file_path <- tempfile()
+##     x <- data.frame(SystemRequirements =
+##                              paste(raw_sys_reqs, collapse = ","))
+##     write.dcf(x, file = description_file_path)
+##     return(description_file_path)
+## }
+
+## .query_sysreqs_bioc <- function(handle, os) {
+##     sys_reqs_all <- .memo_query_sysreqs_rhub()
+##     pkgs <- .memo_search_bioc(bioc_version = "release")
+##     raw_sys_reqs <- pkgs$SystemRequirements[pkgs$Package %in% handle]
+##     .query_sysreqs_posit(.write_pony_description_file(raw_sys_reqs),
+##                          os = os)
+## }
+
+.extract_sys_package <- function(item, arch = "DEB") {
+    output <- item[[names(item)]]$platforms[[arch]]
+    if (isFALSE(is.list((output)))) {
+        sys_pkg <- output
+    } else {
+        sys_pkg <- output[["buildtime"]]
+    }
+    if (arch == "DEB") {
+        return(paste0("apt-get install -y ", sys_pkg))
+    }
+    if (arch == "RPM") {
+        return(paste0("yum -y ", sys_pkg))
     }
 }
 
-.clean_sys_reqs_bioc <- function(sys_reqs){
-  sys_reqs <- unlist(strsplit(sys_reqs,split = ",\\s*|\\n"),use.names = FALSE)
-  sys_reqs <- tolower(sys_reqs)
-  sys_reqs <- gsub("\\s*\\(.*\\)","",sys_reqs)
-  sys_reqs <- gsub("GNU make","gnumake",sys_reqs)
-  sys_reqs <- gsub("^gsl$","libgsl",sys_reqs)
-  sys_reqs <- gsub("^pandoc.*","pandoc",sys_reqs)
-  sys_reqs <- gsub("^xml2$","libxml2",sys_reqs)
-}
+## .clean_sys_reqs_bioc <- function(sys_reqs){
+##   sys_reqs <- unlist(strsplit(sys_reqs,split = ",\\s*|\\n"),use.names = FALSE)
+##   sys_reqs <- tolower(sys_reqs)
+##   sys_reqs <- gsub("\\s*\\(.*\\)","",sys_reqs)
+##   sys_reqs <- gsub("GNU make","gnumake",sys_reqs)
+##   sys_reqs <- gsub("^gsl$","libgsl",sys_reqs)
+##   sys_reqs <- gsub("^pandoc.*","pandoc",sys_reqs)
+##   sys_reqs <- gsub("^xml2$","libxml2",sys_reqs)
+## }
 
-## get system requirements for github packages
-.query_sysreqs_github_single <- function(handle, os) {
+.query_sysreqs_posit <- function(description_file, os, remove_description = TRUE) {
     os_info <- strsplit(os, "-")[[1]]
     DEFAULT_RSPM <- "https://packagemanager.rstudio.com"
     DEFAULT_RSPM_REPO_ID <- "1"
     curl <- Sys.which("curl")
     rspm_repo_id <- Sys.getenv("RSPM_REPO_ID", DEFAULT_RSPM_REPO_ID)
     rspm <- Sys.getenv("RSPM_ROOT", DEFAULT_RSPM)
-
     rspm_repo_url <- sprintf("%s/__api__/repos/%s", rspm, rspm_repo_id)
-    desc_file <- tempfile()
-    ## potential issue: not going back to snapshot time! but the same is true for the remotes approach?
-    repo_descr <- gh::gh(paste0("GET /repos/", handle, "/contents/DESCRIPTION"))   
-    writeLines(readLines(repo_descr$download_url),con = desc_file)
     res <- system2(
         curl,
         args = c(
             "--silent",
             "--data-binary",
-            shQuote(paste0("@", desc_file)),
+            shQuote(paste0("@", description_file)),
             shQuote(sprintf("%s/sysreqs?distribution=%s&release=%s&suggests=false",
                             rspm_repo_url,
                             os_info[1],
@@ -531,11 +559,22 @@ query_sysreqs <- function(rang, os = "ubuntu-20.04") {
         ),
         stdout = TRUE
     )
-    file.remove(desc_file)
     res <- json$parse(res)
     if (!is.null(res$error)) {
         stop(res$error)
     }
+    if (isTRUE(remove_description)) {
+        file.remove(description_file)
+    }
     unique(unlist(c(res[["install_scripts"]],
                     lapply(res[["dependencies"]], `[[`, "install_scripts"))))
+}
+
+## get system requirements for github packages
+.query_sysreqs_github_single <- function(handle, os) {
+    description_file <- tempfile()
+    ## potential issue: not going back to snapshot time! but the same is true for the remotes approach?
+    repo_descr <- gh::gh(paste0("GET /repos/", handle, "/contents/DESCRIPTION"))
+    writeLines(readLines(repo_descr$download_url), con = description_file)
+    .query_sysreqs_posit(description_file = description_file, os = os, remove_description = TRUE)
 }
