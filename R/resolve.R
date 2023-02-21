@@ -250,9 +250,14 @@ resolve <- function(pkgs, snapshot_date, no_enhances = TRUE, no_suggests = TRUE,
     }
     if (class(pkgs) %in% c("sessionInfo")) {
         pkgrefs <- as_pkgrefs(pkgs)
+        if(any(grepl("^bioc::",pkgrefs))){
+          bioc_version <- .query_biocver(snapshot_date)$version
+        } else{
+          bioc_version <- NULL
+        }
     } else {
         if(any(grepl("^bioc::",pkgs))){
-          query_bioc <- TRUE
+            query_bioc <- TRUE
         }
         if(isTRUE(query_bioc)){
             bioc_version <- .query_biocver(snapshot_date)$version
