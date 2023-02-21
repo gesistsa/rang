@@ -35,7 +35,7 @@
             pkgname$set(current_pkgref, current_pkgname)
             if ("x_uid" %in% colnames(dep_df)) { ## Not supported, but no harm to add it now
                 uid$set(current_pkgref, unique(dep_df$x_uid))
-            }   
+            }
         }
     }
     ## installation simulation
@@ -97,8 +97,9 @@
 }
 
 .group_sysreqs <- function(rang) {
+    must_do_cmd <- "apt-get update -qq && apt-get install -y libpcre3-dev zlib1g-dev pkg-config"
     if (length(rang$sysreqs) == 0) {
-        return("apt-get update -qq")
+        return(must_do_cmd)
     }
     if (isFALSE(.is_ppa_in_sysreqs(rang))) {
         cmds <- rang$sysreqs
@@ -113,7 +114,7 @@
         prefix <- paste0(paste0(ppa_lines, collapse = " && "), " && ")
         cmd <- .group_apt_cmds(cmds, fix_libgit2 = FALSE)
     }
-    paste0("apt-get update -qq && ", prefix, cmd)
+    paste0(must_do_cmd, " && ", prefix, cmd)
 }
 
 .write_rang_as_comment <- function(rang, con, path, verbose, lib,
@@ -243,7 +244,7 @@
 
 .insert_materials_dir <- function(dockerfile_content) {
     rang_line <- which(dockerfile_content == "COPY rang.R ./rang.R")
-    c(dockerfile_content[1:rang_line], 
+    c(dockerfile_content[1:rang_line],
       "COPY materials/ ./materials/",
       dockerfile_content[(rang_line + 1):length(dockerfile_content)])
 }
@@ -298,7 +299,7 @@
 #' is provided. The current approach does not work in R < 2.1.0.
 #' @export
 #' @references
-#' Ripley, B. (2005) [Packages and their Management in R 2.1.0.](https://cran.r-project.org/doc/Rnews/Rnews_2005-1.pdf) R News, 5(1):8--11. 
+#' Ripley, B. (2005) [Packages and their Management in R 2.1.0.](https://cran.r-project.org/doc/Rnews/Rnews_2005-1.pdf) R News, 5(1):8--11.
 #' @examples
 #' \donttest{
 #' if (interactive()) {
@@ -335,11 +336,11 @@ export_rang <- function(rang, path, rang_as_comment = TRUE, verbose = TRUE, lib 
     } else {
         cat(paste0("lib <- \"", as.character(lib), "\"\n"), file = con)
     }
-    cat(paste0("cran_mirror <- \"", cran_mirror, "\"\n"), file = con)   
+    cat(paste0("cran_mirror <- \"", cran_mirror, "\"\n"), file = con)
     if(!is.null(rang$bioc_version)){
-        cat(paste0("bioc_mirror <- \"", "https://bioconductor.org/packages/",rang$bioc_version,"/", "\"\n"), file = con)      
+        cat(paste0("bioc_mirror <- \"", "https://bioconductor.org/packages/",rang$bioc_version,"/", "\"\n"), file = con)
     }
-    
+
     writeLines(readLines(system.file("footer.R", package = "rang")), con = con)
     if (isTRUE(rang_as_comment)) {
         .write_rang_as_comment(rang = rang, con = con, path = path, verbose = verbose,
@@ -437,15 +438,15 @@ dockerize <- function(rang, output_dir, materials_dir = NULL, image = c("r-ver",
         if (isFALSE(dir.exists(materials_subdir_in_output_dir))) {
             dir.create(materials_subdir_in_output_dir)
         }
-        file.copy(list.files(materials_dir, full.names = TRUE), 
-                  materials_subdir_in_output_dir, 
+        file.copy(list.files(materials_dir, full.names = TRUE),
+                  materials_subdir_in_output_dir,
                   recursive = TRUE)
         dockerfile_content <- .insert_materials_dir(dockerfile_content)
     }
     writeLines(dockerfile_content, file.path(output_dir, "Dockerfile"))
-    
+
     .generate_docker_readme(output_dir = output_dir,image = image)
-    
+
     invisible(output_dir)
 }
 
