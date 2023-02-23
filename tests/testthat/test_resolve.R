@@ -179,8 +179,18 @@ test_that("issue 68, correct querying of bioc packages from major releases", {
     skip_on_cran()
     expect_equal(.query_biocver("2007-04-27")$version, "2.0")
     expect_false(is.numeric(.query_biocver("2007-04-27")$version))
-    expect_error(.query_snapshot_dependencies_bioc("affy", "2014-10-15"), NA)
+    expect_error(.query_snapshot_dependencies_bioc("affy", "2007-04-15")) ## pre 2.0
+    expect_error(.query_snapshot_dependencies_bioc("affy", "2007-04-27"), NA)
     expect_error(.query_snapshot_dependencies_bioc("affy", "2014-10-15"), NA)
     expect_equal(length(resolve("bioc::affy", snapshot_date = "2007-04-27")$ranglets), 1)
     expect_equal(length(resolve("bioc::affy", snapshot_date = "2014-10-15")$ranglets), 1)
+})
+
+test_that("issue 69, complete bioc information", {
+    skip_if_offline()
+    skip_on_cran()
+    expect_true(nrow(.memo_search_bioc("3.3")) > 1211)
+    expect_true("affydata" %in% .memo_search_bioc("3.3")$Package)
+    expect_equal(.normalize_pkg("affydata", "3.3"), "bioc::affydata")
+    expect_equal(length(resolve("bioc::affydata", snapshot_date = "2016-06-15")$ranglets), 1)
 })

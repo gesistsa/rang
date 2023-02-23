@@ -26,7 +26,8 @@ Imports:
     pkgsearch,
     remotes,
     utils,
-    gh
+    gh,
+    vctrs
 Depends: 
     R (>= 3.5.0)
 VignetteBuilder: knitr

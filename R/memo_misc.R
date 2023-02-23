@@ -34,10 +34,21 @@ NULL
     if (bioc_version != "release" && utils::compareVersion(bioc_version, "2.0") == -1) {
         stop("Bioconductor versions < 2.0 are not supported.", call. = FALSE)
     }
-    con <- url(paste0("http://bioconductor.org/packages/", bioc_version, "/bioc/VIEWS"))
-    pkgs <- read.dcf(con)
-    close(con)
-    as.data.frame(pkgs)
+    suffixes <- c("bioc", "data/annotation", "data/experiment", "workflow")
+    output <- data.frame()
+    for (suffix in suffixes) {
+        view_url <- paste0("http://bioconductor.org/packages/", bioc_version, "/", suffix, "/VIEWS")
+        con <- url(view_url)
+        tryCatch({
+            raw_metadata <- suppressWarnings(read.dcf(con))
+            metadata <- as.data.frame(raw_metadata)
+            output <- vctrs::vec_rbind(output, metadata)
+            close(con)
+        }, error = function(e) {
+            close(con)
+        })
+    }
+    output
 }
 
 .memo_search_bioc <- memoise::memoise(.bioc_package_history, cache = cachem::cache_mem(max_age = 60 * 60))
