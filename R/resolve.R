@@ -559,7 +559,7 @@ query_sysreqs <- function(rang, os = "ubuntu-20.04") {
         ),
         stdout = TRUE
     )
-    res <- json$parse(res)
+    res <- jsonlite::fromJSON(res,simplifyDataFrame = FALSE)
     if (!is.null(res$error)) {
         stop(res$error)
     }
