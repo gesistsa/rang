@@ -9,11 +9,11 @@
 \usage{
 convert_edgelist(x, ...)
 
-\method{convert_edgelist}{default}(x)
+\method{convert_edgelist}{default}(x, ...)
 
-\method{convert_edgelist}{ranglet}(x)
+\method{convert_edgelist}{ranglet}(x, ...)
 
-\method{convert_edgelist}{rang}(x)
+\method{convert_edgelist}{rang}(x, ...)
 }
 \arguments{
 \item{x, }{supported data structures are \code{rang} and \code{ranglet} S3 objects}

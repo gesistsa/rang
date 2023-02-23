@@ -25,13 +25,13 @@ convert_edgelist <- function(x, ...) {
 
 #' @rdname convert_edgelist
 #' @export
-convert_edgelist.default <- function(x){
+convert_edgelist.default <- function(x, ...){
     stop(paste("don't know how to convert an object of type",class(x),"to a rang edgelist"), call. = FALSE)
 }
 
 #' @rdname convert_edgelist
 #' @export
-convert_edgelist.ranglet <- function(x){
+convert_edgelist.ranglet <- function(x, ...){
     output <- data.frame(from = x$pkgref, to = .extract_queryable_dependencies(x$original, x$no_enhances, x$no_suggests))
     for (dep in x$deps) {
         if (!.is_terminal_node(dep, x$no_enhances)) {
@@ -44,7 +44,7 @@ convert_edgelist.ranglet <- function(x){
 
 #' @rdname convert_edgelist
 #' @export
-convert_edgelist.rang <- function(x){
+convert_edgelist.rang <- function(x, ...){
     el <- do.call("rbind",lapply(x$ranglets,convert_edgelist))
     rownames(el) <- NULL
     el
