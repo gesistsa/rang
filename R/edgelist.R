@@ -45,7 +45,7 @@ convert_edgelist.ranglet <- function(x, ...){
 #' @rdname convert_edgelist
 #' @export
 convert_edgelist.rang <- function(x, ...){
-    el <- do.call("rbind",lapply(x$ranglets,convert_edgelist))
+    el <- vctrs::vec_rbind(lapply(x$ranglets,convert_edgelist))
     rownames(el) <- NULL
     el
 }
