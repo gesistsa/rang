@@ -162,7 +162,7 @@ With any browser, go to: `local:8787`. The default username is `rstudio`, passwo
 
 ## Recreate the computational environment for R < 3.1.0
 
-`rang` can still be used to recreate computational environments for R < 3.1.0. The Dockerfile generated is based on Debian Woody (3.0) and the requested version of R is compiled from source. As of writing, this method works for R < 3.1.0 but not R < 2.1.0. The `image` parameter is ignored in this case.
+`rang` can still be used to recreate computational environments for R < 3.1.0. The Dockerfile generated is based on Debian Lenny (5.0) and the requested version of R is compiled from source. As of writing, this method works for R < 3.1.0 but not R < 2.1.0. The `image` parameter is ignored in this case.
 
 ```r
 rang_rio <- resolve("rio", snapshot_date = "2013-08-28") ## R 3.0.1
