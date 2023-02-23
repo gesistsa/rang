@@ -8,14 +8,14 @@
     utils::tail(allvers[allvers$date < snapshot_date,], 1)$version
 }
 
-.query_biocver <- function(snapshot_date){
-  if (snapshot_date < attr(cached_biocver, "newest_date")) {
-    allvers <- cached_biocver
-  } else {
-    allvers <- .memo_biocver()
-  }
-  allvers$date <- anytime::anytime(allvers$date, tz = "UTC", asUTC = TRUE)
-  utils::tail(allvers[allvers$date < snapshot_date,], 1)[,1:2]
+.query_biocver <- function(snapshot_date) {
+    if (snapshot_date < attr(cached_biocver, "newest_date")) {
+        allvers <- cached_biocver
+    } else {
+        allvers <- .memo_biocver()
+    }
+    allvers$date <- anytime::anytime(allvers$date, tz = "UTC", asUTC = TRUE)
+    utils::tail(allvers[allvers$date < snapshot_date,], 1)[,1:2]
 }
 
 ## .msysreps <- memoise::memoise(.raw_sysreqs, cache = cachem::cache_mem(max_age = 60 * 60))
