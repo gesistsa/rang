@@ -366,17 +366,6 @@ print.rang <- function(x, all_pkgs = FALSE, ...) {
     }
 }
 
-convert_edgelist <- function(x) {
-    output <- data.frame(x = x$pkg, y = .extract_queryable_dependencies(x$original, x$no_enhances, x$no_suggests))
-    for (dep in x$deps) {
-        if (!.is_terminal_node(dep, x$no_enhances)) {
-            el <- data.frame(x = unique(dep$x), y = .extract_queryable_dependencies(dep, x$no_enhances, x$no_suggests))
-            output <- rbind(output, el)
-        }
-    }
-    output
-}
-
 ## extract all the pkgrefs of deps and pkgs: for .sysreqs
 .extract_pkgrefs <- function(rang) {
     original_pkgrefs <- names(rang$ranglets)
