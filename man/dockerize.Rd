@@ -18,7 +18,9 @@ dockerize(
   lib = NA,
   cran_mirror = "https://cran.r-project.org/",
   check_cran_mirror = TRUE,
-  bioc_mirror = "https://bioconductor.org/packages/"
+  bioc_mirror = "https://bioconductor.org/packages/",
+  no_rocker = FALSE,
+  debian_version = c("lenny", "etch", "squeeze", "wheezy", "jessie", "stretch")
 )
 
 dockerize_rang(...)
@@ -52,6 +54,10 @@ and \code{\link[=download.file]{download.file()}}.}
 \item{check_cran_mirror}{logical, whether to check the CRAN mirror}
 
 \item{bioc_mirror}{character, which Bioconductor mirror to use}
+
+\item{no_rocker}{logical, whether to skip using Rocker images even when an appropriate version is available. Please keep this as \code{TRUE} unless you know what you are doing}
+
+\item{debian_version, }{when Rocker images are not used, which EOL version of Debian to use. Can only be "lenny", "etch", "squeeze", "wheezy", "jessie", "stretch". Please keep this as default "lenny" unless you know what you are doing}
 
 \item{...}{arguments to be passed to \code{dockerize}}
 }
