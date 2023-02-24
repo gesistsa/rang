@@ -7,6 +7,13 @@ test_that("defensive programming", {
     expect_error(dockerize(graph, output_dir = tempdir()))
 })
 
+test_that("empty rang dockerize #75", {
+    graph <- readRDS("../testdata/rang_ok.RDS")
+    graph$ranglets <- list()
+    expect_warning(x <- dockerize(graph, output_dir = .generate_temp_dir()))
+    expect_equal(x, NULL)
+})
+
 test_that("integration of #13 in dockerize()", {
     rang_ok <- readRDS("../testdata/rang_ok.RDS")
     temp_dir <- .generate_temp_dir()
