@@ -6,3 +6,4 @@
 ^cran-comments\.md$
 ^CRAN-SUBMISSION$
 ^.editorconfig$
+^.codecov.yml$
