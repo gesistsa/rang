@@ -194,3 +194,12 @@ test_that("issue 69, complete bioc information", {
     expect_equal(.normalize_pkg("affydata", "3.3"), "bioc::affydata")
     expect_equal(length(resolve("bioc::affydata", snapshot_date = "2016-06-15")$ranglets), 1)
 })
+
+test_that("issue #82", {
+    skip_if_offline()
+    skip_on_cran()
+    expect_error(x <- .query_snapshot_dependencies_bioc("zlibbioc", "2023-01-01"), NA)
+    expect_false("y" %in% colnames(x))
+    expect_error(x <- .query_snapshot_dependencies_bioc("Organism.dplyr", "2023-01-01"), NA)
+    expect_true("y" %in% colnames(x))
+})
