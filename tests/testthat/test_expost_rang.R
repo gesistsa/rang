@@ -115,9 +115,16 @@ test_that("issue #38", {
 })
 
 test_that("Bioconductor <2.0",{
-  expect_error(.bioc_package_history(bioc_version = "1.9"))
+    expect_error(.bioc_package_history(bioc_version = "1.9"))
 })
 
 test_that("Bioconductor new release",{
-  expect_equal(.query_biocver("2023-01-01")$version,"3.16")
+    expect_equal(.query_biocver("2023-01-01")$version,"3.16")
+})
+
+test_that("empty rang export, #75", {
+    graph <- readRDS("../testdata/rang_ok.RDS")
+    graph$ranglets <- list()
+    expect_warning(x <- export_rang(graph, path = tempfile()))
+    expect_equal(x, NULL)
 })
