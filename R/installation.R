@@ -99,12 +99,16 @@
 .group_sysreqs <- function(rang) {
     must_do_cmd <- "apt-get update -qq && apt-get install -y libpcre3-dev zlib1g-dev pkg-config"
     if (length(rang$sysreqs) == 0) {
+        must_do_cmd <- paste(must_do_cmd, "libcurl4-openssl-dev")
         return(must_do_cmd)
     }
     if (isFALSE(.is_ppa_in_sysreqs(rang))) {
         cmds <- rang$sysreqs
         prefix <- ""
         cmd <- .group_apt_cmds(cmds, fix_libgit2 = TRUE)
+        if (!grepl("libcurl4-gnutls-dev", cmd)) {
+            must_do_cmd <- paste(must_do_cmd, "libcurl4-openssl-dev")
+        }
     } else {
         cmds <- setdiff(rang$sysreqs, c("apt-get install -y software-properties-common", "apt-get update"))
         ppa_lines <- c("apt-get install -y software-properties-common",
@@ -249,7 +253,7 @@
       dockerfile_content[(rang_line + 1):length(dockerfile_content)])
 }
 
-.generate_pre310_dockerfile_content <- function(r_version, lib, sysreqs_cmd, cache, debian_version = "lenny") {
+.generate_debian_eol_dockerfile_content<- function(r_version, lib, sysreqs_cmd, cache, debian_version = "lenny") {
     dockerfile_content <- c(
         paste0("FROM debian/eol:", debian_version),
         "ENV TZ UTC",
@@ -264,6 +268,23 @@
     }
     if (isTRUE(cache)) {
         dockerfile_content <- c(dockerfile_content[1:5], "COPY cache ./cache", dockerfile_content[6:8])
+    }
+    return(dockerfile_content)
+}
+
+.generate_rocker_dockerfile_content <- function(r_version, lib, sysreqs_cmd, cache, image) {
+    dockerfile_content <- c("", "", "COPY rang.R ./rang.R", "RUN Rscript rang.R", "CMD [\"R\"]")
+    if (!is.na(lib)) {
+        dockerfile_content[4] <- paste0("RUN mkdir ", lib, " && Rscript rang.R")
+    }
+    dockerfile_content[1] <- paste0("FROM rocker/", image, ":", r_version)
+    dockerfile_content[2] <- paste("RUN", sysreqs_cmd)
+    if (image == "rstudio") {
+        dockerfile_content[5] <- "EXPOSE 8787"
+        dockerfile_content[6] <- "CMD [\"/init\"]"
+    }
+    if (isTRUE(cache)) {
+        dockerfile_content <- .insert_cache_dir(dockerfile_content)
     }
     return(dockerfile_content)
 }
@@ -341,10 +362,9 @@ export_rang <- function(rang, path, rang_as_comment = TRUE, verbose = TRUE, lib 
         cat(paste0("lib <- \"", as.character(lib), "\"\n"), file = con)
     }
     cat(paste0("cran_mirror <- \"", cran_mirror, "\"\n"), file = con)
-    if(!is.null(rang$bioc_version)){
+    if(!is.null(rang$bioc_version)) {
         cat(paste0("bioc_mirror <- \"", "https://bioconductor.org/packages/",rang$bioc_version,"/", "\"\n"), file = con)
     }
-
     writeLines(readLines(system.file("footer.R", package = "rang")), con = con)
     if (isTRUE(rang_as_comment)) {
         .write_rang_as_comment(rang = rang, con = con, path = path, verbose = verbose,
@@ -364,6 +384,8 @@ export_rang <- function(rang, path, rang_as_comment = TRUE, verbose = TRUE, lib 
 #' @param image character, which versioned Rocker image to use. Can only be "r-ver", "rstudio", "tidyverse", "verse", "geospatial"
 #' This applies only to R version <= 3.1
 #' @param cache logical, whether to cache the packages now. Please note that the system requirements are not cached. For query with non-CRAN packages, this option is strongly recommended. For R version < 3.1, this must be TRUE if there is any non-CRAN packages.
+#' @param no_rocker logical, whether to skip using Rocker images even when an appropriate version is available. Please keep this as `TRUE` unless you know what you are doing
+#' @param debian_version, when Rocker images are not used, which EOL version of Debian to use. Can only be "lenny", "etch", "squeeze", "wheezy", "jessie", "stretch". Please keep this as default "lenny" unless you know what you are doing
 #' @param ... arguments to be passed to `dockerize`
 #' @return `output_dir`, invisibly
 #' @inheritParams export_rang
@@ -384,7 +406,9 @@ export_rang <- function(rang, path, rang_as_comment = TRUE, verbose = TRUE, lib 
 dockerize <- function(rang, output_dir, materials_dir = NULL, image = c("r-ver", "rstudio", "tidyverse", "verse", "geospatial"),
                       rang_as_comment = TRUE, cache = FALSE, verbose = TRUE, lib = NA,
                       cran_mirror = "https://cran.r-project.org/", check_cran_mirror = TRUE,
-                      bioc_mirror = "https://bioconductor.org/packages/") {
+                      bioc_mirror = "https://bioconductor.org/packages/",
+                      no_rocker = FALSE,
+                      debian_version = c("lenny", "etch", "squeeze", "wheezy", "jessie", "stretch")) {
     if (length(rang$ranglets) == 0) {
         warning("Nothing to dockerize.")
         return(invisible(NULL))
@@ -409,6 +433,7 @@ dockerize <- function(rang, output_dir, materials_dir = NULL, image = c("r-ver",
         stop("Non-CRAN packages must be cached for this R version: ", rang$r_version, ". Please set `cache` = TRUE.", call. = FALSE)
     }
     image <- match.arg(image)
+    debian_version <- match.arg(debian_version)
     sysreqs_cmd <- .group_sysreqs(rang)
     if (!dir.exists(output_dir)) {
         dir.create(output_dir)
@@ -420,26 +445,18 @@ dockerize <- function(rang, output_dir, materials_dir = NULL, image = c("r-ver",
     if (isTRUE(cache)) {
         .cache_pkgs(rang, output_dir, cran_mirror, bioc_mirror, verbose)
     }
-    if (utils::compareVersion(rang$r_version, "3.1") == -1) {
+    if (utils::compareVersion(rang$r_version, "3.1") == -1 || isTRUE(no_rocker)) {
         file.copy(system.file("compile_r.sh", package = "rang"), file.path(output_dir, "compile_r.sh"),
                   overwrite = TRUE)
-        dockerfile_content <- .generate_pre310_dockerfile_content(r_version = rang$r_version,
-                                                sysreqs_cmd = sysreqs_cmd, lib = lib,
-                                                cache = cache)
+
+        dockerfile_content <- .generate_debian_eol_dockerfile_content(r_version = rang$r_version,
+                                                                      sysreqs_cmd = sysreqs_cmd, lib = lib,
+                                                                      cache = cache,
+                                                                      debian_version = debian_version)
     } else {
-        dockerfile_content <- c("", "", "COPY rang.R ./rang.R", "RUN Rscript rang.R", "CMD [\"R\"]")
-        if (!is.na(lib)) {
-            dockerfile_content[4] <- paste0("RUN mkdir ", lib, " && Rscript rang.R")
-        }
-        dockerfile_content[1] <- paste0("FROM rocker/", image, ":", rang$r_version)
-        dockerfile_content[2] <- paste("RUN", sysreqs_cmd)
-        if (image == "rstudio") {
-            dockerfile_content[5] <- "EXPOSE 8787"
-            dockerfile_content[6] <- "CMD [\"/init\"]"
-        }
-        if (isTRUE(cache)) {
-            dockerfile_content <- .insert_cache_dir(dockerfile_content)
-        }
+        dockerfile_content <- .generate_rocker_dockerfile_content(r_version = rang$r_version,
+                                                                  sysreqs_cmd = sysreqs_cmd, lib = lib,
+                                                                  cache = cache, image = image)
     }
     if (!(is.null(materials_dir))) {
         materials_subdir_in_output_dir <- file.path(output_dir, "materials")
@@ -452,9 +469,7 @@ dockerize <- function(rang, output_dir, materials_dir = NULL, image = c("r-ver",
         dockerfile_content <- .insert_materials_dir(dockerfile_content)
     }
     writeLines(dockerfile_content, file.path(output_dir, "Dockerfile"))
-
     .generate_docker_readme(output_dir = output_dir,image = image)
-
     invisible(output_dir)
 }
 

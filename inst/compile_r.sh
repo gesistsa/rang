@@ -4,8 +4,11 @@ if echo "$1" | grep -Eq '^1' ; then
 elif echo "$1" | grep -Eq '^2' ; then
     DOWNLOAD_DIR="R-2"
     TARFILE="R-$1.tar.gz"
-else
+elif echo "$1" | grep -Eq '^3' ; then
     DOWNLOAD_DIR="R-3"
+    TARFILE="R-$1.tar.gz"
+else
+    DOWNLOAD_DIR="R-4"
     TARFILE="R-$1.tar.gz"
 fi
 

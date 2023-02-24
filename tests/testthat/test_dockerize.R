@@ -112,9 +112,9 @@ test_that("Docker R < 2.1", {
 
 test_that(".group_sysreqs and issue #21", {
     graph <- readRDS("../testdata/graph.RDS")
-    expect_equal(.group_sysreqs(graph), "apt-get update -qq && apt-get install -y libpcre3-dev zlib1g-dev pkg-config && apt-get install -y default-jdk libgsl0-dev libicu-dev libpng-dev libxml2-dev make python3 zlib1g-dev liblzma-dev libpcre3-dev libbz2-dev && R CMD javareconf")
+    expect_equal(.group_sysreqs(graph), "apt-get update -qq && apt-get install -y libpcre3-dev zlib1g-dev pkg-config libcurl4-openssl-dev && apt-get install -y default-jdk libgsl0-dev libicu-dev libpng-dev libxml2-dev make python3 zlib1g-dev liblzma-dev libpcre3-dev libbz2-dev && R CMD javareconf")
     graph <- readRDS("../testdata/rang_ok.RDS")
-    expect_equal(.group_sysreqs(graph), "apt-get update -qq && apt-get install -y libpcre3-dev zlib1g-dev pkg-config")
+    expect_equal(.group_sysreqs(graph), "apt-get update -qq && apt-get install -y libpcre3-dev zlib1g-dev pkg-config libcurl4-openssl-dev")
     graph <- readRDS("../testdata/issue21.RDS")
     expected_output <- "apt-get update -qq && apt-get install -y libpcre3-dev zlib1g-dev pkg-config && apt-get install -y software-properties-common && add-apt-repository -y ppa:cran/libgit2 && apt-get update && apt-get install -y cmake git libcurl4-openssl-dev libfontconfig1-dev libfreetype6-dev libfribidi-dev libgit2-dev libgsl0-dev libharfbuzz-dev libicu-dev libjpeg-dev libpng-dev libssh2-1-dev libssl-dev libtiff-dev libxml2-dev make pandoc pari-gp zlib1g-dev"
     expect_warning(output <- .group_sysreqs(graph))
@@ -216,4 +216,24 @@ test_that("dockerize with bioc #58", {
   dockerize(rang = rang_bioc, output_dir = temp_dir) ## verbose = TRUE
   x <- readLines(file.path(temp_dir, "rang.R"))
   expect_true(any(grepl("bioc_mirror",x)))
+})
+
+test_that("no_rocker #67", {
+    rang_ok <- readRDS("../testdata/rang_ok.RDS")
+    temp_dir <- .generate_temp_dir()
+    dockerize(rang = rang_ok, output_dir = temp_dir) ## no_rocker = FALSE
+    expect_false(file.exists(file.path(temp_dir, "compile_r.sh")))
+    expect_false(any(readLines(file.path(temp_dir, "Dockerfile")) == "FROM debian/eol:lenny"))
+    temp_dir <- .generate_temp_dir()
+    dockerize(rang = rang_ok, output_dir = temp_dir, no_rocker = TRUE) ## debian_version = lenny
+    expect_true(file.exists(file.path(temp_dir, "compile_r.sh")))
+    expect_true(any(readLines(file.path(temp_dir, "Dockerfile")) == "FROM debian/eol:lenny"))
+    temp_dir <- .generate_temp_dir()
+    dockerize(rang = rang_ok, output_dir = temp_dir, no_rocker = TRUE,
+              debian_version = "jessie")
+    expect_true(file.exists(file.path(temp_dir, "compile_r.sh")))
+    expect_true(any(readLines(file.path(temp_dir, "Dockerfile")) == "FROM debian/eol:jessie"))
+    temp_dir <- .generate_temp_dir()
+    expect_error(dockerize(rang = rang_ok, output_dir = temp_dir, no_rocker = TRUE,
+              debian_version = "3.11"))
 })
