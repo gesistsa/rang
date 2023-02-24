@@ -131,9 +131,9 @@
     } else {
         lib_as_character <- paste0("\"", lib, "\"")
     }
-    if(!is.null(rang$bioc_version)){
+    if(!is.null(rang$bioc_version)) {
       bioc_txt <- paste0(", bioc_mirror = \"", bioc_mirror,rang$bioc_version,"/","\"")
-    } else{
+    } else {
       bioc_txt <- NULL
     }
     writeLines(paste0("## rang::export_rang(rang = rang, path = \"", path, "\", verbose = ",
@@ -226,7 +226,7 @@
                           source = source, uid = uid,
                           cache_dir = cache_dir, verbose = verbose)
         }
-        if(source == "bioc"){
+        if(source == "bioc") {
             .cache_pkg_bioc(x = x, version = version, cache_dir = cache_dir,
                             bioc_mirror = bioc_mirror,bioc_version = rang$bioc_version, verbose = verbose)
         }
@@ -268,16 +268,16 @@
     return(dockerfile_content)
 }
 
-.generate_docker_readme <- function(output_dir,image){
-  file.create(file.path(output_dir,"README"))
-  con <- file(file.path(output_dir,"README"), open="w")
-  readme <- readLines(system.file("readme_template.txt", package = "rang"))
-  readme <- gsub("__DATE__",Sys.Date(),readme)
-  readme <- gsub("__OUTPUT__",output_dir,readme)
-  readme <- gsub("__IMAGE__",image,readme)
-  writeLines(readme,file.path(output_dir,"README"))
-  close(con)
-  invisible(readme)
+.generate_docker_readme <- function(output_dir,image) {
+    file.create(file.path(output_dir,"README"))
+    con <- file(file.path(output_dir,"README"), open="w")
+    readme <- readLines(system.file("readme_template.txt", package = "rang"))
+    readme <- gsub("__DATE__",Sys.Date(),readme)
+    readme <- gsub("__OUTPUT__",output_dir,readme)
+    readme <- gsub("__IMAGE__",image,readme)
+    writeLines(readme,file.path(output_dir,"README"))
+    close(con)
+    invisible(readme)
 }
 
 #' Export The Resolved Result As Installation Script
@@ -313,6 +313,10 @@ export_rang <- function(rang, path, rang_as_comment = TRUE, verbose = TRUE, lib 
                             bioc_mirror = "https://bioconductor.org/packages/") {
     if (utils::compareVersion(rang$r_version, "2.1") == -1) {
         stop("`export_rang` doesn't support this R version (yet).")
+    }
+    if (length(rang$ranglets) == 0) {
+        warning("Nothing to export.")
+        return(invisible(NULL))
     }
     cran_mirror <- .normalize_url(cran_mirror)
     if (isTRUE(check_cran_mirror)) { ## probably need to stop this also if #17 is implemented
@@ -381,6 +385,10 @@ dockerize <- function(rang, output_dir, materials_dir = NULL, image = c("r-ver",
                       rang_as_comment = TRUE, cache = FALSE, verbose = TRUE, lib = NA,
                       cran_mirror = "https://cran.r-project.org/", check_cran_mirror = TRUE,
                       bioc_mirror = "https://bioconductor.org/packages/") {
+    if (length(rang$ranglets) == 0) {
+        warning("Nothing to dockerize.")
+        return(invisible(NULL))
+    }
     if (missing(output_dir)) {
         stop("You must provide `output_dir`.", call. = FALSE)
     }
