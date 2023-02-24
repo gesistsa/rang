@@ -85,15 +85,15 @@
     bioc_version <- .query_biocver(snapshot_date)
     search_res <- .memo_search_bioc(bioc_version$version)
     search_res$pubdate <- anytime::anytime(bioc_version$date, tz = "UTC", asUTC = TRUE)
-
     latest_version <- search_res[search_res$Package==handle,]
-
     if (nrow(latest_version) == 0) {
         stop("No snapshot version exists for ", handle, ".",  call. = FALSE)
     }
     pkg_dep_df <- .parse_desc(descr_df = latest_version,snapshot_date = snapshot_date)
     pkg_dep_df$x_bioc_ver <- bioc_version$version
-    pkg_dep_df <- pkg_dep_df[!is.na(pkg_dep_df$y),]
+    if ("y" %in% colnames(pkg_dep_df)) {
+        pkg_dep_df <- pkg_dep_df[!is.na(pkg_dep_df$y),]
+    }
     pkg_dep_df$x_pubdate <- bioc_version$date
     pkg_dep_df$x_pkgref <- .normalize_pkgs(handle,bioc_version = bioc_version$version)
     if("y"%in% names(pkg_dep_df)) {
@@ -136,7 +136,7 @@
     type <- lapply(seq_along(raw_deps), function(x) rep(types[x], length(raw_deps[[x]])))
     version <- vapply(unlist(raw_deps), .extract_version, character(1), USE.NAMES = FALSE)
     deps <- gsub("\\s*\\(.*\\)","",unlist(raw_deps))
-    if(length(deps) != 0) {
+    if(length(deps) != 0 && all(!is.na(deps))) {
         return(data.frame(
             snapshot_date = snapshot_date,
             x = descr_df[["Package"]],
