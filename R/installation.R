@@ -457,19 +457,6 @@ dockerize <- function(rang, output_dir, materials_dir = NULL, image = c("r-ver",
         dockerfile_content <- .generate_rocker_dockerfile_content(r_version = rang$r_version,
                                                                   sysreqs_cmd = sysreqs_cmd, lib = lib,
                                                                   cache = cache, image = image)
-        ## dockerfile_content <- c("", "", "COPY rang.R ./rang.R", "RUN Rscript rang.R", "CMD [\"R\"]")
-        ## if (!is.na(lib)) {
-        ##     dockerfile_content[4] <- paste0("RUN mkdir ", lib, " && Rscript rang.R")
-        ## }
-        ## dockerfile_content[1] <- paste0("FROM rocker/", image, ":", rang$r_version)
-        ## dockerfile_content[2] <- paste("RUN", sysreqs_cmd)
-        ## if (image == "rstudio") {
-        ##     dockerfile_content[5] <- "EXPOSE 8787"
-        ##     dockerfile_content[6] <- "CMD [\"/init\"]"
-        ## }
-        ## if (isTRUE(cache)) {
-        ##     dockerfile_content <- .insert_cache_dir(dockerfile_content)
-        ## }
     }
     if (!(is.null(materials_dir))) {
         materials_subdir_in_output_dir <- file.path(output_dir, "materials")
