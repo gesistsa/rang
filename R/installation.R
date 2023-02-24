@@ -40,23 +40,23 @@
     }
     ## installation simulation
     installed_pkgrefs <- c()
-    noncran_pkgrefs <- c()
+    github_pkgrefs <- c()
     needed_pkgrefs <- dep$keys()
     ## install all terminal nodes
     for (pkgref in needed_pkgrefs) {
         if (.is_github(pkgref)) {
-          noncran_pkgrefs <- c(noncran_pkgrefs, pkgref)
+          github_pkgrefs <- c(github_pkgrefs, pkgref)
           next()
         }
         if (is.null(dep$get(pkgref))) {
             installed_pkgrefs <- c(installed_pkgrefs, pkgref)
         }
     }
-    while(length(setdiff(needed_pkgrefs, c(installed_pkgrefs, noncran_pkgrefs))) != 0) {
+    while(length(setdiff(needed_pkgrefs, c(installed_pkgrefs, github_pkgrefs))) != 0) {
         for (pkgref in needed_pkgrefs) {
-            ##print(package)
-            if (!pkgref %in% installed_pkgrefs && !pkgref %in% noncran_pkgrefs) {
+            if (!pkgref %in% installed_pkgrefs && !pkgref %in% github_pkgrefs) {
                 ## check requirement
+                ##print(pkgref)
                 requirement_fulfilled <- length(setdiff(dep$get(pkgref), installed_pkgrefs)) == 0
                 if (requirement_fulfilled) {
                     installed_pkgrefs <- c(installed_pkgrefs, pkgref)
@@ -64,7 +64,7 @@
             }
         }
     }
-    ordered_pkgrefs <- c(installed_pkgrefs, noncran_pkgrefs)
+    ordered_pkgrefs <- c(installed_pkgrefs, github_pkgrefs)
     ordered_x <- vapply(ordered_pkgrefs, function(x) pkgname$get(x), character(1), USE.NAMES = FALSE)
     ordered_version <- vapply(ordered_pkgrefs, function(x) version$get(x), character(1), USE.NAMES = FALSE)
     ordered_source <- vapply(ordered_pkgrefs, function(x) .parse_pkgref(x, return_handle = FALSE), character(1), USE.NAMES = FALSE)
