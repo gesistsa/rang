@@ -330,7 +330,7 @@ resolve <- function(pkgs, snapshot_date, no_enhances = TRUE, no_suggests = TRUE,
             }
         }, error = function(e) {
             ## can't query
-            output$unresolved_deps <- c(output$unresolved_deps, current_pkgref)
+            output$unresolved_deps <<- c(output$unresolved_deps, current_pkgref)
         })
     }
     attr(output, "class") <- "ranglet"
