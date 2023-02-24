@@ -45,7 +45,12 @@ convert_edgelist.ranglet <- function(x, ...){
 #' @rdname convert_edgelist
 #' @export
 convert_edgelist.rang <- function(x, ...){
-    el <- do.call("rbind",lapply(x$ranglets,convert_edgelist))
-    rownames(el) <- NULL
-    el
+    if(length(x$ranglets)!=0){
+      el <- do.call("rbind",lapply(x$ranglets,convert_edgelist))
+      rownames(el) <- NULL
+      return(el)
+    } else{
+      return(data.frame(from = character(0),to = character(0)))
+    }
+
 }
