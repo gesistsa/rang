@@ -25,6 +25,9 @@ as_pkgrefs.default <- function(x, ...) {
     if (is.numeric(x) || is.logical(x) || is.integer(x)) {
         stop("Don't know how to convert this to package references.", call. = FALSE)
     }
+    if(.detect_renv_lockfile(x)){
+        return(as_pkgrefs(.parse_renv_lockfile(x)))
+    }
     return(.normalize_pkgs(x))
 }
 
@@ -32,6 +35,27 @@ as_pkgrefs.default <- function(x, ...) {
 #' @export
 as_pkgrefs.sessionInfo <- function(x, ...) {
     vapply(X = x$otherPkgs, FUN = .extract_pkgref_packageDescription, FUN.VALUE = character(1), USE.NAMES = FALSE)
+}
+
+#' @rdname as_pkgrefs
+#' @export
+as_pkgrefs.renv_lockfile <- function(x, ...){
+  sources <- vapply(lockfile[["Packages"]],`[[`,character(1),"Source",USE.NAMES = FALSE)
+  pkgs <- c()
+  if("Repository"%in%sources){
+    pkgs <- c(pkgs, paste0("cran::",vapply(lockfile[["Packages"]][sources=="Repository"],`[[`,character(1),"Package",USE.NAMES = FALSE)))
+  }
+  if("Bioconductor"%in%sources){
+    pkgs <- c(pkgs,paste0("bioc::",vapply(lockfile[["Packages"]][sources=="Bioconductor"],`[[`,character(1),"Package",USE.NAMES = FALSE)))
+  }
+  if("GitHub"%in%sources){
+    pkgs <- c(pkgs,
+              paste0("github::",
+                     vapply(lockfile[["Packages"]][sources=="GitHub"],`[[`,character(1), "RemoteUsername", USE.NAMES = FALSE),"/",
+                     vapply(lockfile[["Packages"]][sources=="GitHub"],`[[`,character(1), "Package", USE.NAMES = FALSE))
+    )
+  }
+  pkgs
 }
 
 .extract_pkgref_packageDescription <- function(packageDescription) {
@@ -51,4 +75,25 @@ as_pkgrefs.sessionInfo <- function(x, ...) {
     ## if (basename(attr(packageDescription, "file")) == "package.rds") {
     return(paste0("cran::", handle))
     ## }
+}
+
+.detect_renv_lockfile <- function(path){
+  # assuming all renv lockfiles are called renv.lock and path is only length 1
+  if(length(path)!=1){
+    return(FALSE)
+  }
+  if(isFALSE(file.exists(path))){
+    return(FALSE)
+  }
+  if(grepl("renv.lock$",path)){
+    return(TRUE)
+  } else{
+    return(FALSE)
+  }
+}
+
+.parse_renv_lockfile <- function(path){
+  lockfile <- jsonlite::fromJSON(f, simplifyVector = FALSE)
+  class(lockfile) <- "renv_lockfile"
+  lockfile
 }

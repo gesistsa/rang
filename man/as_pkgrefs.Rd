@@ -4,6 +4,7 @@
 \alias{as_pkgrefs}
 \alias{as_pkgrefs.default}
 \alias{as_pkgrefs.sessionInfo}
+\alias{as_pkgrefs.renv_lockfile}
 \title{Convert Data Structures into Package References}
 \usage{
 as_pkgrefs(x, ...)
@@ -11,6 +12,8 @@ as_pkgrefs(x, ...)
 \method{as_pkgrefs}{default}(x, ...)
 
 \method{as_pkgrefs}{sessionInfo}(x, ...)
+
+\method{as_pkgrefs}{renv_lockfile}(x, ...)
 }
 \arguments{
 \item{x, }{currently supported data structure(s) are: output from \code{\link[=sessionInfo]{sessionInfo()}}, a character vector of package names}
