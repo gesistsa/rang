@@ -52,7 +52,9 @@
             installed_pkgrefs <- c(installed_pkgrefs, pkgref)
         }
     }
+    loop_counter <- 0
     while(length(setdiff(needed_pkgrefs, c(installed_pkgrefs, github_pkgrefs))) != 0) {
+        unfulfilled_pkgrefs <- c()
         for (pkgref in needed_pkgrefs) {
             if (!pkgref %in% installed_pkgrefs && !pkgref %in% github_pkgrefs) {
                 ## check requirement
@@ -60,8 +62,15 @@
                 requirement_fulfilled <- length(setdiff(dep$get(pkgref), installed_pkgrefs)) == 0
                 if (requirement_fulfilled) {
                     installed_pkgrefs <- c(installed_pkgrefs, pkgref)
+                } else {
+                    unfulfilled_pkgrefs <- c(unfulfilled_pkgrefs, pkgref)
                 }
             }
+        }
+        loop_counter <- loop_counter + 1
+        print(unfulfilled_pkgrefs)
+        if (loop_counter > length(needed_pkgrefs)) {
+            stop("Can't determine installation order. Please report this to the developers.", call. = FALSE)
         }
     }
     ordered_pkgrefs <- c(installed_pkgrefs, github_pkgrefs)
