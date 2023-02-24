@@ -4,3 +4,9 @@ You'll need to clone the following repo here.
 git clone https://github.com/Joe-Hilgard/vvg-2d4d.git
 ```
 
+And install the quarto extension
+
+```sh
+quarto install extension mikemahoney218/quarto-arxiv
+```
+
