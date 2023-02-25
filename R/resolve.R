@@ -94,11 +94,12 @@
     }
     pkg_dep_df$x_pubdate <- bioc_version_df$date
     pkg_dep_df$x_pkgref <- .normalize_pkgs(handle, bioc_version = bioc_version_df$version)
+    pkg_dep_df$x_uid <- latest_version$suffix
     if (isFALSE("y" %in% names(pkg_dep_df))) {
-        return(pkg_dep_df[,c("snapshot_date", "x", "x_version", "x_pubdate", "x_pkgref", "x_bioc_ver")])
+        return(pkg_dep_df[,c("snapshot_date", "x", "x_version", "x_pubdate", "x_pkgref", "x_bioc_ver", "x_uid")])
     }
     pkg_dep_df$y_pkgref <- .normalize_pkgs(pkg_dep_df$y, bioc_version = bioc_version_df$version)
-    pkg_dep_df[,c("snapshot_date", "x", "x_version", "x_pubdate", "x_pkgref", "x_bioc_ver", "y", "type", "y_raw_version", "y_pkgref")]
+    pkg_dep_df[,c("snapshot_date", "x", "x_version", "x_pubdate", "x_pkgref", "x_bioc_ver", "x_uid", "y", "type", "y_raw_version", "y_pkgref")]
 }
 
 # get the commit sha for the commit closest to date
@@ -472,12 +473,30 @@ query_sysreqs <- function(rang, os = "ubuntu-20.04") {
     if (grepl("^centos|^fedora|^redhat", os)) {
         arch <- "RPM"
     }
-    sys_reqs_all <- .memo_query_sysreqs_rhub()
     pkgs <- .memo_search_bioc(bioc_version = "release")
     raw_sys_reqs <- pkgs$SystemRequirements[pkgs$Package %in% handles]
     baseurl <- "https://sysreqs.r-hub.io/map/"
-    url <- utils::URLencode(paste0(baseurl, paste0(raw_sys_reqs, collapse = ", ")))
-    vapply(jsonlite::read_json(url), .extract_sys_package, character(1), arch = arch)
+    singleline_sysreqs <- paste0(raw_sys_reqs[!is.na(raw_sys_reqs)], collapse = ", ")
+    singleline_sysreqs <- gsub("\\n", " ", singleline_sysreqs)
+    url <- utils::URLencode(paste0(baseurl, singleline_sysreqs))
+    checkable_cmds <- vapply(jsonlite::read_json(url), .extract_sys_package, character(1), arch = arch)
+    uncheckable_cmds <- .extract_uncheckable_sysreqs(singleline_sysreqs, arch = arch)
+    return(c(checkable_cmds, uncheckable_cmds))
+}
+
+## Not everything can be check from sysreqs DB, especially Bioc packages
+## https://github.com/r-hub/sysreqsdb
+.extract_uncheckable_sysreqs <- function(singleline_sysreqs, arch) {
+    uncheckable_sysreqs <- list(liblzma = c("DEB" = "liblzma-dev", "RPM" = "xz-devel"),
+                                libbz2 = c("DEB" = "libbz2-dev", "RPM" = "libbz2-devel"))
+    cmds <- c()
+    prefix <- c("DEB" = "apt-get install -y", "RPM" = "yum install -y")
+    for (regex in names(uncheckable_sysreqs)) {
+        if (grepl(regex, singleline_sysreqs)) {
+            cmds <- c(cmds, paste(prefix[arch], uncheckable_sysreqs[[regex]][arch]))
+        }
+    }
+    return(cmds)
 }
 
 .extract_sys_package <- function(item, arch = "DEB") {
@@ -491,7 +510,7 @@ query_sysreqs <- function(rang, os = "ubuntu-20.04") {
         return(paste0("apt-get install -y ", sys_pkg))
     }
     if (arch == "RPM") {
-        return(paste0("yum -y ", sys_pkg))
+        return(paste0("yum install -y ", sys_pkg))
     }
 }
 

@@ -21,18 +21,20 @@
         return(.download_package_from_github(tarball_path, x, version, handle, source, uid))
     }
     if (source == "bioc") {
-        url <- paste(bioc_mirror, "bioc/src/contrib/", x, "_", version, ".tar.gz", sep = "")
+        url <- paste(bioc_mirror, uid, "/src/contrib/", x, "_", version, ".tar.gz", sep = "")
     }
     if (source == "cran") {
-        url <- paste(cran_mirror, "src/contrib/Archive/", x, "/", x, "_", version, ".tar.gz", sep = "")  
+        url <- paste(cran_mirror, "src/contrib/Archive/", x, "/", x, "_", version, ".tar.gz", sep = "")
     }
-    
+
     tryCatch({
         suppressWarnings(download.file(url, destfile = tarball_path, quiet = !verbose))
     }, error = function(e) {
-        ## is the current latest
-        url <- paste(cran_mirror, "src/contrib/", x, "_", version, ".tar.gz", sep = "")
-        download.file(url, destfile = tarball_path, quiet = !verbose)
+        if (source == "cran") {
+            ## is the current latest
+            url <- paste(cran_mirror, "src/contrib/", x, "_", version, ".tar.gz", sep = "")
+            download.file(url, destfile = tarball_path, quiet = !verbose)
+        }
     })
     invisible(tarball_path)
 }
@@ -109,7 +111,7 @@
         error = function(e) {
             .download_github_safe(handle, sha, dest_tar)
         }
-    )  
+    )
     system(command = paste("tar", "-zxf ", dest_tar, "-C", tmp_dir))
     dlist <- list.dirs(path = tmp_dir, recursive = FALSE) ## TODO list.dirs is 2.14
     pkg_dir <- dlist[grepl(short_sha, dlist)] ## TODO grepl is 2.9.0
