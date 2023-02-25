@@ -151,7 +151,7 @@ test_that("Integration of as_pkgrefs() in resolve() for sessionInfo()", {
 test_that("resolving packages from bioconductor", {
     skip_if_offline()
     skip_on_cran()
-    expect_silent(x <- resolve("BiocGenerics", snapshot_date = "2022-10-20", query_bioc = TRUE))
+    expect_silent(x <- resolve("BiocGenerics", snapshot_date = "2022-10-20"))
     expect_equal(x$unresolved_pkgrefs, character(0))
     expect_equal(x$sysreqs, character(0))
     expect_equal(x$r_version, "4.2.1")
@@ -202,4 +202,16 @@ test_that("issue #82", {
     expect_false("y" %in% colnames(x))
     expect_error(x <- .query_snapshot_dependencies_bioc("Organism.dplyr", "2023-01-01"), NA)
     expect_true("y" %in% colnames(x))
+})
+
+test_that("issue #85", {
+    skip_if_offline()
+    skip_on_cran()
+    x <- resolve("restfulr", snapshot_date = "2023-01-01")
+    expect_equal(x$ranglet[[1]]$unresolved_deps, character(0))
+    expect_true("bioc::S4Vectors" %in% names(x$ranglet[[1]]$deps))
+})
+
+test_that("as_pkgrefs with bioc_version", {
+    expect_equal(as_pkgrefs(c("rtoot", "S4Vectors"), bioc_version = "3.3"), c("cran::rtoot", "bioc::S4Vectors"))
 })
