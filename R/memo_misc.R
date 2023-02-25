@@ -42,6 +42,7 @@ NULL
         tryCatch({
             raw_metadata <- suppressWarnings(read.dcf(con))
             metadata <- as.data.frame(raw_metadata)
+            metadata$suffix <- suffix
             output <- vctrs::vec_rbind(output, metadata)
             close(con)
         }, error = function(e) {

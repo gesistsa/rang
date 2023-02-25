@@ -196,8 +196,8 @@
     }
 }
 
-.cache_pkg_bioc <- function(x, version, cache_dir, bioc_mirror, bioc_version, verbose) {
-    url <- paste(bioc_mirror, bioc_version, "/bioc/src/contrib/", x, "_", version, ".tar.gz", sep = "")
+.cache_pkg_bioc <- function(x, version, cache_dir, bioc_mirror, bioc_version, verbose, uid) {
+    url <- paste(bioc_mirror, bioc_version, "/", uid, "/src/contrib/", x, "_", version, ".tar.gz", sep = "")
     tarball_path <- file.path(cache_dir, paste(x, "_", version, ".tar.gz", sep = ""))
     suppressWarnings(utils::download.file(url, destfile = tarball_path, quiet = !verbose))
     if (!file.exists(tarball_path)) {
@@ -239,7 +239,8 @@
         }
         if(source == "bioc") {
             .cache_pkg_bioc(x = x, version = version, cache_dir = cache_dir,
-                            bioc_mirror = bioc_mirror,bioc_version = rang$bioc_version, verbose = verbose)
+                            bioc_mirror = bioc_mirror,bioc_version = rang$bioc_version, verbose = verbose,
+                            uid = uid)
         }
     }
     ## For #14, cache R source in the future here
