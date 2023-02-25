@@ -3,6 +3,7 @@
 \name{as_pkgrefs}
 \alias{as_pkgrefs}
 \alias{as_pkgrefs.default}
+\alias{as_pkgrefs.character}
 \alias{as_pkgrefs.sessionInfo}
 \alias{as_pkgrefs.renv_lockfile}
 \title{Convert Data Structures into Package References}
@@ -10,6 +11,8 @@
 as_pkgrefs(x, ...)
 
 \method{as_pkgrefs}{default}(x, ...)
+
+\method{as_pkgrefs}{character}(x, bioc_version = NULL, ...)
 
 \method{as_pkgrefs}{sessionInfo}(x, ...)
 
@@ -19,6 +22,9 @@ as_pkgrefs(x, ...)
 \item{x, }{currently supported data structure(s) are: output from \code{\link[=sessionInfo]{sessionInfo()}}, a character vector of package names}
 
 \item{..., }{not used}
+
+\item{bioc_version}{character. When x is a character vector, version of Bioconductor to search for package names. NULL indicates not
+search for Bioconductor.}
 }
 \value{
 a vector of package references
@@ -32,7 +38,9 @@ packages. But we strongly recommend manually reviewing the detected packages bef
 as_pkgrefs(sessionInfo())
 if (interactive()) {
    require(rang)
-   require(pkgsearch)
    graph <- resolve(as_pkgrefs(sessionInfo()))
+   as_pkgrefs(c("rtoot"))
+   as_pkgrefs(c("rtoot", "S4Vectors")) ## this gives cran::S4Vectors and is not correct.
+   as_pkgrefs(c("rtoot", "S4Vectors"), bioc_version = "3.3") ## This gives bioc::S4Vectors
 }
 }

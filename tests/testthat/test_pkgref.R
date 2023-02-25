@@ -81,6 +81,7 @@ test_that("as_pkgrefs dispatch", {
     expect_error(as_pkgrefs(1L))
     expect_equal(as_pkgrefs("rtoot"), "cran::rtoot")
     expect_equal(as_pkgrefs(c("rtoot", "sna")), c("cran::rtoot", "cran::sna"))
+    expect_equal(as_pkgrefs(c("rtoot", "S4Vectors")), c("cran::rtoot", "cran::S4Vectors")) ## the bioc version is in test_resolve
 })
 
 test_that("as_pkgrefs_packageDescription", {
