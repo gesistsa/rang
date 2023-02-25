@@ -54,12 +54,6 @@ NULL
 
 .memo_search_bioc <- memoise::memoise(.bioc_package_history, cache = cachem::cache_mem(max_age = 60 * 60))
 
-.query_sysreqs_rhub <- function() {
-    jsonlite::fromJSON("https://sysreqs.r-hub.io/list")
-}
-
-.memo_query_sysreqs_rhub <- memoise::memoise(.query_sysreqs_rhub,cache = cachem::cache_mem(max_age = 60 * 60))
-
 ## internal data generation
 ## ---
 ### Supported OS Versions
