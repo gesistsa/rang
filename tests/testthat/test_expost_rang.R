@@ -128,3 +128,13 @@ test_that("empty rang export, #75", {
     expect_warning(x <- export_rang(graph, path = tempfile()))
     expect_equal(x, NULL)
 })
+
+test_that("prevent infinite loop, #81", {
+    graph <- readRDS("../testdata/rang_ok.RDS")
+    graph$ranglets[[1]]$deps[[2]] <- NULL
+    expect_error(.generate_installation_order(graph), "cran::LDAvis")
+    graph <- readRDS("../testdata/rang_ok.RDS")
+    graph$ranglets[[1]]$original$y <- "S4Vectors"
+    graph$ranglets[[1]]$original$y_pkgref <- "bioc::S4Vectors"
+    expect_error(.generate_installation_order(graph), "cran::LDAvis")
+})
