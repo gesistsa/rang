@@ -213,5 +213,30 @@ test_that("issue #85", {
 })
 
 test_that("as_pkgrefs with bioc_version", {
+    skip_if_offline()
+    skip_on_cran()
     expect_equal(as_pkgrefs(c("rtoot", "S4Vectors"), bioc_version = "3.3"), c("cran::rtoot", "bioc::S4Vectors"))
+})
+
+test_that(".query_sysreqs_bioc with uncheckable info", {
+    skip_if_offline()
+    skip_on_cran()
+    x <- .query_sysreqs_bioc("Rhtslib", "ubuntu-20.04")
+    expect_true("apt-get install -y libbz2-dev" %in% x) ## uncheckable
+    expect_true("apt-get install -y liblzma-dev" %in% x)
+    expect_true("apt-get install -y make" %in% x) ## checkable
+    x <- .query_sysreqs_bioc("Rhtslib", "centos-7")
+    expect_true("yum install -y libbz2-devel" %in% x)
+    expect_true("yum install -y xz-devel" %in% x)
+    expect_true("yum install -y make" %in% x)
+})
+
+test_that("issue 89", {
+    skip_if_offline()
+    skip_on_cran()
+    x <- resolve("bioc::GenomeInfoDbData", snapshot_date = "2023-01-01")
+    expect_equal(x$ranglets[["bioc::GenomeInfoDbData"]]$original$x_uid, "data/annotation")
+    temp_dir <- .generate_temp_dir()
+    expect_error(dockerize(x, output_dir = temp_dir, cache = TRUE, verbose = FALSE), NA)
+    expect_true(file.exists(file.path(temp_dir, "cache", "GenomeInfoDbData_1.2.9.tar.gz")))
 })
