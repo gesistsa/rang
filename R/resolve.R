@@ -91,7 +91,7 @@
     snapshot_date <- anytime::anytime(snapshot_date, tz = "UTC", asUTC = TRUE)
     bioc_version_df <- .query_biocver(snapshot_date) ## a dataframe!
     search_res <- .memo_search_bioc(bioc_version_df$version)
-    search_res$pubdate <- anytime::anytime(bioc_version$date, tz = "UTC", asUTC = TRUE)
+    search_res$pubdate <- anytime::anytime(bioc_version_df$date, tz = "UTC", asUTC = TRUE)
     latest_version <- search_res[search_res$Package==handle,]
     if (nrow(latest_version) == 0) {
         stop("No snapshot version exists for ", handle, ".",  call. = FALSE)
