@@ -211,3 +211,7 @@ test_that("issue #85", {
     expect_equal(x$ranglet[[1]]$unresolved_deps, character(0))
     expect_true("bioc::S4Vectors" %in% names(x$ranglet[[1]]$deps))
 })
+
+test_that("as_pkgrefs with bioc_version", {
+    expect_equal(as_pkgrefs(c("rtoot", "S4Vectors"), bioc_version = "3.3"), c("cran::rtoot", "bioc::S4Vectors"))
+})

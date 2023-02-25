@@ -260,11 +260,7 @@ resolve <- function(pkgs, snapshot_date, no_enhances = TRUE, no_suggests = TRUE,
         stop("We don't know the future.", call. = FALSE)
     }
     bioc_version <- .generate_bioc_version(snapshot_date = snapshot_date, pkgs = pkgs)
-    if (class(pkgs) %in% c("sessionInfo")) {
-        pkgrefs <- as_pkgrefs(pkgs)
-    } else {
-        pkgrefs <- .normalize_pkgs(pkgs, bioc_version = bioc_version)
-    }
+    pkgrefs <- as_pkgrefs(pkgs, bioc_version = bioc_version)
     output <- list()
     output$call <- match.call()
     output$ranglets <- list()
