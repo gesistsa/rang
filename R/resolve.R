@@ -18,15 +18,6 @@
     utils::tail(allvers[allvers$date < snapshot_date,], 1)[,1:2]
 }
 
-## .msysreps <- memoise::memoise(.raw_sysreqs, cache = cachem::cache_mem(max_age = 60 * 60))
-
-## .sysreps <- function(pkg, verbose = FALSE) {
-##     if (isTRUE(verbose)) {
-##         cat("Querying SystemRequirements of", pkg, "\n")
-##     }
-##     .msysreps(pkg)
-## }
-
 ## get the latest version as of date
 ## let's call this output dep_df; basically is a rough version of edgelist
 .query_snapshot_dependencies <- function(pkgref = "cran::rtoot", snapshot_date = "2022-12-10", bioc_version) {
@@ -269,32 +260,8 @@ resolve <- function(pkgs, snapshot_date, no_enhances = TRUE, no_suggests = TRUE,
         stop("We don't know the future.", call. = FALSE)
     }
     bioc_version <- .generate_bioc_version(snapshot_date = snapshot_date, pkgs = pkgs)
-    ## if (length(bioc_version) == 0) {
-    ##     bioc_version <- NULL
-    ## }
-    ## ## explicit bioc case and too old
-    ## if(any(grepl("^bioc::", pkgs)) && utils::compareVersion(bioc_version, "2.0") == -1) {
-    ##     stop("Bioconductor versions < 2.0 are not supported.", call. = FALSE)
-    ## }
-    ## ## old bioc, but not explicit
-    ## if (utils::compareVersion(bioc_version, "2.0") == -1) {
-    ##     bioc_version <- NULL
-    ## }
     if (class(pkgs) %in% c("sessionInfo")) {
         pkgrefs <- as_pkgrefs(pkgs)
-    ##     if(any(grepl("^bioc::",pkgrefs))) {
-    ##       bioc_version <- .query_biocver(snapshot_date)$version
-    ##     } else {
-    ##       bioc_version <- NULL
-    ##     }
-    ## } else {
-    ##     if(any(grepl("^bioc::",pkgs))) {
-    ##         query_bioc <- TRUE
-    ##     }
-    ##     if(isTRUE(query_bioc)) {
-    ##         bioc_version <- .query_biocver(snapshot_date)$version
-    ##   } else {
-    ##         bioc_version <- NULL
     } else {
         pkgrefs <- .normalize_pkgs(pkgs, bioc_version = bioc_version)
     }
@@ -517,22 +484,6 @@ query_sysreqs <- function(rang, os = "ubuntu-20.04") {
     vapply(jsonlite::read_json(url), .extract_sys_package, character(1), arch = arch)
 }
 
-## .write_pony_description_file <- function(raw_sys_reqs) {
-##     description_file_path <- tempfile()
-##     x <- data.frame(SystemRequirements =
-##                              paste(raw_sys_reqs, collapse = ","))
-##     write.dcf(x, file = description_file_path)
-##     return(description_file_path)
-## }
-
-## .query_sysreqs_bioc <- function(handle, os) {
-##     sys_reqs_all <- .memo_query_sysreqs_rhub()
-##     pkgs <- .memo_search_bioc(bioc_version = "release")
-##     raw_sys_reqs <- pkgs$SystemRequirements[pkgs$Package %in% handle]
-##     .query_sysreqs_posit(.write_pony_description_file(raw_sys_reqs),
-##                          os = os)
-## }
-
 .extract_sys_package <- function(item, arch = "DEB") {
     output <- item[[names(item)]]$platforms[[arch]]
     if (isFALSE(is.list((output)))) {
@@ -547,16 +498,6 @@ query_sysreqs <- function(rang, os = "ubuntu-20.04") {
         return(paste0("yum -y ", sys_pkg))
     }
 }
-
-## .clean_sys_reqs_bioc <- function(sys_reqs){
-##   sys_reqs <- unlist(strsplit(sys_reqs,split = ",\\s*|\\n"),use.names = FALSE)
-##   sys_reqs <- tolower(sys_reqs)
-##   sys_reqs <- gsub("\\s*\\(.*\\)","",sys_reqs)
-##   sys_reqs <- gsub("GNU make","gnumake",sys_reqs)
-##   sys_reqs <- gsub("^gsl$","libgsl",sys_reqs)
-##   sys_reqs <- gsub("^pandoc.*","pandoc",sys_reqs)
-##   sys_reqs <- gsub("^xml2$","libxml2",sys_reqs)
-## }
 
 .query_sysreqs_posit <- function(description_file, os, remove_description = TRUE) {
     os_info <- strsplit(os, "-")[[1]]
