@@ -250,3 +250,9 @@ test_that("issue 89", {
     expect_error(dockerize(x, output_dir = temp_dir, cache = TRUE, verbose = FALSE), NA)
     expect_true(file.exists(file.path(temp_dir, "cache", "GenomeInfoDbData_1.2.9.tar.gz")))
 })
+
+test_that("integration of renv to resolve", {
+  skip_if_offline()
+  skip_on_cran()
+  expect_error(X <- resolve("../testdata/renv.lock", snapshot_date = "2023-01-01"), NA)
+})
