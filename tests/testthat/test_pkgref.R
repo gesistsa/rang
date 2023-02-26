@@ -91,3 +91,8 @@ test_that("as_pkgrefs_packageDescription", {
     ## expect_equal(res, c("github::chainsawriot/grafzahl", "cran::rtoot", "local::/home/chainsawriot/dev/rang", "cran::testthat")
     expect_equal(res, c("github::chainsawriot/grafzahl", "cran::rtoot", "cran::rang", "cran::testthat"))
 })
+
+test_that("as_pkgrefs renv_lockfile", {
+    res <- as_pkgrefs("../testdata/renv.lock")
+    expect_equal(res, c("cran::rtoot", "bioc::BiocGenerics", "github::schochastics/levelnet"))
+})

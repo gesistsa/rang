@@ -1,0 +1,56 @@
+{
+  "R": {
+    "Version": "4.2.2",
+    "Repositories": [
+      {
+        "Name": "CRAN",
+        "URL": "https://cloud.r-project.org"
+      }
+    ]
+  },
+  "Packages": {
+    "BiocGenerics": {
+      "Package": "BiocGenerics",
+      "Version": "0.44.0",
+      "Source": "Bioconductor",
+      "git_url": "https://git.bioconductor.org/packages/BiocGenerics",
+      "git_branch": "RELEASE_3_16",
+      "git_last_commit": "d7cd9c1",
+      "git_last_commit_date": "2022-11-01",
+      "Hash": "0de19224c2cd94f48fbc0d0bc663ce3b",
+      "Requirements": []
+    },
+    "levelnet": {
+      "Package": "levelnet",
+      "Version": "0.5.0",
+      "Source": "GitHub",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteRepo": "levelnet",
+      "RemoteUsername": "schochastics",
+      "RemoteRef": "HEAD",
+      "RemoteSha": "775cf5e91b83cb73fe35e378ed1d7facb1d741eb",
+      "Hash": "29eed562ec1c9bb7e31ce87e321b9252",
+      "Requirements": [
+        "Matrix",
+        "Rcpp",
+        "igraph"
+      ]
+    },
+    "rtoot": {
+      "Package": "rtoot",
+      "Version": "0.3.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "06eb72de42a3f8fcb252badc58f92b2b",
+      "Requirements": [
+        "clipr",
+        "curl",
+        "dplyr",
+        "httr",
+        "jsonlite",
+        "tibble"
+      ]
+    }
+  }
+}

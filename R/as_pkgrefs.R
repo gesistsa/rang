@@ -36,7 +36,7 @@ as_pkgrefs.default <- function(x, ...) {
 #' @export
 as_pkgrefs.character <- function(x, bioc_version = NULL, ...) {
     if(.detect_renv_lockfile(x)){
-      return(.extract_pkgref_renv_lockfile(path = x))
+        return(.extract_pkgref_renv_lockfile(path = x))
     }
     return(.normalize_pkgs(pkgs = x, bioc_version = bioc_version))
 }
@@ -102,7 +102,7 @@ as_pkgrefs.sessionInfo <- function(x, ...) {
 }
 
 .parse_renv_lockfile <- function(path){
-  lockfile <- jsonlite::fromJSON(path, simplifyVector = FALSE)
-  # class(lockfile) <- "renv_lockfile"
-  lockfile
+    lockfile <- jsonlite::fromJSON(path, simplifyVector = FALSE)
+    # class(lockfile) <- "renv_lockfile"
+    lockfile
 }
