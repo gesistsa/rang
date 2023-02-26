@@ -103,7 +103,7 @@ test_that("as_pkgrefs renv_lockfile", {
 })
 
 test_that(".detect_renv_lockfile false",{
-  expect_false(.detect_renv_lockfile("./testdata/graph.RDS"))
-  expect_false(.detect_renv_lockfile(c("../testdata/graph.RDS", "../testdata/renv.lock")))
-  expect_false(.detect_renv_lockfile("../testdata/fake_renv.lock"))
+    expect_false(.detect_renv_lockfile("./testdata/graph.RDS"))
+    expect_false(.detect_renv_lockfile(c("../testdata/graph.RDS", "../testdata/renv.lock")))
+    expect_false(.detect_renv_lockfile("../testdata/fake_renv.lock"))
 })

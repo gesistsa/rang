@@ -19,14 +19,14 @@ Suggests:
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Imports: 
-    anytime,
+    parsedate,
     fastmap,
     jsonlite,
     memoise,
     pkgsearch,
     remotes,
     utils,
-    gh,
+    httr,
     vctrs
 Depends: 
     R (>= 3.5.0)
