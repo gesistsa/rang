@@ -107,3 +107,15 @@ test_that(".detect_renv_lockfile false",{
     expect_false(.detect_renv_lockfile(c("../testdata/graph.RDS", "../testdata/renv.lock")))
     expect_false(.detect_renv_lockfile("../testdata/fake_renv.lock"))
 })
+
+test_that(".is_directory flse",{
+    expect_false(.is_directory(c("a/","b/")))
+    expect_false(.is_directory("a/"))
+})
+
+test_that("as_pkgrefs directory", {
+    skip_if_offline()
+    skip_on_cran()
+    res <- suppressWarnings(as_pkgrefs("../testdata/test_dir",bioc_version = "3.16"))
+    expect_equal(res, c("bioc::BiocGenerics", "cran::rtoot"))
+})
