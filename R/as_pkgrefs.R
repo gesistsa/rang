@@ -36,7 +36,7 @@ as_pkgrefs.default <- function(x, ...) {
 #' @export
 as_pkgrefs.character <- function(x, bioc_version = NULL, ...) {
     if(.detect_renv_lockfile(x)){
-        return(.extract_pkgref_renv_lockfile(path = x))
+        return(.extract_pkgrefs_renv_lockfile(path = x))
     }
     return(.normalize_pkgs(pkgs = x, bioc_version = bioc_version))
 }
@@ -47,7 +47,7 @@ as_pkgrefs.sessionInfo <- function(x, ...) {
     vapply(X = x$otherPkgs, FUN = .extract_pkgref_packageDescription, FUN.VALUE = character(1), USE.NAMES = FALSE)
 }
 
-.extract_pkgref_renv_lockfile <- function(path){
+.extract_pkgrefs_renv_lockfile <- function(path){
   lockfile <- .parse_renv_lockfile(path)
   sources <- vapply(lockfile[["Packages"]],`[[`,character(1),"Source",USE.NAMES = FALSE)
   pkgs <- c()
@@ -94,11 +94,10 @@ as_pkgrefs.sessionInfo <- function(x, ...) {
   if(isFALSE(file.exists(path))){
     return(FALSE)
   }
-  if(grepl("renv.lock$",path)){
-    return(TRUE)
-  } else{
+  if (isFALSE(basename(path) == "renv.lock")) {
     return(FALSE)
   }
+  TRUE
 }
 
 .parse_renv_lockfile <- function(path){
