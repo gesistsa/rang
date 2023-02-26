@@ -49,7 +49,7 @@ as_pkgrefs.sessionInfo <- function(x, ...) {
     if ("GithubRepo" %in% names(packageDescription)) {
         return(paste0("github::", packageDescription[["GithubUsername"]], "/", packageDescription[["GithubRepo"]]))
     }
-    if(grepl("bioconductor",packageDescription[["URL"]])) {
+    if (grepl("bioconductor", packageDescription[["URL"]])) {
       return(paste0("bioc::",handle))
     }
     ## uncomment this when #57 is implemented
