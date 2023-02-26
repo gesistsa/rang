@@ -35,6 +35,9 @@ as_pkgrefs.default <- function(x, ...) {
 #' @rdname as_pkgrefs
 #' @export
 as_pkgrefs.character <- function(x, bioc_version = NULL, ...) {
+    if(.detect_renv_lockfile(x)){
+      return(.extract_pkgref_renv_lockfile(path = x))
+    }
     return(.normalize_pkgs(pkgs = x, bioc_version = bioc_version))
 }
 
@@ -44,9 +47,8 @@ as_pkgrefs.sessionInfo <- function(x, ...) {
     vapply(X = x$otherPkgs, FUN = .extract_pkgref_packageDescription, FUN.VALUE = character(1), USE.NAMES = FALSE)
 }
 
-#' @rdname as_pkgrefs
-#' @export
-as_pkgrefs.renv_lockfile <- function(x, ...){
+.extract_pkgref_renv_lockfile <- function(path){
+  lockfile <- .parse_renv_lockfile(path)
   sources <- vapply(lockfile[["Packages"]],`[[`,character(1),"Source",USE.NAMES = FALSE)
   pkgs <- c()
   if("Repository"%in%sources){
@@ -62,7 +64,7 @@ as_pkgrefs.renv_lockfile <- function(x, ...){
                      vapply(lockfile[["Packages"]][sources=="GitHub"],`[[`,character(1), "Package", USE.NAMES = FALSE))
     )
   }
-  pkgs
+  return(pkgs)
 }
 
 .extract_pkgref_packageDescription <- function(packageDescription) {
@@ -100,7 +102,7 @@ as_pkgrefs.renv_lockfile <- function(x, ...){
 }
 
 .parse_renv_lockfile <- function(path){
-  lockfile <- jsonlite::fromJSON(f, simplifyVector = FALSE)
-  class(lockfile) <- "renv_lockfile"
+  lockfile <- jsonlite::fromJSON(path, simplifyVector = FALSE)
+  # class(lockfile) <- "renv_lockfile"
   lockfile
 }
