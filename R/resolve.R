@@ -478,11 +478,6 @@ query_sysreqs <- function(rang, os = "ubuntu-20.04") {
     singleline_sysreqs <- paste0(raw_sys_reqs[!is.na(raw_sys_reqs)], collapse = ", ")
     singleline_sysreqs <- gsub("\\n", " ", singleline_sysreqs)
     .query_singleline_sysreqs(singleline_sysreqs = singleline_sysreqs, arch = arch)
-    ## baseurl <- "https://sysreqs.r-hub.io/map/"
-    ## url <- utils::URLencode(paste0(baseurl, singleline_sysreqs))
-    ## checkable_cmds <- vapply(jsonlite::read_json(url), .extract_sys_package, character(1), arch = arch)
-    ## uncheckable_cmds <- .extract_uncheckable_sysreqs(singleline_sysreqs, arch = arch)
-    ## return(c(checkable_cmds, uncheckable_cmds))
 }
 
 .query_singleline_sysreqs <- function(singleline_sysreqs, arch) {

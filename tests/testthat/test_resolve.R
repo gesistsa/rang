@@ -231,6 +231,10 @@ test_that(".query_sysreqs_bioc with uncheckable info", {
     expect_true("yum install -y xz-devel" %in% x)
     expect_true("yum install -y make" %in% x)
     expect_false("yum install -y" %in% x) ## the null response from C++
+    x <- .query_singleline_sysreqs("libxml2", "DEB")
+    expect_equal(x, "apt-get install -y libxml2-dev")
+    x <- .query_singleline_sysreqs("C++", "DEB")
+    expect_equal(x, character(0))
 })
 
 test_that("issue 89", {
