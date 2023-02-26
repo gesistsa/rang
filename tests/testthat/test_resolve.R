@@ -225,10 +225,20 @@ test_that(".query_sysreqs_bioc with uncheckable info", {
     expect_true("apt-get install -y libbz2-dev" %in% x) ## uncheckable
     expect_true("apt-get install -y liblzma-dev" %in% x)
     expect_true("apt-get install -y make" %in% x) ## checkable
+    expect_false("apt-get install -y" %in% x) ## the null response from C++
     x <- .query_sysreqs_bioc("Rhtslib", "centos-7")
     expect_true("yum install -y libbz2-devel" %in% x)
     expect_true("yum install -y xz-devel" %in% x)
     expect_true("yum install -y make" %in% x)
+    expect_false("yum install -y" %in% x) ## the null response from C++
+    x <- .query_singleline_sysreqs("libxml2", "DEB")
+    expect_equal(x, "apt-get install -y libxml2-dev")
+    x <- .query_singleline_sysreqs("C++", "DEB")
+    expect_equal(x, character(0))
+    x <- readRDS("../testdata/sysreqs_gmp.RDS")
+    ## buildtime / runtime requirements
+    expect_equal(.extract_sys_package(x[[1]], arch = "DEB"),
+                 "apt-get install -y libgmp-dev")
 })
 
 test_that("issue 89", {

@@ -475,13 +475,18 @@ query_sysreqs <- function(rang, os = "ubuntu-20.04") {
     }
     pkgs <- .memo_search_bioc(bioc_version = "release")
     raw_sys_reqs <- pkgs$SystemRequirements[pkgs$Package %in% handles]
-    baseurl <- "https://sysreqs.r-hub.io/map/"
     singleline_sysreqs <- paste0(raw_sys_reqs[!is.na(raw_sys_reqs)], collapse = ", ")
     singleline_sysreqs <- gsub("\\n", " ", singleline_sysreqs)
+    .query_singleline_sysreqs(singleline_sysreqs = singleline_sysreqs, arch = arch)
+}
+
+.query_singleline_sysreqs <- function(singleline_sysreqs, arch = "DEB") {
+    baseurl <- "https://sysreqs.r-hub.io/map/"
     url <- utils::URLencode(paste0(baseurl, singleline_sysreqs))
-    checkable_cmds <- vapply(jsonlite::read_json(url), .extract_sys_package, character(1), arch = arch)
+    query_res <- jsonlite::read_json(url)
+    checkable_cmds <- vapply(query_res, .extract_sys_package, character(1), arch = arch)
     uncheckable_cmds <- .extract_uncheckable_sysreqs(singleline_sysreqs, arch = arch)
-    return(c(checkable_cmds, uncheckable_cmds))
+    c(checkable_cmds[!is.na(checkable_cmds)], uncheckable_cmds)
 }
 
 ## Not everything can be check from sysreqs DB, especially Bioc packages
@@ -505,6 +510,9 @@ query_sysreqs <- function(rang, os = "ubuntu-20.04") {
         sys_pkg <- output
     } else {
         sys_pkg <- output[["buildtime"]]
+    }
+    if (is.null(sys_pkg)) {
+        return(NA_character_)
     }
     if (arch == "DEB") {
         return(paste0("apt-get install -y ", sys_pkg))
