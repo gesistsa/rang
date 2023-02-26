@@ -26,7 +26,7 @@ Imports:
     pkgsearch,
     remotes,
     utils,
-    gh,
+    httr,
     vctrs
 Depends: 
     R (>= 3.5.0)
