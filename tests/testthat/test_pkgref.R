@@ -90,4 +90,9 @@ test_that("as_pkgrefs_packageDescription", {
     ## change this with #57
     ## expect_equal(res, c("github::chainsawriot/grafzahl", "cran::rtoot", "local::/home/chainsawriot/dev/rang", "cran::testthat")
     expect_equal(res, c("github::chainsawriot/grafzahl", "cran::rtoot", "cran::rang", "cran::testthat"))
+    ## bioc
+    si <- readRDS("../testdata/sessionInfo3.RDS")
+    res <- as_pkgrefs(si)
+    expect_true("bioc::BiocGenerics" %in% res)
+    expect_true("bioc::S4Vectors" %in% res)
 })
