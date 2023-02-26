@@ -36,7 +36,10 @@ as_pkgrefs.default <- function(x, ...) {
 #' @export
 as_pkgrefs.character <- function(x, bioc_version = NULL, ...) {
     if(.detect_renv_lockfile(x)){
-        return(.extract_pkgrefs_renv_lockfile(path = x))
+      return(.extract_pkgrefs_renv_lockfile(path = x))
+    }
+    if(.is_directory(x)){
+      return(.extract_pkgrefs_dir(x,bioc_version))
     }
     return(.normalize_pkgs(pkgs = x, bioc_version = bioc_version))
 }
@@ -48,23 +51,23 @@ as_pkgrefs.sessionInfo <- function(x, ...) {
 }
 
 .extract_pkgrefs_renv_lockfile <- function(path){
-  lockfile <- .parse_renv_lockfile(path)
-  sources <- vapply(lockfile[["Packages"]],`[[`,character(1),"Source",USE.NAMES = FALSE)
-  pkgs <- c()
-  if("Repository"%in%sources){
-    pkgs <- c(pkgs, paste0("cran::",vapply(lockfile[["Packages"]][sources=="Repository"],`[[`,character(1),"Package",USE.NAMES = FALSE)))
-  }
-  if("Bioconductor"%in%sources){
-    pkgs <- c(pkgs,paste0("bioc::",vapply(lockfile[["Packages"]][sources=="Bioconductor"],`[[`,character(1),"Package",USE.NAMES = FALSE)))
-  }
-  if("GitHub"%in%sources){
-    pkgs <- c(pkgs,
-              paste0("github::",
-                     vapply(lockfile[["Packages"]][sources=="GitHub"],`[[`,character(1), "RemoteUsername", USE.NAMES = FALSE),"/",
-                     vapply(lockfile[["Packages"]][sources=="GitHub"],`[[`,character(1), "Package", USE.NAMES = FALSE))
-    )
-  }
-  return(pkgs)
+    lockfile <- .parse_renv_lockfile(path)
+    sources <- vapply(lockfile[["Packages"]],`[[`,character(1),"Source",USE.NAMES = FALSE)
+    pkgs <- c()
+    if("Repository"%in%sources){
+      pkgs <- c(pkgs, paste0("cran::",vapply(lockfile[["Packages"]][sources=="Repository"],`[[`,character(1),"Package",USE.NAMES = FALSE)))
+    }
+    if("Bioconductor"%in%sources){
+      pkgs <- c(pkgs,paste0("bioc::",vapply(lockfile[["Packages"]][sources=="Bioconductor"],`[[`,character(1),"Package",USE.NAMES = FALSE)))
+    }
+    if("GitHub"%in%sources){
+      pkgs <- c(pkgs,
+                paste0("github::",
+                       vapply(lockfile[["Packages"]][sources=="GitHub"],`[[`,character(1), "RemoteUsername", USE.NAMES = FALSE),"/",
+                       vapply(lockfile[["Packages"]][sources=="GitHub"],`[[`,character(1), "Package", USE.NAMES = FALSE))
+      )
+    }
+    return(pkgs)
 }
 
 .extract_pkgref_packageDescription <- function(packageDescription) {
@@ -87,21 +90,37 @@ as_pkgrefs.sessionInfo <- function(x, ...) {
 }
 
 .detect_renv_lockfile <- function(path){
-  # assuming all renv lockfiles are called renv.lock and path is only length 1
-  if(length(path)!=1){
-    return(FALSE)
-  }
-  if(isFALSE(file.exists(path))){
-    return(FALSE)
-  }
-  if (isFALSE(basename(path) == "renv.lock")) {
-    return(FALSE)
-  }
-  TRUE
+    # assuming all renv lockfiles are called renv.lock and path is only length 1
+    if(length(path)!=1){
+      return(FALSE)
+    }
+    if(isFALSE(file.exists(path))){
+      return(FALSE)
+    }
+    if (isFALSE(basename(path) == "renv.lock")) {
+      return(FALSE)
+    }
+    TRUE
 }
 
 .parse_renv_lockfile <- function(path){
     lockfile <- jsonlite::fromJSON(path, simplifyVector = FALSE)
     # class(lockfile) <- "renv_lockfile"
     lockfile
+}
+
+.is_directory <- function(path){
+    if(length(path)!=1){
+      return(FALSE)
+    }
+    if(isFALSE(dir.exists(path))){
+      return(FALSE)
+    }
+    TRUE
+}
+
+.extract_pkgrefs_dir <- function(path, bioc_version = NULL){
+    pkgs <- suppressMessages(unique(renv::dependencies(path,progress = FALSE)$Package))
+    warning("scanning directories for R packages cannot detect github packages.",call. = FALSE)
+    return(.normalize_pkgs(pkgs = pkgs, bioc_version = bioc_version))
 }
