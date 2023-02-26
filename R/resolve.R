@@ -4,7 +4,7 @@
     } else {
         allvers <- .memo_rver()
     }
-    allvers$date <- anytime::anytime(allvers$date, tz = "UTC", asUTC = TRUE)
+    allvers$date <- parsedate::parse_date(allvers$date)
     utils::tail(allvers[allvers$date < snapshot_date,], 1)$version
 }
 
@@ -14,7 +14,7 @@
     } else {
         allvers <- .memo_biocver()
     }
-    allvers$date <- anytime::anytime(allvers$date, tz = "UTC", asUTC = TRUE)
+    allvers$date <- parsedate::parse_date(allvers$date)
     utils::tail(allvers[allvers$date < snapshot_date,], 1)[,1:2]
 }
 
@@ -38,9 +38,9 @@
 }
 
 .query_snapshot_dependencies_cran <- function(handle = "rtoot", snapshot_date = "2022-12-10", bioc_version = NULL) {
-    snapshot_date <- anytime::anytime(snapshot_date, tz = "UTC", asUTC = TRUE)
+    snapshot_date <- parsedate::parse_date(snapshot_date)
     search_res <- .memo_search(handle)
-    search_res$pubdate <- anytime::anytime(search_res$crandb_file_date, tz = "UTC", asUTC = TRUE)
+    search_res$pubdate <- parsedate::parse_date(search_res$crandb_file_date)
     snapshot_versions <- search_res[search_res$pubdate <= snapshot_date,]
     if (nrow(snapshot_versions) == 0) {
         stop("No snapshot version exists for ", handle, ".",  call. = FALSE)
@@ -61,7 +61,7 @@
 }
 
 .query_snapshot_dependencies_github <- function(handle = "schochastics/rtoot", snapshot_date = "2022-12-10", bioc_version = NULL) {
-    snapshot_date <- anytime::anytime(snapshot_date, tz = "UTC", asUTC = TRUE)
+    snapshot_date <- parsedate::parse_date(snapshot_date)
     sha <- .query_sha(handle, snapshot_date)
     repo_descr <- .gh(paste0("/repos/", handle,"/contents/DESCRIPTION"), ref = sha$sha)
     con <- url(repo_descr$download_url)
@@ -79,10 +79,10 @@
 }
 
 .query_snapshot_dependencies_bioc <- function(handle = "BiocGenerics", snapshot_date = "2022-01-10") {
-    snapshot_date <- anytime::anytime(snapshot_date, tz = "UTC", asUTC = TRUE)
+    snapshot_date <- parsedate::parse_date(snapshot_date)
     bioc_version_df <- .query_biocver(snapshot_date) ## a dataframe!
     search_res <- .memo_search_bioc(bioc_version_df$version)
-    search_res$pubdate <- anytime::anytime(bioc_version_df$date, tz = "UTC", asUTC = TRUE)
+    search_res$pubdate <- parsedate::parse_date(bioc_version_df$date)
     latest_version <- search_res[search_res$Package==handle,]
     if (nrow(latest_version) == 0) {
         stop("No snapshot version exists for ", handle, ".",  call. = FALSE)
@@ -112,7 +112,7 @@
         commits <- .gh(paste0("/repos/", handle, "/commits"), per_page = 100, page = k)
         k <- k + 1
     }
-    list(sha = commits[[idx]]$sha, x_pubdate =  anytime::anytime(dates[[idx]], tz = "UTC", asUTC = TRUE))
+    list(sha = commits[[idx]]$sha, x_pubdate =  parsedate::parse_date(dates[[idx]]))
 }
 
 # parse a description file from github repo
@@ -256,8 +256,8 @@ resolve <- function(pkgs, snapshot_date, no_enhances = TRUE, no_suggests = TRUE,
         }
         snapshot_date <- Sys.Date() - 30
     }
-    snapshot_date <- anytime::anytime(snapshot_date, tz = "UTC", asUTC = TRUE)
-    if (snapshot_date >= anytime::anytime(Sys.Date())) {
+    snapshot_date <- parsedate::parse_date(snapshot_date)
+    if (snapshot_date >= parsedate::parse_date(Sys.Date())) {
         stop("We don't know the future.", call. = FALSE)
     }
     bioc_version <- .generate_bioc_version(snapshot_date = snapshot_date, pkgs = pkgs)
@@ -565,22 +565,22 @@ query_sysreqs <- function(rang, os = "ubuntu-20.04") {
 }
 
 .gh <- function(path,ref = NULL,...){
-  url <- httr::parse_url("https://api.github.com/")
-  url <- httr::modify_url(url, path = path)
-  token <- Sys.getenv("GITHUB_PAT", NA_character_)
-  if(is.na(token)){
-    token <- Sys.getenv("GITHUB_TOKEN", NA_character_)  
-  }
-  if(is.na(token)){
-    token <- ""
-  }
-  config <- httr::add_headers(Accept = "application/vnd.github.v3+json",Authorization=token)
-  params <- list(ref = ref,...)
-  request_results <- httr::GET(httr::modify_url(url, path = path), config, query = params)
-  status_code <- httr::status_code(request_results)
-  if (!status_code %in% c(200)) {
-    stop(paste0("github request failed with status code: ", status_code,"\n",
-                "The requested URL was: ",request_results$url), call. = FALSE)
-  }
-  httr::content(request_results)
+    url <- httr::parse_url("https://api.github.com/")
+    url <- httr::modify_url(url, path = path)
+    token <- Sys.getenv("GITHUB_PAT", NA_character_)
+    if(is.na(token)){
+        token <- Sys.getenv("GITHUB_TOKEN", NA_character_)  
+    }
+    if(is.na(token)){
+        token <- ""
+    }
+    config <- httr::add_headers(Accept = "application/vnd.github.v3+json",Authorization=token)
+    params <- list(ref = ref,...)
+    request_results <- httr::GET(httr::modify_url(url, path = path), config, query = params)
+    status_code <- httr::status_code(request_results)
+    if (!status_code %in% c(200)) {
+        stop(paste0("github request failed with status code: ", status_code,"\n",
+                    "The requested URL was: ",request_results$url), call. = FALSE)
+    }
+    httr::content(request_results)
 }

@@ -24,7 +24,7 @@ NULL
     map <- trimws(gsub("\"", "", sub(" #.*", "", map)))
     pattern <- "(.*): (.*)"
     bioc_ver <- sub(pattern, "\\1", map)
-    bioc_date <- anytime::anytime(sub(pattern, "\\2", map), tz = "UTC", asUTC = TRUE)
+    bioc_date <- parsedate::parse_date(sub(pattern, "\\2", map))
     data.frame(version = bioc_ver, date=bioc_date)
 }
 
