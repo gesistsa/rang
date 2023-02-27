@@ -63,8 +63,8 @@ test_that(".parse_pkgref", {
     expect_equal(.parse_pkgref("cran::testthat?source&nocache", FALSE), "cran")
     expect_equal(.parse_pkgref("cran::testthat", TRUE), "testthat")
     expect_equal(.parse_pkgref("cran::testthat", FALSE), "cran")
-    expect_equal(.parse_pkgref("local::./relative/path", TRUE), "local")
-    expect_equal(.parse_pkgref("local::./relative/path", FALSE), "./relative/path")
+    expect_equal(.parse_pkgref("local::./relative/path", TRUE), "./relative/path")
+    expect_equal(.parse_pkgref("local::./relative/path", FALSE), "local")
 })
 
 test_that(".extract_pkgref_packageDescription", {
