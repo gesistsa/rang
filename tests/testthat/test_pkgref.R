@@ -98,7 +98,7 @@ test_that("as_pkgrefs_packageDescription", {
 })
 
 test_that("as_pkgrefs renv_lockfile", {
-    res <- as_pkgrefs("../testdata/renv.lock")
+    res <- as_pkgrefs("../testdata/large_renv_lock/renv.lock")
     expect_equal(res, readRDS("../testdata/bioc_renv.RDS"))
 })
 

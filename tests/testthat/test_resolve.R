@@ -254,7 +254,7 @@ test_that("issue 89", {
 test_that("integration of renv to resolve", {
     skip_if_offline()
     skip_on_cran()
-    expect_error(X <- resolve("../testdata/renv.lock", snapshot_date = "2023-01-01"), NA)
+    expect_error(X <- resolve("../testdata/small_renv_lock/renv.lock", snapshot_date = "2023-01-01"), NA)
 })
 
 test_that(".gh error handling", {
