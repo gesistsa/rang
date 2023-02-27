@@ -15,6 +15,8 @@ test_that(".extract_date", {
 test_that(".check_local_in_pkgrefs", {
     expect_silent(.check_local_in_pkgrefs(c("cran::rtoot", "bioc::S4Vectors", "github::cran/rtoot")))
     expect_warning(.check_local_in_pkgrefs(c("local::../testdata/fakexml2")))
+    expect_warning(.check_local_in_pkgrefs(c("local::../testdata/askpass_1.1.tar.gz")))
+    expect_error(suppressWarnings(.check_local_in_pkgrefs(c("local::../testdata/issue39.RDS", "cran::rtoot"))))
 })
 
 ## The following are real tests. Even with memoisation, please keep at minimum
@@ -272,4 +274,12 @@ test_that(".gh error handling", {
     skip_if_offline()
     skip_on_cran()
     expect_error(.gh("path/is/wrong"))
+})
+
+test_that(".query_sysreqs_local", {
+    skip_if_offline()
+    skip_on_cran()
+    expect_error(sysreqs <- .query_sysreqs_local(c("../testdata/fakexml2", "../testdata/askpass_1.1.tar.gz", "../testdata/fakeRhtslib.tar.gz"), "ubuntu-20.04"), NA)
+    expect_true("apt-get install -y libxml2-dev" %in% sysreqs)
+    expect_true("apt-get install -y libbz2-dev" %in% sysreqs)
 })

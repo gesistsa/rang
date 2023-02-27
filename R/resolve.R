@@ -106,10 +106,24 @@
     pkg_dep_df[,c("snapshot_date", "x", "x_version", "x_pubdate", "x_pkgref", "x_bioc_ver", "x_uid", "y", "type", "y_raw_version", "y_pkgref")]
 }
 
+.read_tarball_description <- function(path) {
+    tempfile <- tempfile()
+    DESCRIPTION_in_tarball <- grep("DESCRIPTION$", utils::untar(path, list = TRUE), value = TRUE)
+    utils::untar(path, files = DESCRIPTION_in_tarball, exdir = tempfile)
+    list.files(tempfile, pattern = "DESCRIPTION", full.names = TRUE, recursive = TRUE)[1]
+}
+
+.extract_local_description_path <- function(handle) {
+    ## .check_local_in_pkgrefs did the check already
+    if (.is_directory(handle)) {
+        return(file.path(handle, "DESCRIPTION"))
+    }
+    .read_tarball_description(handle)
+}
+
 .query_snapshot_dependencies_local <- function(handle, snapshot_date, bioc_version = NULL) {
     snapshot_date <- parsedate::parse_date(snapshot_date)
-    ## TODO tar.gz
-    description_path <- file.path(handle, "DESCRIPTION")
+    description_path <- .extract_local_description_path(handle)
     descr_df <- as.data.frame(read.dcf(description_path))
     pkg_dep_df <- .parse_desc(descr_df, snapshot_date)
     pkg_dep_df$x_pkgref <- .normalize_pkgs(pkgs = handle, bioc_version = bioc_version)
@@ -229,8 +243,15 @@
 }
 
 .check_local_in_pkgrefs <- function(pkgrefs) {
-    if (any(vapply(pkgrefs, .parse_pkgref, character(1), return_handle = FALSE) == "local")) {
+    res <- .group_pkgrefs_by_source(pkgrefs)
+    any_local <- isFALSE(is.null(res[["local"]]))
+    if (isTRUE(any_local)) {
         warning("Using \"local\" package(s) to resolve dependencies is not reproducible on another machine.", call. = FALSE)
+        for (handle in res[["local"]]) {
+            if (isFALSE(.is_directory(handle)) && isFALSE(grepl("\\.tar.gz$|\\.tgz$", handle))) {
+                stop(handle, " doesn't appear to be a valid local package.", call. = FALSE)
+            }
+        }
     }
     invisible()
 }
@@ -535,7 +556,8 @@ query_sysreqs <- function(rang, os = "ubuntu-20.04") {
     if (grepl("^centos|^fedora|^redhat", os)) {
         arch <- "RPM"
     }
-    raw_sys_reqs <- vapply(handles, FUN = function(x) read.dcf(file.path(x, "DESCRIPTION"), fields = "SystemRequirements")[,1],
+    description_paths <- vapply(handles, .extract_local_description_path, FUN.VALUE = character(1))
+    raw_sys_reqs <- vapply(description_paths, FUN = function(x) read.dcf(x, fields = "SystemRequirements")[,1],
                            FUN.VALUE = character(1))
     singleline_sysreqs <- paste0(raw_sys_reqs[!is.na(raw_sys_reqs)], collapse = ", ")
     singleline_sysreqs <- gsub("\\n", " ", singleline_sysreqs)
