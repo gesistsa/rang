@@ -53,7 +53,12 @@
 }
 
 .is_github <- function(pkg) {
-    grepl("/", pkg) && isFALSE(grepl("^[\\.~]?/", pkg)) && isFALSE(grepl("/$", pkg))
+    if (grepl("github\\.com", pkg)) {
+        return(TRUE)
+    }
+    grepl("/", pkg) && isFALSE(grepl("^[\\.~]?/", pkg)) &&
+        isFALSE(grepl("/$", pkg)) &&
+        length(strsplit(pkg, split = "/")[[1]]) == 2
 }
 
 .is_bioc <- function(pkg, bioc_version) {

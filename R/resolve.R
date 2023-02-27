@@ -228,6 +228,13 @@
     bioc_version
 }
 
+.check_local_in_pkgrefs <- function(pkgrefs) {
+    if (any(vapply(pkgrefs, .parse_pkgref, character(1), return_handle = FALSE) == "local")) {
+        warning("Using \"local\" package(s) to resolve dependencies is not reproducible on another machine.", call. = FALSE)
+    }
+    invisible()
+}
+
 #' Resolve Dependencies Of R Packages
 #'
 #' This function recursively queries dependencies of R packages at a specific snapshot time. The dependency graph can then be used to recreate the computational environment. The data on dependencies are provided by R-hub.
@@ -282,6 +289,7 @@ resolve <- function(pkgs, snapshot_date, no_enhances = TRUE, no_suggests = TRUE,
     }
     bioc_version <- .generate_bioc_version(snapshot_date = snapshot_date, pkgs = pkgs)
     pkgrefs <- as_pkgrefs(pkgs, bioc_version = bioc_version)
+    .check_local_in_pkgrefs(pkgrefs)
     output <- list()
     output$call <- match.call()
     output$ranglets <- list()

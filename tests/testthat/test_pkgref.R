@@ -63,6 +63,8 @@ test_that(".parse_pkgref", {
     expect_equal(.parse_pkgref("cran::testthat?source&nocache", FALSE), "cran")
     expect_equal(.parse_pkgref("cran::testthat", TRUE), "testthat")
     expect_equal(.parse_pkgref("cran::testthat", FALSE), "cran")
+    expect_equal(.parse_pkgref("local::./relative/path", TRUE), "local")
+    expect_equal(.parse_pkgref("local::./relative/path", FALSE), "./relative/path")
 })
 
 test_that(".extract_pkgref_packageDescription", {
@@ -118,4 +120,38 @@ test_that("as_pkgrefs directory", {
     skip_on_cran()
     res <- suppressWarnings(as_pkgrefs("../testdata/test_dir",bioc_version = "3.16"))
     expect_equal(res, c("bioc::BiocGenerics", "cran::rtoot"))
+})
+
+test_that(".is_github", {
+    expect_true(.is_github("cran/rtoot"))
+    expect_false(.is_github("cran//rtoot"))
+    expect_false(.is_github("~/hello"))
+    expect_false(.is_github("./hello"))
+    expect_false(.is_github("/hello"))
+    expect_false(.is_github("/hello/world"))
+    expect_false(.is_github("/hello/world/"))
+    expect_false(.is_github("world/"))
+})
+
+test_that(".is_local", {
+    expect_false(.is_local("cran/rtoot"))
+    expect_false(.is_local("cran//rtoot"))
+    expect_false(.is_local("world/"))
+    expect_true(.is_local("~/hello"))
+    expect_true(.is_local("./hello"))
+    expect_true(.is_local("/hello"))
+    expect_true(.is_local("/hello/world"))
+    expect_true(.is_local("/hello/world/"))
+    expect_true(.is_local("/hello/world/"))
+    expect_true(.is_local("../testdata/fakexml2"))
+})
+
+test_that(".normalize_pkgs: local", {
+    expect_equal(.normalize_pkgs("local::/foo/bar/package_1.0.0.tar.gz"), "local::/foo/bar/package_1.0.0.tar.gz")
+    expect_equal(.normalize_pkgs("local::/foo/bar/pkg"), "local::/foo/bar/pkg")
+    expect_equal(.normalize_pkgs("local::."), "local::.")
+    expect_equal(.normalize_pkgs("/absolute/path/package_1.0.0.tar.gz"), "local::/absolute/path/package_1.0.0.tar.gz")
+    expect_equal(.normalize_pkgs("~/path/from/home"), "local::~/path/from/home")
+    expect_equal(.normalize_pkgs("./relative/path"), "local::./relative/path")
+    expect_equal(.normalize_pkgs("."), "local::.")
 })

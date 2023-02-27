@@ -6,6 +6,11 @@ test_that("defensive programming", {
     expect_error(resolve("LDAvis", os = "windows"))
 })
 
+test_that(".check_local_in_pkgrefs", {
+    expect_silent(.check_local_in_pkgrefs(c("cran::rtoot", "bioc::S4Vectors", "github::cran/rtoot")))
+    expect_warning(.check_local_in_pkgrefs(c("local::../testdata/fakexml2")))
+})
+
 ## The following are real tests. Even with memoisation, please keep at minimum
 
 test_that("normal", {
