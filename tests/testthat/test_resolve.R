@@ -262,3 +262,9 @@ test_that(".gh error handling", {
     skip_on_cran()
     expect_error(.gh("path/is/wrong"))
 })
+
+test_that(".extract_date", {
+  expect_error(.extract_date("."),NA)
+  expect_error(.extract_date("../testdata/renv.lock"),NA)
+  expect_error(.extract_date("rtoot"),NA)
+})

@@ -108,7 +108,7 @@ test_that(".is_renv_lockfile false",{
     expect_false(.is_renv_lockfile("../testdata/fake_renv.lock"))
 })
 
-test_that(".is_directory flse",{
+test_that(".is_directory false",{
     expect_false(.is_directory(c("a/","b/")))
     expect_false(.is_directory("a/"))
 })
