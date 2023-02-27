@@ -35,7 +35,7 @@ as_pkgrefs.default <- function(x, ...) {
 #' @rdname as_pkgrefs
 #' @export
 as_pkgrefs.character <- function(x, bioc_version = NULL, ...) {
-    if(.detect_renv_lockfile(x)){
+    if(.is_renv_lockfile(x)){
       return(.extract_pkgrefs_renv_lockfile(path = x))
     }
     if(.is_directory(x)){
@@ -89,7 +89,7 @@ as_pkgrefs.sessionInfo <- function(x, ...) {
     ## }
 }
 
-.detect_renv_lockfile <- function(path){
+.is_renv_lockfile <- function(path){
     # assuming all renv lockfiles are called renv.lock and path is only length 1
     if(length(path)!=1){
       return(FALSE)
