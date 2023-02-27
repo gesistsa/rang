@@ -6,6 +6,12 @@ test_that("defensive programming", {
     expect_error(resolve("LDAvis", os = "windows"))
 })
 
+test_that(".extract_date", {
+  expect_error(.extract_date("."), NA)
+  expect_error(.extract_date("../testdata/renv.lock"), NA)
+  expect_error(.extract_date("rtoot"), NA)
+})
+
 test_that(".check_local_in_pkgrefs", {
     expect_silent(.check_local_in_pkgrefs(c("cran::rtoot", "bioc::S4Vectors", "github::cran/rtoot")))
     expect_warning(.check_local_in_pkgrefs(c("local::../testdata/fakexml2")))
@@ -259,7 +265,7 @@ test_that("issue 89", {
 test_that("integration of renv to resolve", {
     skip_if_offline()
     skip_on_cran()
-    expect_error(X <- resolve("../testdata/renv.lock", snapshot_date = "2023-01-01"), NA)
+    expect_error(X <- resolve("../testdata/small_renv_lock/renv.lock", snapshot_date = "2023-01-01"), NA)
 })
 
 test_that(".gh error handling", {

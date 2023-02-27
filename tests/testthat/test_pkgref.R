@@ -100,17 +100,17 @@ test_that("as_pkgrefs_packageDescription", {
 })
 
 test_that("as_pkgrefs renv_lockfile", {
-    res <- as_pkgrefs("../testdata/renv.lock")
+    res <- as_pkgrefs("../testdata/large_renv_lock/renv.lock")
     expect_equal(res, readRDS("../testdata/bioc_renv.RDS"))
 })
 
-test_that(".detect_renv_lockfile false",{
-    expect_false(.detect_renv_lockfile("./testdata/graph.RDS"))
-    expect_false(.detect_renv_lockfile(c("../testdata/graph.RDS", "../testdata/renv.lock")))
-    expect_false(.detect_renv_lockfile("../testdata/fake_renv.lock"))
+test_that(".is_renv_lockfile false",{
+    expect_false(.is_renv_lockfile("./testdata/graph.RDS"))
+    expect_false(.is_renv_lockfile(c("../testdata/graph.RDS", "../testdata/renv.lock")))
+    expect_false(.is_renv_lockfile("../testdata/fake_renv.lock"))
 })
 
-test_that(".is_directory flse",{
+test_that(".is_directory false",{
     expect_false(.is_directory(c("a/","b/")))
     expect_false(.is_directory("a/"))
 })
