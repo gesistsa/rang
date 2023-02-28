@@ -283,3 +283,33 @@ test_that(".query_sysreqs_local", {
     expect_true("apt-get install -y libxml2-dev" %in% sysreqs)
     expect_true("apt-get install -y libbz2-dev" %in% sysreqs)
 })
+
+test_that(".query_snapshot_dependencies for local packages", {
+    skip_if_offline()
+    skip_on_cran()
+    skip_on_os("windows") ## don't want to be slabbed in the back by Windows' paths
+    expect_error(dep_df <- .query_snapshot_dependencies("local::../testdata/fakeRhtslib",
+                                                   snapshot_date = "2023-01-01", bioc_version = "3.3"), NA)
+    expect_true("y" %in% colnames(dep_df))
+    expect_true("bioc::zlibbioc" %in% dep_df$y_pkgref)
+    expect_true("cran::knitr" %in% dep_df$y_pkgref)
+    expect_equal("Rhtslib", unique(dep_df$x))
+    expect_true(grepl("^/", unique(dep_df$x_uid))) ## path expanded to abs. path
+    ## do the same thing but with tar.gz
+    expect_error(dep_df <- .query_snapshot_dependencies("local::../testdata/fakeRhtslib.tar.gz",
+                                                   snapshot_date = "2023-01-01", bioc_version = "3.3"), NA)
+    expect_true("y" %in% colnames(dep_df))
+    expect_equal(unique(dep_df$x_pubdate), parsedate::parse_date("2023-01-01"))
+    expect_true("bioc::zlibbioc" %in% dep_df$y_pkgref)
+    expect_true("cran::knitr" %in% dep_df$y_pkgref)
+    expect_equal("Rhtslib", unique(dep_df$x))
+    expect_true(grepl("^/", unique(dep_df$x_uid))) ## path expanded to abs. path
+    ## No y
+    expect_error(dep_df <- .query_snapshot_dependencies("local::../testdata/fakezlibbioc",
+                                                   snapshot_date = "2023-01-01", bioc_version = "3.3"), NA)
+    expect_false("y" %in% colnames(dep_df))
+    ## real data
+    expect_error(dep_df <- .query_snapshot_dependencies("local::../testdata/askpass_1.1.tar.gz",
+                                                   snapshot_date = "2023-01-01", bioc_version = "3.3"), NA)
+    expect_true("cran::sys" %in% dep_df$y_pkgref)
+})
