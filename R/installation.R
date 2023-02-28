@@ -40,23 +40,23 @@
     }
     ## installation simulation
     installed_pkgrefs <- c()
-    github_pkgrefs <- c()
+    noncranlike_pkgrefs <- c() ## github and local are noncran-like
     needed_pkgrefs <- dep$keys()
     ## install all terminal nodes
     for (pkgref in needed_pkgrefs) {
-        if (.is_github(pkgref)) {
-          github_pkgrefs <- c(github_pkgrefs, pkgref)
-          next()
+        if (.parse_pkgref(pkgref, return_handle = FALSE) %in% c("github", "local")) {
+            noncranlike_pkgrefs <- c(noncranlike_pkgrefs, pkgref)
+            next()
         }
         if (is.null(dep$get(pkgref))) {
             installed_pkgrefs <- c(installed_pkgrefs, pkgref)
         }
     }
     loop_counter <- 0
-    while(length(setdiff(needed_pkgrefs, c(installed_pkgrefs, github_pkgrefs))) != 0) {
+    while(length(setdiff(needed_pkgrefs, c(installed_pkgrefs, noncranlike_pkgrefs))) != 0) {
         unfulfilled_pkgrefs <- c()
         for (pkgref in needed_pkgrefs) {
-            if (!pkgref %in% installed_pkgrefs && !pkgref %in% github_pkgrefs) {
+            if (!pkgref %in% installed_pkgrefs && !pkgref %in% noncranlike_pkgrefs) {
                 ## check requirement
                 requirement_fulfilled <- length(setdiff(dep$get(pkgref), installed_pkgrefs)) == 0
                 if (requirement_fulfilled) {
@@ -71,7 +71,7 @@
             stop("Can't determine installation order. Please report the to the developers:\n", paste0(unfulfilled_pkgrefs, collapse = ","), call. = FALSE)
         }
     }
-    ordered_pkgrefs <- c(installed_pkgrefs, github_pkgrefs)
+    ordered_pkgrefs <- c(installed_pkgrefs, noncranlike_pkgrefs)
     ordered_x <- vapply(ordered_pkgrefs, function(x) pkgname$get(x), character(1), USE.NAMES = FALSE)
     ordered_version <- vapply(ordered_pkgrefs, function(x) version$get(x), character(1), USE.NAMES = FALSE)
     ordered_source <- vapply(ordered_pkgrefs, function(x) .parse_pkgref(x, return_handle = FALSE), character(1), USE.NAMES = FALSE)
@@ -192,7 +192,7 @@
         utils::download.file(url, destfile = tarball_path, quiet = !verbose)
     })
     if (!file.exists(tarball_path)) {
-        warning(names(x), "(", x,") can't be cache.")
+        warning(x, " can't be cached.")
     }
 }
 
@@ -201,7 +201,7 @@
     tarball_path <- file.path(cache_dir, paste(x, "_", version, ".tar.gz", sep = ""))
     suppressWarnings(utils::download.file(url, destfile = tarball_path, quiet = !verbose))
     if (!file.exists(tarball_path)) {
-      warning(names(x), "(", x,") can't be cache.")
+        warning(x, " can't be cached.")
     }
 }
 
@@ -211,8 +211,29 @@
     utils::download.file(paste("https://api.github.com/repos/", handle, "/tarball/", sha, sep = ""), destfile = tarball_path,
                          quiet = !verbose)
     if (!file.exists(tarball_path)) {
-        warning(names(x), "(", x,") can't be cache.")
+        warning(x, " can't be cached.")
     }
+}
+
+.cache_pkg_local <- function(x, version, cache_dir, uid) {
+    local_path <- uid
+    tarball_path <- file.path(cache_dir, paste("raw_", x, "_", version, ".tar.gz", sep = ""))
+    if (isTRUE(grepl("\\.tar.gz$|\\.tgz$", local_path))) {
+        ## it could be a valid source package, but don't trust it blindly, mark it as raw_
+        ## similar to github packages
+        file.copy(local_path, tarball_path)
+        if (!file.exists(tarball_path)) {
+            warning(x, " can't be cached.")
+        }
+    }
+    if (.is_directory(local_path)) {
+        res <- file.copy(from = local_path, to = cache_dir, recursive = TRUE, overwrite = TRUE)
+        res <- file.rename(from = file.path(cache_dir, x), to = file.path(cache_dir, paste("dir_", x, "_", version, sep = "")))
+        if (!dir.exists(file.path(cache_dir, paste("dir_", x, "_", version, sep = "")))) {
+            warning(x, "can't be cached.")
+        }
+    }
+    invisible()
 }
 
 .cache_pkgs <- function(rang, output_dir, cran_mirror, bioc_mirror, verbose) {
@@ -239,9 +260,13 @@
         }
         if(source == "bioc") {
             .cache_pkg_bioc(x = x, version = version, cache_dir = cache_dir,
-                            bioc_mirror = bioc_mirror,bioc_version = rang$bioc_version, verbose = verbose,
+                            bioc_mirror = bioc_mirror, bioc_version = rang$bioc_version, verbose = verbose,
                             uid = uid)
         }
+        if(source == "local") {
+            .cache_pkg_local(x = x, version = version, cache_dir = cache_dir, uid = uid)
+        }
+
     }
     ## For #14, cache R source in the future here
     invisible(output_dir)
@@ -391,7 +416,7 @@ export_rang <- function(rang, path, rang_as_comment = TRUE, verbose = TRUE, lib 
 #' @param materials_dir character, path to the directory containing additional resources (e.g. analysis scripts) to be copied into `output_dir` and in turn into the Docker container
 #' @param image character, which versioned Rocker image to use. Can only be "r-ver", "rstudio", "tidyverse", "verse", "geospatial"
 #' This applies only to R version <= 3.1
-#' @param cache logical, whether to cache the packages now. Please note that the system requirements are not cached. For query with non-CRAN packages, this option is strongly recommended. For R version < 3.1, this must be TRUE if there is any non-CRAN packages.
+#' @param cache logical, whether to cache the packages now. Please note that the system requirements are not cached. For query with non-CRAN packages, this option is strongly recommended. For query with local packages, this must be TRUE regardless of R version. For R version < 3.1, this must be also TRUE if there is any non-CRAN packages.
 #' @param no_rocker logical, whether to skip using Rocker images even when an appropriate version is available. Please keep this as `TRUE` unless you know what you are doing
 #' @param debian_version, when Rocker images are not used, which EOL version of Debian to use. Can only be "lenny", "etch", "squeeze", "wheezy", "jessie", "stretch". Please keep this as default "lenny" unless you know what you are doing
 #' @param ... arguments to be passed to `dockerize`
@@ -436,9 +461,10 @@ dockerize <- function(rang, output_dir, materials_dir = NULL, image = c("r-ver",
     need_cache <- (isTRUE(any(grepl("^github::", .extract_pkgrefs(rang)))) &&
                    utils::compareVersion(rang$r_version, "3.1") == -1) ||
         (isTRUE(any(grepl("^bioc::", .extract_pkgrefs(rang)))) &&
-         utils::compareVersion(rang$r_version, "3.3") == -1)
+         utils::compareVersion(rang$r_version, "3.3") == -1) ||
+        (isTRUE(any(grepl("^local::", .extract_pkgrefs(rang)))))
     if (isTRUE(need_cache) && isFALSE(cache)) {
-        stop("Non-CRAN packages must be cached for this R version: ", rang$r_version, ". Please set `cache` = TRUE.", call. = FALSE)
+        stop("Packages must be cached. Please set `cache` = TRUE.", call. = FALSE)
     }
     image <- match.arg(image)
     debian_version <- match.arg(debian_version)
