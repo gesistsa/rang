@@ -71,9 +71,7 @@ test_that(".extract_pkgref_packageDescription", {
     si <- readRDS("../testdata/sessionInfo1.RDS")
     expect_equal(.extract_pkgref_packageDescription(si$otherPkgs[[1]]), "github::chainsawriot/grafzahl")
     expect_equal(.extract_pkgref_packageDescription(si$otherPkgs[[2]]), "cran::rtoot")
-    ## change this with #57
-    ## expect_equal(.extract_pkgref_packageDescription(si$otherPkgs[[3]]), "local::/home/chainsawriot/dev/rang")
-    expect_equal(.extract_pkgref_packageDescription(si$otherPkgs[[3]]), "cran::rang")
+    expect_equal(.extract_pkgref_packageDescription(si$otherPkgs[[3]]), "local::/home/chainsawriot/dev/rang")
     expect_equal(.extract_pkgref_packageDescription(si$otherPkgs[[4]]), "cran::testthat")
 })
 
@@ -89,9 +87,7 @@ test_that("as_pkgrefs dispatch", {
 test_that("as_pkgrefs_packageDescription", {
     si <- readRDS("../testdata/sessionInfo1.RDS")
     res <- as_pkgrefs(si)
-    ## change this with #57
-    ## expect_equal(res, c("github::chainsawriot/grafzahl", "cran::rtoot", "local::/home/chainsawriot/dev/rang", "cran::testthat")
-    expect_equal(res, c("github::chainsawriot/grafzahl", "cran::rtoot", "cran::rang", "cran::testthat"))
+    expect_equal(res, c("github::chainsawriot/grafzahl", "cran::rtoot", "local::/home/chainsawriot/dev/rang", "cran::testthat"))
     ## bioc
     si <- readRDS("../testdata/sessionInfo3.RDS")
     res <- as_pkgrefs(si)
