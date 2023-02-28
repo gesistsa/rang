@@ -45,14 +45,19 @@
     fileext)
 }
 
-.build_raw_tarball <- function(raw_tarball_path, x, version, tarball_path) {
+.build_raw_tarball <- function(raw_tarball_path, x, version, tarball_path, current_r_version) {
+    if (utils::compareVersion(current_r_version, "3.1") != -1) {
+        vignetteflag <- "--no-build-vignettes"
+    } else {
+        vignetteflag <- "--no-vignettes"
+    }
     tmp_dir <- .tempfile(fileext = "")
     dir.create(tmp_dir)
     system(command = paste("tar", "-zxf ", raw_tarball_path, "-C", tmp_dir))
     pkg_dir <- list.files(path = tmp_dir, full.names = TRUE)[1]
     new_pkg_dir <- file.path(tmp_dir, x)
     file.rename(pkg_dir, new_pkg_dir)
-    res <- system(command = paste("R", "CMD", "build", new_pkg_dir))
+    res <- system(command = paste("R", "CMD", "build", vignetteflag, new_pkg_dir))
     expected_tarball_path <- paste(x, "_", version, ".tar.gz", sep = "")
     stopifnot(file.exists(expected_tarball_path))
     file.rename(expected_tarball_path, tarball_path)
@@ -78,7 +83,8 @@
                           uid = uid, verbose = verbose, cran_mirror = cran_mirror, bioc_mirror = bioc_mirror)
     }
     if (file.exists(raw_tarball_path)) {
-        tarball_path <- .build_raw_tarball(raw_tarball_path, x = x, version = version, tarball_path)
+        tarball_path <- .build_raw_tarball(raw_tarball_path, x = x, version = version, tarball_path,
+                                           current_r_version = current_r_version)
         if (!file.exists(tarball_path)) {
             stop("building failed.")
         }
