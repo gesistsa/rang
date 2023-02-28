@@ -282,6 +282,9 @@ test_that(".query_sysreqs_local", {
     expect_error(sysreqs <- .query_sysreqs_local(c("../testdata/fakexml2", "../testdata/askpass_1.1.tar.gz", "../testdata/fakeRhtslib.tar.gz"), "ubuntu-20.04"), NA)
     expect_true("apt-get install -y libxml2-dev" %in% sysreqs)
     expect_true("apt-get install -y libbz2-dev" %in% sysreqs)
+    ## dispatch in .query_sysreqs_smart
+    expect_error(sysreqs2 <- .query_sysreqs_smart(c("local::../testdata/fakexml2", "local::../testdata/askpass_1.1.tar.gz", "local::../testdata/fakeRhtslib.tar.gz"), "ubuntu-20.04"), NA)
+    expect_equal(sysreqs, sysreqs2)
 })
 
 test_that(".query_snapshot_dependencies for local packages", {
