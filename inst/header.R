@@ -64,9 +64,14 @@
     return(tarball_path)
 }
 
-.build_dir_tarball <- function(dir_pkg_path, x, version, tarball_path) {
+.build_dir_tarball <- function(dir_pkg_path, x, version, tarball_path, current_r_version) {
+    if (utils::compareVersion(current_r_version, "3.1") != -1) {
+        vignetteflag <- "--no-build-vignettes"
+    } else {
+        vignetteflag <- "--no-vignettes"
+    }
     expected_tarball_path <- paste(x, "_", version, ".tar.gz", sep = "")
-    res <- system(command = paste("R", "CMD", "build", "--no-build-vignettes", dir_pkg_path))
+    res <- system(command = paste("R", "CMD", "build", vignetteflag, dir_pkg_path))
     expected_tarball_path <- paste(x, "_", version, ".tar.gz", sep = "")
     stopifnot(file.exists(expected_tarball_path))
     file.rename(expected_tarball_path, tarball_path)
@@ -90,7 +95,8 @@
         }
     }
     if (file.exists(dir_pkg_path)) {
-        tarball_path <- .build_dir_tarball(dir_pkg_path, x = x, version = version, tarball_path)
+        tarball_path <- .build_dir_tarball(dir_pkg_path, x = x, version = version, tarball_path,
+                                           current_r_version = current_r_version)
         if (!file.exists(tarball_path)) {
             stop("building failed.")
         }
