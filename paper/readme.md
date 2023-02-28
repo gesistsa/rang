@@ -7,6 +7,6 @@ git clone https://github.com/Joe-Hilgard/vvg-2d4d.git
 And install the quarto extension
 
 ```sh
-quarto install extension mikemahoney218/quarto-arxiv
+quarto install extension quarto-journals/plos
 ```
 
