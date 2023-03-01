@@ -37,7 +37,7 @@ dockerise_rang(...)
 \item{materials_dir}{character, path to the directory containing additional resources (e.g. analysis scripts) to be copied into \code{output_dir} and in turn into the Docker container}
 
 \item{image}{character, which versioned Rocker image to use. Can only be "r-ver", "rstudio", "tidyverse", "verse", "geospatial"
-This applies only to R version <= 3.1}
+This applies only to R version >= 3.1}
 
 \item{rang_as_comment}{logical, whether to write resolved result and the steps to reproduce
 the file to \code{path} as comment}
