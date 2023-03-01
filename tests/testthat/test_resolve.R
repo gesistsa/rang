@@ -316,3 +316,27 @@ test_that(".query_snapshot_dependencies for local packages", {
                                                    snapshot_date = "2023-01-01", bioc_version = "3.3"), NA)
     expect_true("cran::sys" %in% dep_df$y_pkgref)
 })
+
+test_that("dockerize local package as tarball", {
+    skip_if_offline()
+    skip_on_cran()
+    temp_dir <- .generate_temp_dir()
+    expect_error(suppressWarnings(graph <- resolve("local::../testdata/askpass_1.1.tar.gz", snapshot_date = "2023-01-01")), NA)
+    expect_error(dockerize(graph, output_dir = temp_dir)) ## cache = FALSE
+    temp_dir <- .generate_temp_dir()
+    expect_error(dockerize(graph, output_dir = temp_dir, cache = TRUE, verbose = FALSE), NA) ## cache = FALSE
+    expect_true(file.exists(file.path(temp_dir, "cache", "sys_3.4.1.tar.gz")))
+    expect_true(file.exists(file.path(temp_dir, "cache", "raw_askpass_1.1.tar.gz")))
+})
+
+test_that("dockerize local package as tarball", {
+    skip_if_offline()
+    skip_on_cran()
+    temp_dir <- .generate_temp_dir()
+    expect_error(suppressWarnings(graph <- resolve("local::../testdata/askpass", snapshot_date = "2023-01-01")), NA)
+    expect_error(dockerize(graph, output_dir = temp_dir)) ## cache = FALSE
+    temp_dir <- .generate_temp_dir()
+    expect_error(dockerize(graph, output_dir = temp_dir, cache = TRUE, verbose = FALSE), NA) ## cache = FALSE
+    expect_true(file.exists(file.path(temp_dir, "cache", "sys_3.4.1.tar.gz")))
+    expect_true(dir.exists(file.path(temp_dir, "cache", "dir_askpass_1.1")))
+})
