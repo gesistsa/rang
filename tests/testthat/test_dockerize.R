@@ -238,3 +238,10 @@ test_that("no_rocker #67", {
     expect_error(dockerize(rang = rang_ok, output_dir = temp_dir, no_rocker = TRUE,
               debian_version = "3.11"))
 })
+
+test_that(".check_tarball_path", {
+    expect_error(.check_tarball_path("../testdata/gesis_2.0.tar.gz", "gesis")) ##dir = FALSE
+    expect_error(.check_tarball_path("../testdata/askpass_1.1.tar.gz", "askpass"), NA)
+    expect_error(.check_tarball_path("../testdata/gesis", "gesis", dir = TRUE))
+    expect_error(.check_tarball_path("../testdata/askpass", "askpass", dir = TRUE), NA)
+})
