@@ -1,5 +1,7 @@
 ## using all the cases in https://r-lib.github.io/pkgdepends/reference/pkg_refs.html
 
+## .normalize_pkgs aka as_pkgrefs
+
 test_that(".normalize_pkgs, defensive programming", {
     expect_error(.normalize_pkgs(c("forecast", "r-lib/crayon")), NA)
     expect_error(.normalize_pkgs(NULL), NA)
@@ -52,6 +54,27 @@ test_that(".normalize_pkgs: github remote string", {
     expect_equal(.normalize_pkgs("github::git@github.com:r-lib/pak.git"), "github::r-lib/pak")
 })
 
+test_that(".normalize_pkgs: local", {
+    expect_equal(.normalize_pkgs("local::/foo/bar/package_1.0.0.tar.gz"), "local::/foo/bar/package_1.0.0.tar.gz")
+    expect_equal(.normalize_pkgs("local::/foo/bar/pkg"), "local::/foo/bar/pkg")
+    expect_equal(.normalize_pkgs("local::."), "local::.")
+    expect_equal(.normalize_pkgs("/absolute/path/package_1.0.0.tar.gz"), "local::/absolute/path/package_1.0.0.tar.gz")
+    expect_equal(.normalize_pkgs("~/path/from/home"), "local::~/path/from/home")
+    expect_equal(.normalize_pkgs("./relative/path"), "local::./relative/path")
+    expect_equal(.normalize_pkgs("."), "local::.")
+})
+
+test_that("as_pkgrefs dispatch", {
+    expect_error(as_pkgrefs(TRUE))
+    expect_error(as_pkgrefs(7.21))
+    expect_error(as_pkgrefs(1L))
+    expect_equal(as_pkgrefs("rtoot"), "cran::rtoot")
+    expect_equal(as_pkgrefs(c("rtoot", "sna")), c("cran::rtoot", "cran::sna"))
+    expect_equal(as_pkgrefs(c("rtoot", "S4Vectors")), c("cran::rtoot", "cran::S4Vectors")) ## the bioc version is in test_resolve
+})
+
+## .parse_pkgref
+
 test_that(".parse_pkgref", {
     expect_error(.parse_pkgref("withr"))
     expect_error(.parse_pkgref("r-lib/withr"))
@@ -67,21 +90,14 @@ test_that(".parse_pkgref", {
     expect_equal(.parse_pkgref("local::./relative/path", FALSE), "local")
 })
 
+## as_pkgrefs.sessionInfo()
+
 test_that(".extract_pkgref_packageDescription", {
     si <- readRDS("../testdata/sessionInfo1.RDS")
     expect_equal(.extract_pkgref_packageDescription(si$otherPkgs[[1]]), "github::chainsawriot/grafzahl")
     expect_equal(.extract_pkgref_packageDescription(si$otherPkgs[[2]]), "cran::rtoot")
     expect_equal(.extract_pkgref_packageDescription(si$otherPkgs[[3]]), "local::/home/chainsawriot/dev/rang")
     expect_equal(.extract_pkgref_packageDescription(si$otherPkgs[[4]]), "cran::testthat")
-})
-
-test_that("as_pkgrefs dispatch", {
-    expect_error(as_pkgrefs(TRUE))
-    expect_error(as_pkgrefs(7.21))
-    expect_error(as_pkgrefs(1L))
-    expect_equal(as_pkgrefs("rtoot"), "cran::rtoot")
-    expect_equal(as_pkgrefs(c("rtoot", "sna")), c("cran::rtoot", "cran::sna"))
-    expect_equal(as_pkgrefs(c("rtoot", "S4Vectors")), c("cran::rtoot", "cran::S4Vectors")) ## the bioc version is in test_resolve
 })
 
 test_that("as_pkgrefs_packageDescription", {
@@ -95,6 +111,8 @@ test_that("as_pkgrefs_packageDescription", {
     expect_true("bioc::S4Vectors" %in% res)
 })
 
+## as_pkgregs.character (renv)
+
 test_that("as_pkgrefs renv_lockfile", {
     res <- as_pkgrefs("../testdata/large_renv_lock/renv.lock")
     expect_equal(res, readRDS("../testdata/bioc_renv.RDS"))
@@ -106,10 +124,13 @@ test_that(".is_renv_lockfile false",{
     expect_false(.is_renv_lockfile("../testdata/fake_renv.lock"))
 })
 
-test_that(".is_directory false",{
-    expect_false(.is_directory(c("a/","b/")))
-    expect_false(.is_directory("a/"))
+test_that("as_pkgrefs renv_lockfile with local", {
+    res <- as_pkgrefs("../testdata/local_renv_lock/renv.lock")
+    expect_true("local::~/dev/rang/tests/testdata/askpass_1.1.tar.gz" %in% res)
+    expect_true("local::~/dev/rang" %in% res)
 })
+
+## as_pkgrefs.character (directory -> scanning)
 
 test_that("as_pkgrefs directory", {
     skip_if_offline()
@@ -117,6 +138,8 @@ test_that("as_pkgrefs directory", {
     res <- suppressWarnings(as_pkgrefs("../testdata/test_dir",bioc_version = "3.16"))
     expect_equal(res, c("bioc::BiocGenerics", "cran::rtoot"))
 })
+
+## .is_*
 
 test_that(".is_github", {
     expect_true(.is_github("cran/rtoot"))
@@ -127,6 +150,11 @@ test_that(".is_github", {
     expect_false(.is_github("/hello/world"))
     expect_false(.is_github("/hello/world/"))
     expect_false(.is_github("world/"))
+})
+
+test_that(".is_directory false",{
+    expect_false(.is_directory(c("a/","b/")))
+    expect_false(.is_directory("a/"))
 })
 
 test_that(".is_local", {
@@ -140,14 +168,4 @@ test_that(".is_local", {
     expect_true(.is_local("/hello/world/"))
     expect_true(.is_local("/hello/world/"))
     expect_true(.is_local("../testdata/fakexml2"))
-})
-
-test_that(".normalize_pkgs: local", {
-    expect_equal(.normalize_pkgs("local::/foo/bar/package_1.0.0.tar.gz"), "local::/foo/bar/package_1.0.0.tar.gz")
-    expect_equal(.normalize_pkgs("local::/foo/bar/pkg"), "local::/foo/bar/pkg")
-    expect_equal(.normalize_pkgs("local::."), "local::.")
-    expect_equal(.normalize_pkgs("/absolute/path/package_1.0.0.tar.gz"), "local::/absolute/path/package_1.0.0.tar.gz")
-    expect_equal(.normalize_pkgs("~/path/from/home"), "local::~/path/from/home")
-    expect_equal(.normalize_pkgs("./relative/path"), "local::./relative/path")
-    expect_equal(.normalize_pkgs("."), "local::.")
 })

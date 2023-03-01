@@ -55,17 +55,20 @@ as_pkgrefs.sessionInfo <- function(x, ...) {
     sources <- vapply(lockfile[["Packages"]],`[[`,character(1),"Source",USE.NAMES = FALSE)
     pkgs <- c()
     if("Repository" %in% sources) {
-      pkgs <- c(pkgs, paste0("cran::",vapply(lockfile[["Packages"]][sources=="Repository"],`[[`,character(1),"Package",USE.NAMES = FALSE)))
+        pkgs <- c(pkgs, paste0("cran::",vapply(lockfile[["Packages"]][sources=="Repository"],`[[`,character(1),"Package",USE.NAMES = FALSE)))
     }
     if("Bioconductor" %in% sources) {
-      pkgs <- c(pkgs,paste0("bioc::",vapply(lockfile[["Packages"]][sources=="Bioconductor"],`[[`,character(1),"Package",USE.NAMES = FALSE)))
+        pkgs <- c(pkgs,paste0("bioc::",vapply(lockfile[["Packages"]][sources=="Bioconductor"],`[[`,character(1),"Package",USE.NAMES = FALSE)))
     }
     if("GitHub" %in% sources) {
-      pkgs <- c(pkgs,
-                paste0("github::",
-                       vapply(lockfile[["Packages"]][sources=="GitHub"],`[[`,character(1), "RemoteUsername", USE.NAMES = FALSE),"/",
-                       vapply(lockfile[["Packages"]][sources=="GitHub"],`[[`,character(1), "Package", USE.NAMES = FALSE))
-      )
+        pkgs <- c(pkgs,
+                  paste0("github::",
+                         vapply(lockfile[["Packages"]][sources=="GitHub"],`[[`,character(1), "RemoteUsername", USE.NAMES = FALSE),"/",
+                         vapply(lockfile[["Packages"]][sources=="GitHub"],`[[`,character(1), "Package", USE.NAMES = FALSE))
+                  )
+    }
+    if ("Local" %in% sources) {
+        pkgs <- c(pkgs, paste0("local::", vapply(lockfile[["Packages"]][sources=="Local"],`[[`,character(1),"RemoteUrl",USE.NAMES = FALSE)))
     }
     return(pkgs)
 }
