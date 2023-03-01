@@ -34,6 +34,10 @@
            "bioc" = {
                ## no need to have bioc_version because it will get queried once again
                return(.query_snapshot_dependencies_bioc(handle = .parse_pkgref(pkgref), snapshot_date = snapshot_date))
+           },
+           "local" = {
+               return(.query_snapshot_dependencies_local(handle = .parse_pkgref(pkgref), snapshot_date = snapshot_date,
+                                                          bioc_version = bioc_version))
            })
 }
 
@@ -102,7 +106,37 @@
     pkg_dep_df[,c("snapshot_date", "x", "x_version", "x_pubdate", "x_pkgref", "x_bioc_ver", "x_uid", "y", "type", "y_raw_version", "y_pkgref")]
 }
 
-# get the commit sha for the commit closest to date
+.read_tarball_description <- function(path) {
+    tempfile <- tempfile()
+    DESCRIPTION_in_tarball <- grep("DESCRIPTION$", utils::untar(path, list = TRUE), value = TRUE)
+    utils::untar(path, files = DESCRIPTION_in_tarball, exdir = tempfile)
+    list.files(tempfile, pattern = "DESCRIPTION", full.names = TRUE, recursive = TRUE)[1]
+}
+
+.extract_local_description_path <- function(handle) {
+    ## .check_local_in_pkgrefs did the check already
+    if (.is_directory(handle)) {
+        return(file.path(handle, "DESCRIPTION"))
+    }
+    .read_tarball_description(handle)
+}
+
+.query_snapshot_dependencies_local <- function(handle, snapshot_date, bioc_version = NULL) {
+    snapshot_date <- parsedate::parse_date(snapshot_date)
+    description_path <- .extract_local_description_path(handle)
+    descr_df <- as.data.frame(read.dcf(description_path))
+    pkg_dep_df <- .parse_desc(descr_df, snapshot_date)
+    pkg_dep_df$x_pkgref <- .normalize_pkgs(pkgs = handle, bioc_version = bioc_version)
+    pkg_dep_df$x_uid <- normalizePath(handle)
+    pkg_dep_df$x_pubdate <- snapshot_date
+    if (isFALSE("y" %in% names(pkg_dep_df))) {
+        return(pkg_dep_df[,c("snapshot_date", "x", "x_version", "x_pubdate", "x_pkgref", "x_uid")])
+    }
+    pkg_dep_df$y_pkgref <- .normalize_pkgs(pkg_dep_df$y, bioc_version = bioc_version)
+    pkg_dep_df[,c("snapshot_date", "x", "x_version", "x_pubdate", "x_pkgref", "x_uid", "y", "type", "y_raw_version", "y_pkgref")]
+}
+
+## get the commit sha for the commit closest to date
 .query_sha <- function(handle, date) {
     commits <- .gh(paste0("/repos/", handle, "/commits"), per_page = 100)
     dates <- sapply(commits,function(x) x$commit$committer$date)
@@ -208,6 +242,20 @@
     bioc_version
 }
 
+.check_local_in_pkgrefs <- function(pkgrefs) {
+    res <- .group_pkgrefs_by_source(pkgrefs)
+    any_local <- isFALSE(is.null(res[["local"]]))
+    if (isTRUE(any_local)) {
+        warning("Using \"local\" package(s) to resolve dependencies is not reproducible on another machine.", call. = FALSE)
+        for (handle in res[["local"]]) {
+            if (isFALSE(.is_directory(handle)) && isFALSE(grepl("\\.tar.gz$|\\.tgz$", handle))) {
+                stop(handle, " doesn't appear to be a valid local package.", call. = FALSE)
+            }
+        }
+    }
+    invisible()
+}
+
 #' Resolve Dependencies Of R Packages
 #'
 #' This function recursively queries dependencies of R packages at a specific snapshot time. The dependency graph can then be used to recreate the computational environment. The data on dependencies are provided by R-hub.
@@ -253,6 +301,7 @@ resolve <- function(pkgs, snapshot_date, no_enhances = TRUE, no_suggests = TRUE,
     snapshot_date <- .extract_date(pkgs = pkgs, date = snapshot_date, verbose = verbose)
     bioc_version <- .generate_bioc_version(snapshot_date = snapshot_date, pkgs = pkgs)
     pkgrefs <- as_pkgrefs(pkgs, bioc_version = bioc_version)
+    .check_local_in_pkgrefs(pkgrefs)
     output <- list()
     output$call <- match.call()
     output$ranglets <- list()
@@ -446,6 +495,9 @@ query_sysreqs <- function(rang, os = "ubuntu-20.04") {
     if ("bioc" %in% names(grouped_handles)) {
         output[["bioc"]] <- .query_sysreqs_bioc(grouped_handles[["bioc"]], os = os)
     }
+    if ("local" %in% names(grouped_handles)) {
+        output[["local"]] <- .query_sysreqs_local(grouped_handles[["local"]], os = os)
+    }
     unique(unlist(output))
 }
 
@@ -492,6 +544,21 @@ query_sysreqs <- function(rang, os = "ubuntu-20.04") {
     }
     pkgs <- .memo_search_bioc(bioc_version = "release")
     raw_sys_reqs <- pkgs$SystemRequirements[pkgs$Package %in% handles]
+    singleline_sysreqs <- paste0(raw_sys_reqs[!is.na(raw_sys_reqs)], collapse = ", ")
+    singleline_sysreqs <- gsub("\\n", " ", singleline_sysreqs)
+    .query_singleline_sysreqs(singleline_sysreqs = singleline_sysreqs, arch = arch)
+}
+
+.query_sysreqs_local <- function(handles, os) {
+    if (grepl("^ubuntu|^debian", os)) {
+        arch <- "DEB"
+    }
+    if (grepl("^centos|^fedora|^redhat", os)) {
+        arch <- "RPM"
+    }
+    description_paths <- vapply(handles, .extract_local_description_path, FUN.VALUE = character(1))
+    raw_sys_reqs <- vapply(description_paths, FUN = function(x) read.dcf(x, fields = "SystemRequirements")[,1],
+                           FUN.VALUE = character(1))
     singleline_sysreqs <- paste0(raw_sys_reqs[!is.na(raw_sys_reqs)], collapse = ", ")
     singleline_sysreqs <- gsub("\\n", " ", singleline_sysreqs)
     .query_singleline_sysreqs(singleline_sysreqs = singleline_sysreqs, arch = arch)
@@ -586,7 +653,7 @@ query_sysreqs <- function(rang, os = "ubuntu-20.04") {
     url <- httr::modify_url(url, path = path)
     token <- Sys.getenv("GITHUB_PAT", NA_character_)
     if(is.na(token)){
-        token <- Sys.getenv("GITHUB_TOKEN", NA_character_)  
+        token <- Sys.getenv("GITHUB_TOKEN", NA_character_)
     }
     if(is.na(token)){
         token <- ""

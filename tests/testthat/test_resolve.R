@@ -6,6 +6,19 @@ test_that("defensive programming", {
     expect_error(resolve("LDAvis", os = "windows"))
 })
 
+test_that(".extract_date", {
+  expect_error(.extract_date("."), NA)
+  expect_error(.extract_date("../testdata/renv.lock"), NA)
+  expect_error(.extract_date("rtoot"), NA)
+})
+
+test_that(".check_local_in_pkgrefs", {
+    expect_silent(.check_local_in_pkgrefs(c("cran::rtoot", "bioc::S4Vectors", "github::cran/rtoot")))
+    expect_warning(.check_local_in_pkgrefs(c("local::../testdata/fakexml2")))
+    expect_warning(.check_local_in_pkgrefs(c("local::../testdata/askpass_1.1.tar.gz")))
+    expect_error(suppressWarnings(.check_local_in_pkgrefs(c("local::../testdata/issue39.RDS", "cran::rtoot"))))
+})
+
 ## The following are real tests. Even with memoisation, please keep at minimum
 
 test_that("normal", {
@@ -263,8 +276,69 @@ test_that(".gh error handling", {
     expect_error(.gh("path/is/wrong"))
 })
 
-test_that(".extract_date", {
-  expect_error(.extract_date("."),NA)
-  expect_error(.extract_date("../testdata/renv.lock"),NA)
-  expect_error(.extract_date("rtoot"),NA)
+test_that(".query_sysreqs_local", {
+    skip_if_offline()
+    skip_on_cran()
+    expect_error(sysreqs <- .query_sysreqs_local(c("../testdata/fakexml2", "../testdata/askpass_1.1.tar.gz", "../testdata/fakeRhtslib.tar.gz"), "ubuntu-20.04"), NA)
+    expect_true("apt-get install -y libxml2-dev" %in% sysreqs)
+    expect_true("apt-get install -y libbz2-dev" %in% sysreqs)
+    ## dispatch in .query_sysreqs_smart
+    expect_error(sysreqs2 <- .query_sysreqs_smart(c("local::../testdata/fakexml2", "local::../testdata/askpass_1.1.tar.gz", "local::../testdata/fakeRhtslib.tar.gz"), "ubuntu-20.04"), NA)
+    expect_equal(sysreqs, sysreqs2)
+})
+
+test_that(".query_snapshot_dependencies for local packages", {
+    skip_if_offline()
+    skip_on_cran()
+    skip_on_os("windows") ## don't want to be slabbed in the back by Windows' paths
+    expect_error(dep_df <- .query_snapshot_dependencies("local::../testdata/fakeRhtslib",
+                                                   snapshot_date = "2023-01-01", bioc_version = "3.3"), NA)
+    expect_true("y" %in% colnames(dep_df))
+    expect_true("bioc::zlibbioc" %in% dep_df$y_pkgref)
+    expect_true("cran::knitr" %in% dep_df$y_pkgref)
+    expect_equal("Rhtslib", unique(dep_df$x))
+    expect_true(grepl("^/", unique(dep_df$x_uid))) ## path expanded to abs. path
+    ## do the same thing but with tar.gz
+    expect_error(dep_df <- .query_snapshot_dependencies("local::../testdata/fakeRhtslib.tar.gz",
+                                                   snapshot_date = "2023-01-01", bioc_version = "3.3"), NA)
+    expect_true("y" %in% colnames(dep_df))
+    expect_equal(unique(dep_df$x_pubdate), parsedate::parse_date("2023-01-01"))
+    expect_true("bioc::zlibbioc" %in% dep_df$y_pkgref)
+    expect_true("cran::knitr" %in% dep_df$y_pkgref)
+    expect_equal("Rhtslib", unique(dep_df$x))
+    expect_true(grepl("^/", unique(dep_df$x_uid))) ## path expanded to abs. path
+    ## No y
+    expect_error(dep_df <- .query_snapshot_dependencies("local::../testdata/fakezlibbioc",
+                                                   snapshot_date = "2023-01-01", bioc_version = "3.3"), NA)
+    expect_false("y" %in% colnames(dep_df))
+    ## real data
+    expect_error(dep_df <- .query_snapshot_dependencies("local::../testdata/askpass_1.1.tar.gz",
+                                                   snapshot_date = "2023-01-01", bioc_version = "3.3"), NA)
+    expect_true("cran::sys" %in% dep_df$y_pkgref)
+})
+
+test_that("dockerize local package as tarball", {
+    skip_if_offline()
+    skip_on_cran()
+    temp_dir <- .generate_temp_dir()
+    expect_error(suppressWarnings(graph <- resolve("local::../testdata/askpass_1.1.tar.gz", snapshot_date = "2023-01-01")), NA)
+    expect_error(dockerize(graph, output_dir = temp_dir)) ## cache = FALSE
+    temp_dir <- .generate_temp_dir()
+    expect_error(dockerize(graph, output_dir = temp_dir, cache = TRUE, verbose = FALSE), NA) ## cache = FALSE
+    expect_true(file.exists(file.path(temp_dir, "cache", "sys_3.4.1.tar.gz")))
+    expect_true(file.exists(file.path(temp_dir, "cache", "raw_askpass_1.1.tar.gz")))
+})
+
+test_that("dockerize local package as tarball", {
+    skip_if_offline()
+    skip_on_cran()
+    temp_dir <- .generate_temp_dir()
+    expect_error(suppressWarnings(graph <- resolve("local::../testdata/askpass", snapshot_date = "2023-01-01")), NA)
+    expect_error(dockerize(graph, output_dir = temp_dir)) ## cache = FALSE
+    temp_dir <- .generate_temp_dir()
+    expect_error(dockerize(graph, output_dir = temp_dir, cache = TRUE, verbose = FALSE), NA) ## cache = FALSE
+    expect_true(file.exists(file.path(temp_dir, "cache", "sys_3.4.1.tar.gz")))
+    expect_true(dir.exists(file.path(temp_dir, "cache", "dir_askpass_1.1")))
+    x <- readLines(file.path(temp_dir, "rang.R"))
+    expect_true(any(grepl("^## ## WARNING", x)))
 })

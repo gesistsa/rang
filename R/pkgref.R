@@ -52,23 +52,34 @@
     return(source)
 }
 
-.is_github <- function(pkg){
-    ## For now, this is sufficient.
-    ## If "local" and "url" are supported, this is not
-    grepl("/", pkg)
+.is_github <- function(pkg) {
+    if (grepl("github\\.com", pkg)) {
+        return(TRUE)
+    }
+    grepl("/", pkg) && isFALSE(grepl("^[\\.~]?/", pkg)) &&
+        isFALSE(grepl("/$", pkg)) &&
+        length(strsplit(pkg, split = "/")[[1]]) == 2
 }
 
-.is_bioc <- function(pkg,bioc_version){
+.is_bioc <- function(pkg, bioc_version) {
+    if (is.null(bioc_version)) {
+        return(FALSE)
+    }
     bioc_pkgs <- .memo_search_bioc(bioc_version)
-    pkg%in%bioc_pkgs$Package
+    pkg %in% bioc_pkgs$Package
 }
 
-.is_pkgref <- function(pkg) {
-    grepl("::", pkg)
+
+.is_local <- function(pkg) {
+    ## according to the standard, it must be started by ".", "~", "/"
+    grepl("^[\\.~/]", pkg)
 }
 
 ## TBI: .is_valid_pkgref
 ## pkgref is only valid if: exactly one "::", source %in% c("cran", "github"), if "github", .is_github is TRUE
+.is_pkgref <- function(pkg) {
+    grepl("^github::|^cran::|^local::|^bioc::", pkg)
+}
 
 .extract_github_handle <- function(url) {
     url <- gsub("^github::", "", url)
@@ -83,24 +94,6 @@
     return(paste0(path_components[1], "/", path_components[2]))
 }
 
-## to normalize a pkg to pkgref
-# .normalize_pkg <- function(pkg) {
-#     if (pkg == "" || is.na(pkg)) {
-#         stop("Invalid `pkg`.", call. = FALSE)
-#     }
-#     if (isTRUE(.is_github(pkg))) {
-#         if (isTRUE(grepl("github\\.com", pkg))) {
-#             pkg <- .extract_github_handle(pkg)
-#         }
-#     }
-#     if (isTRUE(.is_pkgref(pkg))) {
-#         return(.clean_suffixes(pkg))
-#     }
-#     if (isTRUE(.is_github(pkg))) {
-#         return(paste0("github::", .clean_suffixes(pkg)))
-#     }
-#     return(paste0("cran::", .clean_suffixes(pkg)))
-# }
 .normalize_pkg <- function(pkg,bioc_version=NULL) {
     if (pkg == "" || is.na(pkg)) {
         stop("Invalid `pkg`.", call. = FALSE)
@@ -116,16 +109,15 @@
     if (isTRUE(.is_github(pkg))) {
         return(paste0("github::", .clean_suffixes(pkg)))
     }
-    if(is.null(bioc_version)){
-        return(paste0("cran::", .clean_suffixes(pkg)))
-    } else{
-        if(isTRUE(.is_bioc(pkg,bioc_version))){
-            return(paste0("bioc::", .clean_suffixes(pkg)))
-        } else{
-            return(paste0("cran::", .clean_suffixes(pkg)))
-        }
+    if (isTRUE(.is_local(pkg))) {
+        return(paste0("local::", .clean_suffixes(pkg)))
     }
+    if (isTRUE(.is_bioc(pkg, bioc_version))) {
+        return(paste0("bioc::", .clean_suffixes(pkg)))
+    }
+    paste0("cran::", .clean_suffixes(pkg))
 }
+
 ## vectorize
 .normalize_pkgs <- function(pkgs,bioc_version = NULL) {
     vapply(X = pkgs, bioc_version = bioc_version ,FUN = .normalize_pkg, FUN.VALUE = character(1), USE.NAMES = FALSE)

@@ -64,16 +64,38 @@
     return(tarball_path)
 }
 
+.build_dir_tarball <- function(dir_pkg_path, x, version, tarball_path, current_r_version) {
+    if (utils::compareVersion(current_r_version, "3.1") != -1) {
+        vignetteflag <- "--no-build-vignettes"
+    } else {
+        vignetteflag <- "--no-vignettes"
+    }
+    expected_tarball_path <- paste(x, "_", version, ".tar.gz", sep = "")
+    res <- system(command = paste("R", "CMD", "build", vignetteflag, dir_pkg_path))
+    expected_tarball_path <- paste(x, "_", version, ".tar.gz", sep = "")
+    stopifnot(file.exists(expected_tarball_path))
+    file.rename(expected_tarball_path, tarball_path)
+    return(tarball_path)
+}
+
 .install_from_source <- function(x, version, handle, source, uid, lib,
                                  path = tempdir(), verbose, cran_mirror, bioc_mirror, current_r_version) {
     tarball_path <- file.path(path, paste(x, "_", version, ".tar.gz", sep = ""))
     raw_tarball_path <- file.path(path, paste("raw_", x, "_", version, ".tar.gz", sep = ""))
-    if (!file.exists(tarball_path) && !file.exists(raw_tarball_path)) {
+    dir_pkg_path <- file.path(path, paste("dir_", x, "_", version, sep = ""))
+    if (!file.exists(tarball_path) && !file.exists(raw_tarball_path) && !file.exists(dir_pkg_path)) {
         .download_package(tarball_path = tarball_path, x = x, version = version, handle = handle, source = source,
                           uid = uid, verbose = verbose, cran_mirror = cran_mirror, bioc_mirror = bioc_mirror)
     }
     if (file.exists(raw_tarball_path)) {
         tarball_path <- .build_raw_tarball(raw_tarball_path, x = x, version = version, tarball_path,
+                                           current_r_version = current_r_version)
+        if (!file.exists(tarball_path)) {
+            stop("building failed.")
+        }
+    }
+    if (file.exists(dir_pkg_path)) {
+        tarball_path <- .build_dir_tarball(dir_pkg_path, x = x, version = version, tarball_path,
                                            current_r_version = current_r_version)
         if (!file.exists(tarball_path)) {
             stop("building failed.")

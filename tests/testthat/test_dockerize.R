@@ -20,6 +20,7 @@ test_that("integration of #13 in dockerize()", {
     dockerize(rang = rang_ok, output_dir = temp_dir) ## rang_as_comment = TRUE
     x <- readLines(file.path(temp_dir, "rang.R"))
     expect_true(any(grepl("^## ## To reconstruct this file", x)))
+    expect_false(any(grepl("^## ## WARNING", x)))
     dockerize(rang = rang_ok, output_dir = temp_dir, rang_as_comment = FALSE)
     x <- readLines(file.path(temp_dir, "rang.R"))
     expect_false(any(grepl("^## ## To reconstruct this file", x)))
@@ -236,4 +237,11 @@ test_that("no_rocker #67", {
     temp_dir <- .generate_temp_dir()
     expect_error(dockerize(rang = rang_ok, output_dir = temp_dir, no_rocker = TRUE,
               debian_version = "3.11"))
+})
+
+test_that(".check_tarball_path", {
+    expect_error(.check_tarball_path("../testdata/gesis_2.0.tar.gz", "gesis")) ##dir = FALSE
+    expect_error(.check_tarball_path("../testdata/askpass_1.1.tar.gz", "askpass"), NA)
+    expect_error(.check_tarball_path("../testdata/gesis", "gesis", dir = TRUE))
+    expect_error(.check_tarball_path("../testdata/askpass", "askpass", dir = TRUE), NA)
 })

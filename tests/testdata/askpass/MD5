@@ -1,0 +1,17 @@
+eb6f4d0b9cc61dfa08b3804779591d5f *DESCRIPTION
+98c71b5eae0ac8dabb055bd8883b8398 *LICENSE
+ad7ca63fdfe698661be582601697c491 *NAMESPACE
+53a778139c44afbdf7a33ef6f5df8705 *NEWS
+35412ba699bd625370487aa6a3e462c4 *R/askpass.R
+97259f0bad2d259cc87ad38a01dbf02e *R/onload.R
+a1624267f9c82ed814f980de8c5fbc66 *R/ssh.R
+1f9f6a06b0543cf62931f42ad291db6b *inst/WORDLIST
+a34602417af1b0c9ad06fc93df828c71 *inst/mac-askpass
+e0651808479eb9c747ffbd785441912b *inst/mac-simplepass
+0eb1bcf4a9936ace5ae19d962a2a56a7 *man/askpass.Rd
+20d01a60d6cef576ee14420f207d90d1 *man/ssh_askpass.Rd
+dce2a57c7c4f360319f3beaec3245444 *src/Makevars.win
+ff322a40812325235977b54323b67c91 *src/askpass.c
+b0e65f1a2fd9237f0cb01f9e2e6f64a4 *src/win32/win-askpass.c
+203e4bb2a5fd4caccb9a07d14bf48a90 *tests/testthat.R
+631ab61b3bc4600779d0eee8aaf6cb32 *tests/testthat/test-option.R
