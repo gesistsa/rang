@@ -181,6 +181,15 @@
     }
 }
 
+.check_tarball_path <- function(tarball_path, x, dir = FALSE) {
+    ## raise error when tarball_path doesn't exist
+    if ((isFALSE(dir) && isFALSE(file.exists(tarball_path))) ||
+        (isTRUE(dir) && isFALSE(dir.exists(tarball_path)))) {
+        stop(x, " can't be cached.", call. = FALSE)
+    }
+    invisible()
+}
+
 .cache_pkg_cran <- function(x, version, cache_dir, cran_mirror, verbose) {
     url <- paste(cran_mirror, "src/contrib/Archive/", x, "/", x, "_", version, ".tar.gz", sep = "")
     tarball_path <- file.path(cache_dir, paste(x, "_", version, ".tar.gz", sep = ""))
@@ -191,18 +200,14 @@
         url <- paste(cran_mirror, "src/contrib/", x, "_", version, ".tar.gz", sep = "")
         utils::download.file(url, destfile = tarball_path, quiet = !verbose)
     })
-    if (!file.exists(tarball_path)) {
-        warning(x, " can't be cached.")
-    }
+    .check_tarball_path(tarball_path, x)
 }
 
 .cache_pkg_bioc <- function(x, version, cache_dir, bioc_mirror, bioc_version, verbose, uid) {
     url <- paste(bioc_mirror, bioc_version, "/", uid, "/src/contrib/", x, "_", version, ".tar.gz", sep = "")
     tarball_path <- file.path(cache_dir, paste(x, "_", version, ".tar.gz", sep = ""))
     suppressWarnings(utils::download.file(url, destfile = tarball_path, quiet = !verbose))
-    if (!file.exists(tarball_path)) {
-        warning(x, " can't be cached.")
-    }
+    .check_tarball_path(tarball_path, x)
 }
 
 .cache_pkg_github <- function(x, version, handle, source, uid, cache_dir, verbose) {
@@ -210,9 +215,7 @@
     tarball_path <- file.path(cache_dir, paste("raw_", x, "_", version, ".tar.gz", sep = ""))
     utils::download.file(paste("https://api.github.com/repos/", handle, "/tarball/", sha, sep = ""), destfile = tarball_path,
                          quiet = !verbose)
-    if (!file.exists(tarball_path)) {
-        warning(x, " can't be cached.")
-    }
+    .check_tarball_path(tarball_path, x)
 }
 
 .cache_pkg_local <- function(x, version, cache_dir, uid) {
@@ -222,18 +225,14 @@
         ## it could be a valid source package, but don't trust it blindly, mark it as raw_
         ## similar to github packages
         file.copy(local_path, tarball_path)
-        if (!file.exists(tarball_path)) {
-            warning(x, " can't be cached.")
-        }
+        return(.check_tarball_path(tarball_path, x))
     }
     if (.is_directory(local_path)) {
+        dir_pkg_path <- file.path(cache_dir, paste("dir_", x, "_", version, sep = ""))
         res <- file.copy(from = local_path, to = cache_dir, recursive = TRUE, overwrite = TRUE)
-        res <- file.rename(from = file.path(cache_dir, x), to = file.path(cache_dir, paste("dir_", x, "_", version, sep = "")))
-        if (!dir.exists(file.path(cache_dir, paste("dir_", x, "_", version, sep = "")))) {
-            warning(x, "can't be cached.")
-        }
+        res <- file.rename(from = file.path(cache_dir, x), to = dir_pkg_path)
+        return(.check_tarball_path(dir_pkg_path, x, dir = TRUE))
     }
-    invisible()
 }
 
 .cache_pkgs <- function(rang, output_dir, cran_mirror, bioc_mirror, verbose) {
@@ -264,6 +263,7 @@
                             uid = uid)
         }
         if(source == "local") {
+            ## please note that these cached packages are not built
             .cache_pkg_local(x = x, version = version, cache_dir = cache_dir, uid = uid)
         }
 
