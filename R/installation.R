@@ -129,7 +129,11 @@
 }
 
 .write_rang_as_comment <- function(rang, con, path, verbose, lib,
-                                       cran_mirror, check_cran_mirror, bioc_mirror) {
+                                   cran_mirror, check_cran_mirror, bioc_mirror) {
+    if (isTRUE(any(grepl("^local::", .extract_pkgrefs(rang))))) {
+        cat("## ## WARNING:", file = con)
+        cat("## ## Local packages found. The following instructions are not reproducible.", file = con)
+    }
     cat("## ## To reconstruct this file, please install version",
         as.character(utils::packageVersion("rang")), "of `rang` and run:\n", file = con)
     cat("## rang <- \n", file = con)

@@ -339,4 +339,6 @@ test_that("dockerize local package as tarball", {
     expect_error(dockerize(graph, output_dir = temp_dir, cache = TRUE, verbose = FALSE), NA) ## cache = FALSE
     expect_true(file.exists(file.path(temp_dir, "cache", "sys_3.4.1.tar.gz")))
     expect_true(dir.exists(file.path(temp_dir, "cache", "dir_askpass_1.1")))
+    x <- readLines(file.path(temp_dir, "rang.R"))
+    expect_true(any(grepl("^## ## WARNING", x)))
 })

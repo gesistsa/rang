@@ -20,6 +20,7 @@ test_that("integration of #13 in dockerize()", {
     dockerize(rang = rang_ok, output_dir = temp_dir) ## rang_as_comment = TRUE
     x <- readLines(file.path(temp_dir, "rang.R"))
     expect_true(any(grepl("^## ## To reconstruct this file", x)))
+    expect_false(any(grepl("^## ## WARNING", x)))
     dockerize(rang = rang_ok, output_dir = temp_dir, rang_as_comment = FALSE)
     x <- readLines(file.path(temp_dir, "rang.R"))
     expect_false(any(grepl("^## ## To reconstruct this file", x)))
