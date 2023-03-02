@@ -230,6 +230,12 @@ dockerize(maxent, "maxentdir", cache = TRUE)
 
 ## Recover a removed Bioconductor package
 
+Similar to CRAN, Bioconductor is a series of repositories of R package for bioinformatics and computational biology. Also similar to CRAN, packages can get removed over time.
+
+The Bioconductor package `Sushi` has been deprecated by the original authors and is removed from Bioconductor version 3.16 (2022-11-02). It is a data visualization tool for genomic data and was used in various online tutorials and papers, including the original paper announcing the package by the original authors [@phanstiel:2014:S].
+
+
+
 # Generating a research compendium
 
 # Conclusion
