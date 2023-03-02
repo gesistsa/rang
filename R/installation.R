@@ -459,12 +459,12 @@ export_renv <- function(rang, path = ".") {
             # pkg_list[[i]][["git_last_commit"]] <- ""
             # pkg_list[[i]][["git_last_commit_date"]] <- ""
             # pkg_list[[i]][["Requirements"]] <- c()
-        } else if(pkg_df$source=="local"){
+        } else if(pkg_df$source[i]=="local"){
             pkg_list[[i]][["Source"]] <- "Local"
             pkg_list[[i]][["RemoteType"]] <- "local"
             pkg_list[[i]][["RemoteUrl"]] <- pkg_df$uid[i]
         } else{
-        
+          stop("source not supported")
         }
     }
     r_lst <- list(Version = rang$r_version,
