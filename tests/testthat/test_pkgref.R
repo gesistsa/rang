@@ -150,6 +150,9 @@ test_that(".is_pkgref", {
 
 test_that(".is_github", {
     expect_true(.is_github("cran/rtoot"))
+    expect_true(.is_github("https://github.com/cran/rtoot"))
+    expect_true(.is_github("https://www.github.com/cran/rtoot"))
+    expect_true(.is_github("git@github.com:r-lib/pak.git"))
     expect_false(.is_github("cran//rtoot"))
     expect_false(.is_github("~/hello"))
     expect_false(.is_github("./hello"))
