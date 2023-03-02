@@ -433,8 +433,6 @@ export_renv <- function(rang, path = ".") {
         warning("Nothing to export.")
         return(invisible(NULL))
     }
-    renv_rang <- resolve("renv",Sys.Date())
-    rang$ranglets <- c(rang$ranglets,renv_rang$ranglets)
     pkg_df <- .generate_installation_order(rang)
     pkg_list <- vector(mode = "list",length = nrow(pkg_df))
     names(pkg_list) <- pkg_df$x
@@ -471,8 +469,8 @@ export_renv <- function(rang, path = ".") {
     }
     r_lst <- list(Version = rang$r_version,
                   Repositories = data.frame(Name = "CRAN",URL = "https://cloud.r-project.org"))
-    writeLines(jsonlite::prettify(jsonlite::toJSON(list(R = r_lst,Packages = pkg_list),auto_unbox = TRUE)),
-               file.path(path,"renv.lock"))
+    pkg_json <- jsonlite::toJSON(list(R = r_lst,Packages = pkg_list),auto_unbox = TRUE)
+    writeLines(jsonlite::prettify(pkg_json), file.path(path,"renv.lock"))
     invisible(pkg_list)
 }
 
