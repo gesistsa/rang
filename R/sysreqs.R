@@ -88,12 +88,6 @@ query_sysreqs <- function(rang, os = "ubuntu-20.04") {
 }
 
 .query_sysreqs_bioc <- function(handles, os) {
-    ## if (grepl("^ubuntu|^debian", os)) {
-    ##     arch <- "DEB"
-    ## }
-    ## if (grepl("^centos|^fedora|^redhat", os)) {
-    ##     arch <- "RPM"
-    ## }
     pkgs <- .memo_search_bioc(bioc_version = "release")
     raw_sys_reqs <- pkgs$SystemRequirements[pkgs$Package %in% handles]
     singleline_sysreqs <- paste0(raw_sys_reqs[!is.na(raw_sys_reqs)], collapse = ", ")
@@ -131,7 +125,7 @@ query_sysreqs <- function(rang, os = "ubuntu-20.04") {
     uncheckable_sysreqs <- list(liblzma = c("DEB" = "liblzma-dev", "RPM" = "xz-devel"),
                                 libbz2 = c("DEB" = "libbz2-dev", "RPM" = "libbz2-devel"))
     cmds <- c()
-    prefix <- c("DEB" = "apt-get install -y", "RPM" = "yum install -y")
+    prefix <- c("DEB" = "apt-get install -y", "RPM" = "dnf install -y")
     for (regex in names(uncheckable_sysreqs)) {
         if (grepl(regex, singleline_sysreqs)) {
             cmds <- c(cmds, paste(prefix[arch], uncheckable_sysreqs[[regex]][arch]))
@@ -162,7 +156,7 @@ query_sysreqs <- function(rang, os = "ubuntu-20.04") {
         return(paste0("apt-get install -y ", sys_pkg))
     }
     if (arch == "RPM") {
-        return(paste0("yum install -y ", sys_pkg))
+        return(paste0("dnf install -y ", sys_pkg))
     }
 }
 

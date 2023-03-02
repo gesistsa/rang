@@ -4,6 +4,9 @@
 
 test_that("defensive programming", {
     expect_error(resolve("LDAvis", os = "windows"))
+    expect_error(resolve("LDAvis", os = "opensuse-42.3"))
+    expect_error(resolve("LDAvis", os = "sle-12.3"))
+    expect_error(resolve("LDAvis", os = "sle-15.0"))
 })
 
 test_that(".extract_date", {
@@ -106,13 +109,15 @@ test_that("cache for R < 3.1 and R >= 2.1", {
 test_that(".query_sysreqs_github", {
     skip_if_offline()
     skip_on_cran()
-    res <- .query_sysreqs_github("schochastics/rtoot", os = "ubuntu-20.04")
+    ## This doesn't query for system requirements of deep dependencies anymore
+    res <- .query_sysreqs_github("cran/topicmodels", os = "ubuntu-20.04")
     expect_true(all(grepl("^apt-get", res)))
-    expect_true(length(res) == 2) ## issue #45
-    res <- .query_sysreqs_github("schochastics/rtoot", "opensuse-42.3")
-    expect_true(all(grepl("^zypper", res)))
-    res <- .query_sysreqs_github("schochastics/rtoot", "centos-8")
+    expect_true(length(res) == 1)
+    res <- .query_sysreqs_github("cran/topicmodels", "centos-8")
     expect_true(all(grepl("^dnf", res)))
+    res <- .query_sysreqs_github("Bioconductor/Rhtslib", "ubuntu-20.04")
+    res2 <- .query_sysreqs_bioc("Rhtslib", "ubuntu-20.04")
+    expect_equal(res, res2)
 })
 
 test_that("github correct querying; also #25", {
@@ -240,10 +245,10 @@ test_that(".query_sysreqs_bioc with uncheckable info", {
     expect_true("apt-get install -y make" %in% x) ## checkable
     expect_false("apt-get install -y" %in% x) ## the null response from C++
     x <- .query_sysreqs_bioc("Rhtslib", "centos-7")
-    expect_true("yum install -y libbz2-devel" %in% x)
-    expect_true("yum install -y xz-devel" %in% x)
-    expect_true("yum install -y make" %in% x)
-    expect_false("yum install -y" %in% x) ## the null response from C++
+    expect_true("dnf install -y libbz2-devel" %in% x)
+    expect_true("dnf install -y xz-devel" %in% x)
+    expect_true("dnf install -y make" %in% x)
+    expect_false("dnf install -y" %in% x) ## the null response from C++
     x <- .query_singleline_sysreqs("libxml2", "DEB")
     expect_equal(x, "apt-get install -y libxml2-dev")
     x <- .query_singleline_sysreqs("C++", "DEB")
