@@ -260,7 +260,7 @@
 #'
 #' This function recursively queries dependencies of R packages at a specific snapshot time. The dependency graph can then be used to recreate the computational environment. The data on dependencies are provided by R-hub.
 #'
-#' @param pkgs `pkgs` can be 1) a character vector of R packages to resolve, 2) a path to a [`renv` lockfile](https://rstudio.github.io/renv/articles/lockfile.html), or 3) a data structure that [as_pkgrefs()] can convert to a character vector of package references. For 1) `pkgs` can be either in shorthands, e.g. "rtoot", "ropensci/readODS", or in package references, e.g. "cran::rtoot", "github::ropensci/readODS". Please refer to the [Package References documentation](https://r-lib.github.io/pkgdepends/reference/pkg_refs.html) of `pak` for details. Currently, this package supports only cran and github packages. For 2) [as_pkgrefs()] support the output of [sessionInfo()].
+#' @param pkgs `pkgs` can be 1) a character vector of R packages to resolve, 2) a path to a [`renv` lockfile](https://rstudio.github.io/renv/articles/lockfile.html), or 3) a data structure that [as_pkgrefs()] can convert to a character vector of package references. For 1) `pkgs` can be either in shorthands, e.g. "rtoot", "ropensci/readODS", or in package references, e.g. "cran::rtoot", "github::ropensci/readODS". Please refer to the [Package References documentation](https://r-lib.github.io/pkgdepends/reference/pkg_refs.html) of `pak` for details. Currently, this package supports only cran and github packages. For 2) [as_pkgrefs()] support the output of [sessionInfo()], a renv lockfile or a single directory. If it is a single directory, all R scripts are scanned for R packages used using [renv::dependencies()]. Currently, the default is to scan the R scripts in the current working directory. Please also note that this scanning only assumes there are CRAN and Bioconductor packages. We strongly recommend checking whether this is really the case (see example below).
 #' @param snapshot_date Snapshot date, if not specified, assume to be a month ago
 #' @param no_enhances logical, whether to ignore packages in the "Enhances" field
 #' @param no_suggests logical, whether to ignore packages in the "Suggests" field
@@ -292,9 +292,15 @@
 #'     gh_graph <- resolve(pkgs = c("https://github.com/schochastics/rtoot"),
 #'                    snapshot_date = "2022-11-28")
 #'     gh_graph
+#'     ## scanning
+#'     graph <- resolve(snapshot_date = "2022-11-28")
+#'     ## But we recommend this:
+#'     pkgs <- as_pkgrefs(".")
+#'     pkgs ## check the accuracy
+#'     graph <- resolve(pkgs, snapshot_date = "2022-11-28")
 #' }
 #' }
-resolve <- function(pkgs, snapshot_date, no_enhances = TRUE, no_suggests = TRUE, query_sysreqs = TRUE, os = "ubuntu-20.04", verbose = FALSE) {
+resolve <- function(pkgs = ".", snapshot_date, no_enhances = TRUE, no_suggests = TRUE, query_sysreqs = TRUE, os = "ubuntu-20.04", verbose = FALSE) {
     if (!os %in% supported_os) {
         stop("Don't know how to resolve ", os, ". Supported OSes are: ", paste(supported_os, collapse = ", "))
     }
