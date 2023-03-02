@@ -52,7 +52,16 @@
     return(source)
 }
 
+.is_local <- function(pkg) {
+    ## according to the standard, it must be started by ".", "~", "/"
+    grepl("^[\\.~/]", pkg)
+}
+
 .is_github <- function(pkg) {
+    ## make .is_local precedes .is_github
+    if (isTRUE(.is_local(pkg))) {
+        return(FALSE)
+    }
     if (grepl("github\\.com", pkg)) {
         return(TRUE)
     }
@@ -67,12 +76,6 @@
     }
     bioc_pkgs <- .memo_search_bioc(bioc_version)
     pkg %in% bioc_pkgs$Package
-}
-
-
-.is_local <- function(pkg) {
-    ## according to the standard, it must be started by ".", "~", "/"
-    grepl("^[\\.~/]", pkg)
 }
 
 ## TBI: .is_valid_pkgref
@@ -98,10 +101,8 @@
     if (pkg == "" || is.na(pkg)) {
         stop("Invalid `pkg`.", call. = FALSE)
     }
-    if (isTRUE(.is_github(pkg))) {
-        if (isTRUE(grepl("github\\.com", pkg))) {
-          pkg <- .extract_github_handle(pkg)
-        }
+    if (isTRUE(grepl("github\\.com", pkg))) {
+        pkg <- .extract_github_handle(pkg)
     }
     if (isTRUE(.is_pkgref(pkg))) {
         return(.clean_suffixes(pkg))

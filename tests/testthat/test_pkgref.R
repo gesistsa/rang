@@ -169,3 +169,8 @@ test_that(".is_local", {
     expect_true(.is_local("/hello/world/"))
     expect_true(.is_local("../testdata/fakexml2"))
 })
+
+test_that(".is_local precedes .is_github", {
+    expect_false(.is_github("~/helloworld"))
+    expect_false(.is_github("./helloworld"))
+})
