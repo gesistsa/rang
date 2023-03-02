@@ -5,7 +5,7 @@
 \title{Resolve Dependencies Of R Packages}
 \usage{
 resolve(
-  pkgs,
+  pkgs = ".",
   snapshot_date,
   no_enhances = TRUE,
   no_suggests = TRUE,
@@ -15,7 +15,7 @@ resolve(
 )
 }
 \arguments{
-\item{pkgs}{\code{pkgs} can be 1) a character vector of R packages to resolve, 2) a path to a \href{https://rstudio.github.io/renv/articles/lockfile.html}{\code{renv} lockfile}, or 3) a data structure that \code{\link[=as_pkgrefs]{as_pkgrefs()}} can convert to a character vector of package references. For 1) \code{pkgs} can be either in shorthands, e.g. "rtoot", "ropensci/readODS", or in package references, e.g. "cran::rtoot", "github::ropensci/readODS". Please refer to the \href{https://r-lib.github.io/pkgdepends/reference/pkg_refs.html}{Package References documentation} of \code{pak} for details. Currently, this package supports only cran and github packages. For 2) \code{\link[=as_pkgrefs]{as_pkgrefs()}} support the output of \code{\link[=sessionInfo]{sessionInfo()}}.}
+\item{pkgs}{\code{pkgs} can be 1) a character vector of R packages to resolve, 2) a path to a \href{https://rstudio.github.io/renv/articles/lockfile.html}{\code{renv} lockfile}, or 3) a data structure that \code{\link[=as_pkgrefs]{as_pkgrefs()}} can convert to a character vector of package references. For 1) \code{pkgs} can be either in shorthands, e.g. "rtoot", "ropensci/readODS", or in package references, e.g. "cran::rtoot", "github::ropensci/readODS". Please refer to the \href{https://r-lib.github.io/pkgdepends/reference/pkg_refs.html}{Package References documentation} of \code{pak} for details. Currently, this package supports only cran and github packages. For 2) \code{\link[=as_pkgrefs]{as_pkgrefs()}} support the output of \code{\link[=sessionInfo]{sessionInfo()}}, a renv lockfile or a single directory. If it is a single directory, all R scripts are scanned for R packages used using \code{\link[renv:dependencies]{renv::dependencies()}}. Currently, the default is to scan the R scripts in the current working directory. Please also note that this scanning only assumes there are CRAN and Bioconductor packages. We strongly recommend checking whether this is really the case (see example below).}
 
 \item{snapshot_date}{Snapshot date, if not specified, assume to be a month ago}
 
@@ -55,6 +55,12 @@ if (interactive()) {
     gh_graph <- resolve(pkgs = c("https://github.com/schochastics/rtoot"),
                    snapshot_date = "2022-11-28")
     gh_graph
+    ## scanning
+    graph <- resolve(snapshot_date = "2022-11-28")
+    ## But we recommend this:
+    pkgs <- as_pkgrefs(".")
+    pkgs ## check the accuracy
+    graph <- resolve(pkgs, snapshot_date = "2022-11-28")
 }
 }
 }
