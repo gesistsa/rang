@@ -471,7 +471,7 @@ export_renv <- function(rang, path = ".") {
     }
     r_lst <- list(Version = rang$r_version,
                   Repositories = data.frame(Name = "CRAN",URL = "https://cloud.r-project.org"))
-    writeLines(jsonlite::prettify(jsonlite::toJSON(list(R = r_lst,Packages = pkg_list))),
+    writeLines(jsonlite::prettify(jsonlite::toJSON(list(R = r_lst,Packages = pkg_list),auto_unbox = TRUE)),
                file.path(path,"renv.lock"))
     invisible(pkg_list)
 }
