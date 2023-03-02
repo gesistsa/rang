@@ -412,6 +412,71 @@ export_rang <- function(rang, path, rang_as_comment = TRUE, verbose = TRUE, lib 
     invisible(path)
 }
 
+#' Export The Resolved Result As a renv Lockfile
+#'
+#' This function exports the results from [resolve()] to a renv lockfile that can be used as an alternative to a docker container.
+#' @param rang output from [resolve()]
+#' @param path character, path of the exported renv lockfile
+#' @return `path`, invisibly
+#' @details A renv lockfile is easier to handle than a docker container, but it cannot always reliably reproduce the exact computational environment,especially for very old code.
+#' @export
+#' @examples
+#' \donttest{
+#' if (interactive()) {
+#'     graph <- resolve(pkgs = c("openNLP", "LDAvis", "topicmodels", "quanteda"),
+#'                     snapshot_date = "2020-01-16")
+#'     export_renv(graph, ".")
+#' }
+#' }
+export_renv <- function(rang, path = ".") {
+    if (length(rang$ranglets) == 0) {
+        warning("Nothing to export.")
+        return(invisible(NULL))
+    }
+    renv_rang <- resolve("renv",Sys.Date())
+    rang$ranglets <- c(rang$ranglets,renv_rang$ranglets)
+    pkg_df <- .generate_installation_order(rang)
+    pkg_list <- vector(mode = "list",length = nrow(pkg_df))
+    names(pkg_list) <- pkg_df$x
+    for(i in seq_len(nrow(pkg_df))){
+        pkg_list[[i]][["Package"]] <- pkg_df$x[i]
+        pkg_list[[i]][["Version"]] <- pkg_df$version[i] 
+        if(pkg_df$source[i]=="cran"){
+            pkg_list[[i]][["Source"]] <- "Repository"
+            pkg_list[[i]][["Repository"]] <- "CRAN"
+        #   pkg_list[[i]][["Requirements"]] <- c()
+        } else if(pkg_df$source[i]=="github"){
+            pkg_list[[i]][["Source"]] <- "GitHub"
+            pkg_list[[i]][["RemoteType"]] <- "GitHub"
+            pkg_list[[i]][["RemoteHost"]] <- "api.github.com"
+            pkg_list[[i]][["RemoteRepo"]] <- pkg_df$x[i]
+            pkg_list[[i]][["RemoteUsername"]]<- strsplit(pkg_df$handle[i],"/")[[1]][1]
+            pkg_list[[i]][["RemoteRef"]] = "HEAD"
+            pkg_list[[i]][["RemoteSha"]] = pkg_df$uid[i]
+        #   pkg_list[[i]][["Requirements"]] <- c()
+        } else if(pkg_df$source[i]=="bioc"){
+            pkg_list[[i]][["Source"]] <- "Bioconductor"
+            pkg_list[[i]][["git_url"]] <- paste0("https://git.bioconductor.org/packages/",pkg_df$x[i])
+            pkg_list[[i]][["git_branch"]] <- ""
+            pkg_list[[i]][["git_last_commit"]] <- ""
+            pkg_list[[i]][["git_last_commit_date"]] <- ""
+            # pkg_list[[i]][["Requirements"]] <- c()
+        } else if(pkg_df$source=="local"){
+            pkg_list[[i]][["Source"]] <- "Local"
+            pkg_list[[i]][["RemoteType"]] <- "local"
+            pkg_list[[i]][["RemoteUrl"]] <- pkg_df$uid[i]
+        } else{
+        
+        }
+    }
+    r_lst <- list(Version = rang$r_version,
+                  Repositories = data.frame(Name = "CRAN",URL = "https://cloud.r-project.org"))
+    writeLines(jsonlite::prettify(jsonlite::toJSON(list(R = r_lst,Packages = pkg_list))),
+               file.path(path,"renv.lock"))
+    invisible(pkg_list)
+}
+
+
 #' Dockerize The Resolved Result
 #'
 #' This function exports the result from [resolve()] to a Docker file. For R version >= 3.1.0, the Dockerfile is based on the versioned Rocker image.
