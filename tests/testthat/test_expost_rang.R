@@ -138,3 +138,45 @@ test_that("prevent infinite loop, #81", {
     graph$ranglets[[1]]$original$y_pkgref <- "bioc::S4Vectors"
     expect_error(.generate_installation_order(graph), "cran::LDAvis")
 })
+
+test_that("renv export cran", {
+  temp_dir <- tempdir()
+  graph <- readRDS("../testdata/rang_ok.RDS")
+  export_renv(graph, path = temp_dir)
+  x <- readLines(file.path(temp_dir,"renv.lock"))
+  expect_true(any(grepl("LDAvis",x)))
+  expect_true(any(grepl("proxy",x)))
+  expect_true(any(grepl("RJSONIO",x)))
+})
+
+test_that("renv export bioc", {
+  temp_dir <- tempdir()
+  graph <- readRDS("../testdata/rang_bioc.RDS")
+  export_renv(graph, path = temp_dir)
+  x <- readLines(file.path(temp_dir,"renv.lock"))
+  expect_true(any(grepl("Bioconductor",x)))
+})
+
+test_that("renv export local and GH", {
+  temp_dir <- tempdir()
+  graph <- readRDS("../testdata/rang_local_gh.RDS")
+  export_renv(graph, path = temp_dir)
+  x <- readLines(file.path(temp_dir,"renv.lock"))
+  expect_true(any(grepl("local",x)))
+  expect_true(any(grepl("GitHub",x)))
+})
+
+test_that("empty renv export", {
+  temp_dir <- tempdir()
+  graph <- readRDS("../testdata/rang_ok.RDS")
+  graph$ranglets <- list()
+  expect_warning(x <- export_rang(graph, path = temp_dir))
+  expect_equal(x, NULL)
+})
+
+test_that("renv export unknown source", {
+  temp_dir <- tempdir()
+  graph <- readRDS("../testdata/rang_ok.RDS")
+  graph$ranglets[[1]]$original$x_pkgref <- "errr::or"
+  expect_error(export_rang(graph, temp_dir))
+})
