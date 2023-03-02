@@ -249,9 +249,9 @@ test_that(".query_sysreqs_bioc with uncheckable info", {
     expect_true("dnf install -y xz-devel" %in% x)
     expect_true("dnf install -y make" %in% x)
     expect_false("dnf install -y" %in% x) ## the null response from C++
-    x <- .query_singleline_sysreqs("libxml2", "DEB")
+    x <- .query_singleline_sysreqs("libxml2", "ubuntu-20.04")
     expect_equal(x, "apt-get install -y libxml2-dev")
-    x <- .query_singleline_sysreqs("C++", "DEB")
+    x <- .query_singleline_sysreqs("C++", "ubuntu-20.04")
     expect_equal(x, character(0))
     x <- readRDS("../testdata/sysreqs_gmp.RDS")
     ## buildtime / runtime requirements
