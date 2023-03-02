@@ -138,3 +138,21 @@ test_that("prevent infinite loop, #81", {
     graph$ranglets[[1]]$original$y_pkgref <- "bioc::S4Vectors"
     expect_error(.generate_installation_order(graph), "cran::LDAvis")
 })
+
+test_that("renv export", {
+  temp_dir <- tempdir()
+  graph <- readRDS("../testdata/rang_ok.RDS")
+  export_renv(graph, path = temp_dir)
+  x <- readLines(file.path(temp_dir,"renv.lock"))
+  expect_true(any(grepl("LDAvis",x)))
+  expect_true(any(grepl("proxy",x)))
+  expect_true(any(grepl("RJSONIO",x)))
+})
+
+test_that("empty renv export", {
+  graph <- readRDS("../testdata/rang_ok.RDS")
+  graph$ranglets <- list()
+  expect_warning(x <- export_rang(graph, path = tempfile()))
+  expect_equal(x, NULL)
+})
+
