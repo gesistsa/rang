@@ -456,10 +456,10 @@ export_renv <- function(rang, path = ".") {
         #   pkg_list[[i]][["Requirements"]] <- c()
         } else if(pkg_df$source[i]=="bioc"){
             pkg_list[[i]][["Source"]] <- "Bioconductor"
-            pkg_list[[i]][["git_url"]] <- paste0("https://git.bioconductor.org/packages/",pkg_df$x[i])
-            pkg_list[[i]][["git_branch"]] <- ""
-            pkg_list[[i]][["git_last_commit"]] <- ""
-            pkg_list[[i]][["git_last_commit_date"]] <- ""
+            # pkg_list[[i]][["git_url"]] <- paste0("https://git.bioconductor.org/packages/",pkg_df$x[i])
+            # pkg_list[[i]][["git_branch"]] <- ""
+            # pkg_list[[i]][["git_last_commit"]] <- ""
+            # pkg_list[[i]][["git_last_commit_date"]] <- ""
             # pkg_list[[i]][["Requirements"]] <- c()
         } else if(pkg_df$source=="local"){
             pkg_list[[i]][["Source"]] <- "Local"
