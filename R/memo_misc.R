@@ -57,6 +57,9 @@ NULL
 ## internal data generation
 ## ---
 ### Supported OS Versions
+os <- c("trusty" = "ubuntu-14.04", "xenial" = "ubuntu-16.04", "bionic" = "ubuntu-18.04", "focal" = "ubuntu-20.04", "centos-6", "centos-7", "centos-8", "redhat-6", "redhat-7", "redhat-8")
+
+
 ## os <- names(remotes:::supported_os_versions())
 ## supported_os <- unlist(mapply(function(x, y) paste(x,"-", y, sep = ""), os, remotes:::supported_os_versions()))
 ## names(supported_os) <- NULL
