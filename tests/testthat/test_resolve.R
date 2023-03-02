@@ -342,3 +342,13 @@ test_that("dockerize local package as tarball", {
     x <- readLines(file.path(temp_dir, "rang.R"))
     expect_true(any(grepl("^## ## WARNING", x)))
 })
+
+test_that("issue 102 confusion between github and local pkgref", {
+    skip_if_offline()
+    skip_on_cran()
+    original_wd <- getwd()
+    setwd(normalizePath(file.path("../testdata")))
+    expect_error(suppressWarnings(graph <- resolve("local::./askpass", snapshot_date = "2023-01-01")), NA)
+    expect_equal(.parse_pkgref(unique(graph$ranglets[[1]]$original$x_pkgref), FALSE), "local")
+    setwd(original_wd)
+})
