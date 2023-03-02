@@ -141,6 +141,13 @@ test_that("as_pkgrefs directory", {
 
 ## .is_*
 
+test_that(".is_pkgref", {
+    expect_true(.is_pkgref("cran::rtoot"))
+    expect_false(.is_pkgref("cran::"))
+    expect_false(.is_pkgref("cran:::"))
+    expect_false(.is_pkgref("xran:::"))
+})
+
 test_that(".is_github", {
     expect_true(.is_github("cran/rtoot"))
     expect_false(.is_github("cran//rtoot"))

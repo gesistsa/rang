@@ -38,14 +38,9 @@
     }
     ## remove all @, ?, or # suffixes, we don't support them
     pkgref <- .clean_suffixes(pkgref)
-    res <- strsplit(pkgref, "::")[[1]]
-    if (length(res) == 1) {
-        source <- "cran"
-        handle <- res[1]
-    } else {
-        source <- res[1]
-        handle <- res[2]
-    }
+    res <- strsplit(pkgref, ":+")[[1]]
+    source <- res[1]
+    handle <- res[2]
     if (isTRUE(return_handle)) {
         return(handle)
     }
@@ -81,7 +76,7 @@
 ## TBI: .is_valid_pkgref
 ## pkgref is only valid if: exactly one "::", source %in% c("cran", "github"), if "github", .is_github is TRUE
 .is_pkgref <- function(pkg) {
-    grepl("^github::|^cran::|^local::|^bioc::", pkg)
+    grepl("^github::|^cran::|^local::|^bioc::", pkg) && length(strsplit(pkg, ":+")[[1]]) == 2
 }
 
 .extract_github_handle <- function(url) {
