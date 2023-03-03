@@ -135,6 +135,17 @@ query_sysreqs <- function(rang, os = "ubuntu-20.04") {
     return(cmds)
 }
 
+.extract_item_cheat <- function(item, arch) {
+    cheat_code <- list("libgsl" = c("DEB" = "libgsl0-dev", "RPM" = "libgsl-devel"),
+                       "mysql-client" = c("DEB" = "libmysqlclient-dev", "RPM" = "mariadb-devel"))
+    for (libname in names(cheat_code)) {
+        if (names(item) == libname) {
+            return(cheat_code[[libname]][arch])
+        }
+    }
+    return(NULL)
+}
+
 .extract_sys_package <- function(item, arch = "DEB") {
     output <- item[[names(item)]]$platforms[[arch]]
     if (isFALSE(is.list((output)))) {
@@ -143,12 +154,15 @@ query_sysreqs <- function(rang, os = "ubuntu-20.04") {
         sys_pkg <- output[["buildtime"]]
     }
     ## VW style cheating for libgsl
-    if (names(item) == "libgsl" && arch == "DEB") {
-        ## libgsl0-dev is a virtual package of libgsl-dev in later distros anyway
-        sys_pkg <- "libgsl0-dev"
-    }
-    if (names(item) == "libgsl" && arch == "RPM") {
-        sys_pkg <- "libgsl-devel"
+    ## if (names(item) == "libgsl" && arch == "DEB") {
+    ##     ## libgsl0-dev is a virtual package of libgsl-dev in later distros anyway
+    ##     sys_pkg <- "libgsl0-dev"
+    ## }
+    ## if (names(item) == "libgsl" && arch == "RPM") {
+    ##     sys_pkg <- "libgsl-devel"
+    ## }
+    if (is.null(sys_pkg)) {
+        sys_pkg <- .extract_item_cheat(item, arch)
     }
     if (is.null(sys_pkg)) {
         return(NA_character_)
