@@ -153,14 +153,6 @@ query_sysreqs <- function(rang, os = "ubuntu-20.04") {
     } else {
         sys_pkg <- output[["buildtime"]]
     }
-    ## VW style cheating for libgsl
-    ## if (names(item) == "libgsl" && arch == "DEB") {
-    ##     ## libgsl0-dev is a virtual package of libgsl-dev in later distros anyway
-    ##     sys_pkg <- "libgsl0-dev"
-    ## }
-    ## if (names(item) == "libgsl" && arch == "RPM") {
-    ##     sys_pkg <- "libgsl-devel"
-    ## }
     if (is.null(sys_pkg)) {
         sys_pkg <- .extract_item_cheat(item, arch)
     }
@@ -175,38 +167,6 @@ query_sysreqs <- function(rang, os = "ubuntu-20.04") {
     }
 }
 
-## .query_sysreqs_posit <- function(description_file, os, remove_description = TRUE) {
-##     os_info <- strsplit(os, "-")[[1]]
-##     DEFAULT_RSPM <- "https://packagemanager.rstudio.com"
-##     DEFAULT_RSPM_REPO_ID <- "1"
-##     curl <- Sys.which("curl")
-##     rspm_repo_id <- Sys.getenv("RSPM_REPO_ID", DEFAULT_RSPM_REPO_ID)
-##     rspm <- Sys.getenv("RSPM_ROOT", DEFAULT_RSPM)
-##     rspm_repo_url <- sprintf("%s/__api__/repos/%s", rspm, rspm_repo_id)
-##     res <- system2(
-##         curl,
-##         args = c(
-##             "--silent",
-##             "--data-binary",
-##             shQuote(paste0("@", description_file)),
-##             shQuote(sprintf("%s/sysreqs?distribution=%s&release=%s&suggests=false",
-##                             rspm_repo_url,
-##                             os_info[1],
-##                             os_info[2])
-##                     )
-##         ),
-##         stdout = TRUE
-##     )
-##     res <- jsonlite::fromJSON(res,simplifyDataFrame = FALSE)
-##     if (!is.null(res$error)) {
-##         stop(res$error)
-##     }
-##     if (isTRUE(remove_description)) {
-##         file.remove(description_file)
-##     }
-##     unique(unlist(c(res[["install_scripts"]],
-##                     lapply(res[["dependencies"]], `[[`, "install_scripts"))))
-## }
 
 ## get system requirements for github packages
 .query_sysreqs_github_single <- function(handle, os) {
@@ -220,8 +180,6 @@ query_sysreqs <- function(rang, os = "ubuntu-20.04") {
         return(NULL)
     }
     .query_singleline_sysreqs(singleline_sysreqs, os)
-    ##writeLines(readLines(repo_descr$download_url), con = description_file)
-    ##.query_sysreqs_posit(description_file = description_file, os = os, remove_description = TRUE)
 }
 
 .is_ppa_in_sysreqs <- function(rang, warn = TRUE) {
