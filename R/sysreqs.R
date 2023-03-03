@@ -123,7 +123,8 @@ query_sysreqs <- function(rang, os = "ubuntu-20.04") {
 ## https://github.com/r-hub/sysreqsdb
 .extract_uncheckable_sysreqs <- function(singleline_sysreqs, arch) {
     uncheckable_sysreqs <- list(liblzma = c("DEB" = "liblzma-dev", "RPM" = "xz-devel"),
-                                libbz2 = c("DEB" = "libbz2-dev", "RPM" = "libbz2-devel"))
+                                libbz2 = c("DEB" = "libbz2-dev", "RPM" = "libbz2-devel"),
+                                `Tcl/Tk` = c("DEB" = "tcl8.6 tk8.6", "RPM" = "tcl tk"))
     cmds <- c()
     prefix <- c("DEB" = "apt-get install -y", "RPM" = "dnf install -y")
     for (regex in names(uncheckable_sysreqs)) {
