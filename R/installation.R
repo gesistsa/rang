@@ -81,53 +81,6 @@
                uid = ordered_uid)
 }
 
-.is_ppa_in_sysreqs <- function(rang, warn = TRUE) {
-    res <- isTRUE(any(grepl("add-apt-repository", rang$sysreqs)))
-    if (isTRUE(res) && isTRUE(warn)) {
-        warning("The command for getting system requirements is likely not going to work for the default Docker images. You might need to requery system requirements with another version of Ubuntu.", call. = FALSE)
-    }
-    return(res)
-}
-
-.group_apt_cmds <- function(cmds, fix_libgit2 = FALSE) {
-    debs <- vapply(strsplit(cmds, "-y "), function(x) x[2], character(1))
-    if (isTRUE(fix_libgit2) && "libgit2-dev" %in% debs) {
-        if ("libcurl4-openssl-dev" %in% debs) {
-            debs[debs == "libcurl4-openssl-dev"] <- "libcurl4-gnutls-dev"
-        }
-    }
-    cmd <- paste("apt-get install -y", paste(sort(debs), collapse = " "))
-    if ("default-jdk" %in% debs) {
-        cmd <- paste(cmd, "liblzma-dev libpcre3-dev libbz2-dev && R CMD javareconf")
-    }
-    return(cmd)
-}
-
-.group_sysreqs <- function(rang) {
-    must_do_cmd <- "apt-get update -qq && apt-get install -y libpcre3-dev zlib1g-dev pkg-config"
-    if (length(rang$sysreqs) == 0) {
-        must_do_cmd <- paste(must_do_cmd, "libcurl4-openssl-dev")
-        return(must_do_cmd)
-    }
-    if (isFALSE(.is_ppa_in_sysreqs(rang))) {
-        cmds <- rang$sysreqs
-        prefix <- ""
-        cmd <- .group_apt_cmds(cmds, fix_libgit2 = TRUE)
-        if (!grepl("libcurl4-gnutls-dev", cmd)) {
-            must_do_cmd <- paste(must_do_cmd, "libcurl4-openssl-dev")
-        }
-    } else {
-        cmds <- setdiff(rang$sysreqs, c("apt-get install -y software-properties-common", "apt-get update"))
-        ppa_lines <- c("apt-get install -y software-properties-common",
-                       grep("^add-apt-repository", rang$sysreqs, value = TRUE),
-                       "apt-get update")
-        cmds <- setdiff(rang$sysreqs, ppa_lines)
-        prefix <- paste0(paste0(ppa_lines, collapse = " && "), " && ")
-        cmd <- .group_apt_cmds(cmds, fix_libgit2 = FALSE)
-    }
-    paste0(must_do_cmd, " && ", prefix, cmd)
-}
-
 .write_rang_as_comment <- function(rang, con, path, verbose, lib,
                                    cran_mirror, check_cran_mirror, bioc_mirror) {
     if (isTRUE(any(grepl("^local::", .extract_pkgrefs(rang))))) {

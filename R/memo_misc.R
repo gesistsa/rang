@@ -57,13 +57,11 @@ NULL
 ## internal data generation
 ## ---
 ### Supported OS Versions
-## os <- names(remotes:::supported_os_versions())
-## supported_os <- unlist(mapply(function(x, y) paste(x,"-", y, sep = ""), os, remotes:::supported_os_versions()))
-## names(supported_os) <- NULL
-### R version history
+## supported_os <- c("trusty" = "ubuntu-14.04", "xenial" = "ubuntu-16.04", "bionic" = "ubuntu-18.04", "focal" = "ubuntu-20.04", "centos-6", "centos-7", "centos-8", "redhat-6", "redhat-7", "redhat-8")
+## ### R version history
 ## cached_rver <- .rver()
 ## attr(cached_rver, "newest_date") <- anytime::anytime(tail(cached_rver, n = 1)$date, tz = "UTC", asUTC = TRUE)
-### Bioconductor version history
+## ### Bioconductor version history
 ## cached_biocver <- .biocver()
 ## attr(cached_biocver, "newest_date") <- max(cached_biocver$date)
 ## usethis::use_data(supported_os, cached_rver, cached_biocver, internal = TRUE, overwrite = TRUE)

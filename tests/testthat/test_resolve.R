@@ -4,6 +4,9 @@
 
 test_that("defensive programming", {
     expect_error(resolve("LDAvis", os = "windows"))
+    expect_error(resolve("LDAvis", os = "opensuse-42.3"))
+    expect_error(resolve("LDAvis", os = "sle-12.3"))
+    expect_error(resolve("LDAvis", os = "sle-15.0"))
 })
 
 test_that(".extract_date", {
@@ -101,18 +104,6 @@ test_that("cache for R < 3.1 and R >= 2.1", {
     expect_true(file.exists(file.path(temp_dir, "cache", "foreign_0.8-54.tar.gz")))
     expect_true(file.exists(file.path(temp_dir, "cache", "evaluate_0.4.7.tar.gz")))
     expect_true(file.exists(file.path(temp_dir, "cache", "testthat_0.7.1.tar.gz")))
-})
-
-test_that(".query_sysreqs_github", {
-    skip_if_offline()
-    skip_on_cran()
-    res <- .query_sysreqs_github("schochastics/rtoot", os = "ubuntu-20.04")
-    expect_true(all(grepl("^apt-get", res)))
-    expect_true(length(res) == 2) ## issue #45
-    res <- .query_sysreqs_github("schochastics/rtoot", "opensuse-42.3")
-    expect_true(all(grepl("^zypper", res)))
-    res <- .query_sysreqs_github("schochastics/rtoot", "centos-8")
-    expect_true(all(grepl("^dnf", res)))
 })
 
 test_that("github correct querying; also #25", {
@@ -231,28 +222,6 @@ test_that("as_pkgrefs with bioc_version", {
     expect_equal(as_pkgrefs(c("rtoot", "S4Vectors"), bioc_version = "3.3"), c("cran::rtoot", "bioc::S4Vectors"))
 })
 
-test_that(".query_sysreqs_bioc with uncheckable info", {
-    skip_if_offline()
-    skip_on_cran()
-    x <- .query_sysreqs_bioc("Rhtslib", "ubuntu-20.04")
-    expect_true("apt-get install -y libbz2-dev" %in% x) ## uncheckable
-    expect_true("apt-get install -y liblzma-dev" %in% x)
-    expect_true("apt-get install -y make" %in% x) ## checkable
-    expect_false("apt-get install -y" %in% x) ## the null response from C++
-    x <- .query_sysreqs_bioc("Rhtslib", "centos-7")
-    expect_true("yum install -y libbz2-devel" %in% x)
-    expect_true("yum install -y xz-devel" %in% x)
-    expect_true("yum install -y make" %in% x)
-    expect_false("yum install -y" %in% x) ## the null response from C++
-    x <- .query_singleline_sysreqs("libxml2", "DEB")
-    expect_equal(x, "apt-get install -y libxml2-dev")
-    x <- .query_singleline_sysreqs("C++", "DEB")
-    expect_equal(x, character(0))
-    x <- readRDS("../testdata/sysreqs_gmp.RDS")
-    ## buildtime / runtime requirements
-    expect_equal(.extract_sys_package(x[[1]], arch = "DEB"),
-                 "apt-get install -y libgmp-dev")
-})
 
 test_that("issue 89", {
     skip_if_offline()
@@ -274,17 +243,6 @@ test_that(".gh error handling", {
     skip_if_offline()
     skip_on_cran()
     expect_error(.gh("path/is/wrong"))
-})
-
-test_that(".query_sysreqs_local", {
-    skip_if_offline()
-    skip_on_cran()
-    expect_error(sysreqs <- .query_sysreqs_local(c("../testdata/fakexml2", "../testdata/askpass_1.1.tar.gz", "../testdata/fakeRhtslib.tar.gz"), "ubuntu-20.04"), NA)
-    expect_true("apt-get install -y libxml2-dev" %in% sysreqs)
-    expect_true("apt-get install -y libbz2-dev" %in% sysreqs)
-    ## dispatch in .query_sysreqs_smart
-    expect_error(sysreqs2 <- .query_sysreqs_smart(c("local::../testdata/fakexml2", "local::../testdata/askpass_1.1.tar.gz", "local::../testdata/fakeRhtslib.tar.gz"), "ubuntu-20.04"), NA)
-    expect_equal(sysreqs, sysreqs2)
 })
 
 test_that(".query_snapshot_dependencies for local packages", {
