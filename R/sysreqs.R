@@ -124,7 +124,19 @@ query_sysreqs <- function(rang, os = "ubuntu-20.04") {
 .extract_uncheckable_sysreqs <- function(singleline_sysreqs, arch) {
     uncheckable_sysreqs <- list(liblzma = c("DEB" = "liblzma-dev", "RPM" = "xz-devel"),
                                 libbz2 = c("DEB" = "libbz2-dev", "RPM" = "libbz2-devel"),
-                                `Tcl/Tk` = c("DEB" = "tcl8.6 tk8.6", "RPM" = "tcl tk"))
+                                `Tcl/Tk` = c("DEB" = "tcl8.6 tk8.6", "RPM" = "tcl tk"),
+                                `perl` = c("DEB" = "perl", "RPM" = "perl"),
+                                `Netpbm` = c("DEB" = "netpbm", "RPM" = "netpbm"),
+                                `jags` = c("DEB" = "jags","RPM" = "jags"),
+                                `kallisto` = c("DEB" = "kallisto","RPM" = "kallisto"),
+                                `openbabel` = c("DEB" = "libopenbabel-dev", "RPM" = "libopenbabel-dev"),
+                                `Eigen3` = c("DEB" = "libeigen3-dev", "RPM" = "libeigen3-dev"),
+                                `bowtie` = c("DEB" = "bowtie", "RPM" = "bowtie"),
+                                `samtools` = c("DEB" = "samtools", "RPM" = "samtools"),
+                                `libgtkmm-2.4` = c("DEB" = "libgtkmm-2.4-dev", "RPM" = "gtkmm24-docs"),
+                                `clustalo` = c("DEB" = "libclustalo-dev", "RPM" = "libclustalo-dev"),
+                                `bedtools` = c("DEB" = "bedtools", "RPM" = "BEDTools"),
+                                `redis` = c("DEB" = "libhiredis-dev", "RPM" = "redis-devel"))
     cmds <- c()
     prefix <- c("DEB" = "apt-get install -y", "RPM" = "dnf install -y")
     for (regex in names(uncheckable_sysreqs)) {
