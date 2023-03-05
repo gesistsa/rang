@@ -16,9 +16,9 @@
     }
 }
 
-.download.package <- function(tarball.path, x, version, handle, source, uid, verbose, cran.mirror, bioc.mirror) {
+.download.package <- function(tarball.path, x, version, handle, source, uid, verbose, cran.mirror, bioc.mirror, current.r.version) {
     if (source == "github") {
-        return(.download.package.from.github(tarball.path, x, version, handle, source, uid))
+        return(.download.package.from.github(tarball.path, x, version, handle, source, uid, current.r.version))
     }
     if (source == "bioc") {
         url <- paste(bioc.mirror, uid, "/src/contrib/", x, "_", version, ".tar.gz", sep = "")
@@ -37,6 +37,11 @@
         }
     })
     invisible(tarball.path)
+}
+
+.tempfile <- function(tmpdir = tempdir(), fileext = ".tar.gz") {
+    file.path(tmpdir,
+    paste(paste(sample(c(LETTERS, letters), 20, replace = TRUE), collapse = ""), fileext, sep = ""))
 }
 
 .build.raw.tarball <- function(raw.tarball.path, x, version, tarball.path, current.r.version) {
@@ -79,7 +84,8 @@
     dir.pkg.path <- file.path(path, paste("dir_", x, "_", version, sep = ""))
     if (!file.exists(tarball.path) && !file.exists(raw.tarball.path) && !file.exists(dir.pkg.path)) {
         .download.package(tarball.path = tarball.path, x = x, version = version, handle = handle, source = source,
-                          uid = uid, verbose = verbose, cran.mirror = cran.mirror, bioc.mirror = bioc.mirror)
+                          uid = uid, verbose = verbose, cran.mirror = cran.mirror, bioc.mirror = bioc.mirror,
+                          current.r.version = current.r.version)
     }
     if (file.exists(raw.tarball.path)) {
         tarball.path <- .build.raw.tarball(raw.tarball.path, x = x, version = version, tarball.path,
@@ -118,33 +124,17 @@
     )
 }
 
-.tempfile <- function(tmpdir = tempdir(), fileext = ".tar.gz") {
-    file.path(tmpdir,
-    paste(paste(sample(c(LETTERS, letters), 20, replace = TRUE), collapse = ""), fileext, sep = ""))
-}
-
-.download.package.from.github <- function(tarball.path, x, version, handle, source, uid) {
+.download.package.from.github <- function(tarball.path, x, version, handle, source, uid, current.r.version) {
     sha <- uid
     short.sha <- substr(sha, 1, 7)
-    dest.tar <- .tempfile(fileext = ".tar.gz")
+    raw.tarball.path <- .tempfile(fileext = ".tar.gz")
     tmp.dir <- tempdir()
     tryCatch(
-        download.file(paste("https://api.github.com/repos/", handle, "/tarball/", sha, sep = ""), destfile = dest.tar),
+        download.file(paste("https://api.github.com/repos/", handle, "/tarball/", sha, sep = ""), destfile = raw.tarball.path),
         error = function(e) {
-            .download.github.safe(handle, sha, dest.tar)
+            .download.github.safe(handle, sha, raw.tarball.path)
         }
     )
-    system(command = paste("tar", "-zxf ", dest.tar, "-C", tmp.dir))
-    dlist <- list.dirs(path = tmp.dir, recursive = FALSE) ## TODO list.dirs is 2.14
-    pkg.dir <- dlist[grepl(short.sha, dlist)] ## TODO grepl is 2.9.0
-    if(length(pkg.dir) != 1) {
-        stop(paste("couldn't uniquely locate the unzipped package source in ",tmp.dir, sep = ""))
-    }
-    res <- system(command = paste("R", "CMD", "build", pkg.dir), intern = TRUE)
-    expected.tarball.path <- paste(x, "_", version, ".tar.gz", sep = "")
-    if (!file.exists(expected.tarball.path)) {
-        stop("Cannot locate the built tarball.")
-    }
-    file.rename(from = expected.tarball.path, to = tarball.path)
+    .build.raw.tarball(raw.tarball.path = raw.tarball.path, x = x, version = version, tarball.path = tarball.path, current.r.version = current.r.version)
     return(tarball.path)
 }
