@@ -229,6 +229,10 @@
     invisible(output_dir)
 }
 
+.is_r_version_older_than <- function(rang, r_version = "1.3.1") {
+    utils::compareVersion(rang$r_version, r_version) == -1
+}
+
 .insert_cache_dir <- function(dockerfile_content) {
     rang_line <- which(dockerfile_content == "RUN Rscript rang.R")
     c(dockerfile_content[1:(rang_line - 1)],
@@ -322,7 +326,7 @@
 export_rang <- function(rang, path, rang_as_comment = TRUE, verbose = TRUE, lib = NA,
                             cran_mirror = "https://cran.r-project.org/", check_cran_mirror = TRUE,
                             bioc_mirror = "https://bioconductor.org/packages/") {
-    if (utils::compareVersion(rang$r_version, "1.3.1") == -1) {
+    if (.is_r_version_older_than(rang, "1.3.1")) {
         stop("`export_rang` doesn't support this R version (yet).")
     }
     if (length(rang$ranglets) == 0) {
@@ -335,13 +339,18 @@ export_rang <- function(rang, path, rang_as_comment = TRUE, verbose = TRUE, lib 
             stop(cran_mirror, "does not appear to be a valid CRAN mirror.", call. = FALSE)
         }
     }
-    if (utils::compareVersion(rang$r_version, "3.3") == -1) { #20
+    if (.is_r_version_older_than(rang, "3.3")) { #20
         cran_mirror <- .normalize_url(cran_mirror, https = FALSE)
     }
     installation_order <- .generate_installation_order(rang)
     file.create(path)
     con <- file(path, open="w")
-    writeLines(readLines(system.file("header.R", package = "rang")), con = con)
+    if (.is_r_version_older_than(rang, "2.1")) {
+        header_file <- "header_cmd.R"
+    } else {
+        header_file <- "header.R"
+    }
+    writeLines(readLines(system.file(header_file, package = "rang")), con = con)
     cat("installation.order <- ", file = con)
     dput(installation_order, file = con)
     cat("\n", file = con)
@@ -472,17 +481,18 @@ dockerize <- function(rang, output_dir, materials_dir = NULL, image = c("r-ver",
     if (!grepl("^ubuntu", rang$os)) {
         stop("System dependencies of ", rang$os, " can't be dockerized.", call. = FALSE)
     }
-    if (utils::compareVersion(rang$r_version, "1.3.1") == -1) {
+    if (.is_r_version_older_than(rang, "1.3.1")) {
         stop("`dockerize` doesn't support this R version (yet):", rang$r_version, call. = FALSE)
     }
     if (!is.null(materials_dir) && !(dir.exists(materials_dir))) {
         stop(paste0("The folder ", materials_dir, " does not exist"), call. = FALSE)
     }
     need_cache <- (isTRUE(any(grepl("^github::", .extract_pkgrefs(rang)))) &&
-                   utils::compareVersion(rang$r_version, "3.1") == -1) ||
+                   .is_r_version_older_than(rang, "3.1")) ||
         (isTRUE(any(grepl("^bioc::", .extract_pkgrefs(rang)))) &&
-         utils::compareVersion(rang$r_version, "3.3") == -1) ||
-        (isTRUE(any(grepl("^local::", .extract_pkgrefs(rang)))))
+         .is_r_version_older_than(rang, "3.3")) ||
+        (isTRUE(any(grepl("^local::", .extract_pkgrefs(rang))))) ||
+        .is_r_version_older_than(rang, "2.1")
     if (isTRUE(need_cache) && isFALSE(cache)) {
         stop("Packages must be cached. Please set `cache` = TRUE.", call. = FALSE)
     }
@@ -499,7 +509,7 @@ dockerize <- function(rang, output_dir, materials_dir = NULL, image = c("r-ver",
     if (isTRUE(cache)) {
         .cache_pkgs(rang, output_dir, cran_mirror, bioc_mirror, verbose)
     }
-    if (utils::compareVersion(rang$r_version, "3.1") == -1 || isTRUE(no_rocker)) {
+    if (.is_r_version_older_than(rang, "3.1") || isTRUE(no_rocker)) {
         file.copy(system.file("compile_r.sh", package = "rang"), file.path(output_dir, "compile_r.sh"),
                   overwrite = TRUE)
 
