@@ -54,17 +54,17 @@ test_that("integration of #18 in dockerize()", {
     temp_dir <- .generate_temp_dir()
     dockerize(rang = rang_ok, output_dir = temp_dir) ## cran_mirror = "https://cran.r-project.org/"
     x <- readLines(file.path(temp_dir, "rang.R"))
-    expect_true(any(grepl("^cran_mirror <- \"https://cran\\.r\\-project\\.org/\"", x)))
+    expect_true(any(grepl("^cran.mirror <- \"https://cran\\.r\\-project\\.org/\"", x)))
     dockerize(rang = rang_ok, output_dir = temp_dir, cran_mirror = "cran.r-project.org")
     x <- readLines(file.path(temp_dir, "rang.R"))
-    expect_true(any(grepl("^cran_mirror <- \"https://cran\\.r\\-project\\.org/\"", x)))
+    expect_true(any(grepl("^cran.mirror <- \"https://cran\\.r\\-project\\.org/\"", x)))
     dockerize(rang = rang_ok, output_dir = temp_dir, cran_mirror = "https://cloud.r-project.org/")
     x <- readLines(file.path(temp_dir, "rang.R"))
-    expect_true(any(grepl("^cran_mirror <- \"https://cloud\\.r\\-project\\.org/\"", x)))
+    expect_true(any(grepl("^cran.mirror <- \"https://cloud\\.r\\-project\\.org/\"", x)))
     expect_error(dockerize(rang = rang_ok, output_dir = temp_dir, cran_mirror = "https://www.chainsawriot.com/"))
     expect_error(dockerize(rang = rang_ok, output_dir = temp_dir, cran_mirror = "https://www.chainsawriot.com/", check_cran_mirror = FALSE), NA)
     x <- readLines(file.path(temp_dir, "rang.R"))
-    expect_true(any(grepl("^cran_mirror <- \"https://www\\.chainsawriot\\.com/\"", x)))
+    expect_true(any(grepl("^cran.mirror <- \"https://www\\.chainsawriot\\.com/\"", x)))
 })
 
 test_that("integration of #20 to dockerize()", {
@@ -73,18 +73,18 @@ test_that("integration of #20 to dockerize()", {
     temp_dir <- .generate_temp_dir()
     dockerize(rang_ok, output_dir = temp_dir) ## cran_mirror = "https://cran.r-project.org/"
     x <- readLines(file.path(temp_dir, "rang.R"))
-    expect_true(any(grepl("^cran_mirror <- \"https://cran\\.r\\-project\\.org/\"", x)))
+    expect_true(any(grepl("^cran.mirror <- \"https://cran\\.r\\-project\\.org/\"", x)))
     rang_ok <- readRDS("../testdata/rang_ok.RDS")
     rang_ok$r_version <- "3.3.0"
     dockerize(rang_ok, output_dir = temp_dir) ## cran_mirror = "https://cran.r-project.org/"
     x <- readLines(file.path(temp_dir, "rang.R"))
-    expect_true(any(grepl("^cran_mirror <- \"https://cran\\.r\\-project\\.org/\"", x)))
+    expect_true(any(grepl("^cran.mirror <- \"https://cran\\.r\\-project\\.org/\"", x)))
     rang_ok <- readRDS("../testdata/rang_ok.RDS")
     rang_ok$r_version <- "3.2.0"
     dockerize(rang_ok, output_dir = temp_dir) ## cran_mirror = "https://cran.r-project.org/"
     x <- readLines(file.path(temp_dir, "rang.R"))
-    expect_false(any(grepl("^cran_mirror <- \"https://cran\\.r\\-project\\.org/\"", x)))
-    expect_true(any(grepl("^cran_mirror <- \"http://cran\\.r\\-project\\.org/\"", x)))
+    expect_false(any(grepl("^cran.mirror <- \"https://cran\\.r\\-project\\.org/\"", x)))
+    expect_true(any(grepl("^cran.mirror <- \"http://cran\\.r\\-project\\.org/\"", x)))
 })
 
 test_that("Dockerize R < 3.1 and >= 2.1", {
@@ -216,7 +216,7 @@ test_that("dockerize with bioc #58", {
   temp_dir <- .generate_temp_dir()
   dockerize(rang = rang_bioc, output_dir = temp_dir) ## verbose = TRUE
   x <- readLines(file.path(temp_dir, "rang.R"))
-  expect_true(any(grepl("bioc_mirror",x)))
+  expect_true(any(grepl("bioc.mirror",x)))
 })
 
 test_that("no_rocker #67", {
