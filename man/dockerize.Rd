@@ -20,7 +20,7 @@ dockerize(
   check_cran_mirror = TRUE,
   bioc_mirror = "https://bioconductor.org/packages/",
   no_rocker = FALSE,
-  debian_version = c("lenny", "etch", "squeeze", "wheezy", "jessie", "stretch")
+  debian_version = c("lenny", "squeeze", "wheezy", "jessie", "stretch")
 )
 
 dockerize_rang(...)
