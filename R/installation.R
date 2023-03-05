@@ -342,7 +342,7 @@ export_rang <- function(rang, path, rang_as_comment = TRUE, verbose = TRUE, lib 
     file.create(path)
     con <- file(path, open="w")
     writeLines(readLines(system.file("header.R", package = "rang")), con = con)
-    cat("installation_order <- ", file = con)
+    cat("installation.order <- ", file = con)
     dput(installation_order, file = con)
     cat("\n", file = con)
     cat(paste0("verbose <- ", as.character(verbose), "\n"), file = con)
@@ -351,9 +351,9 @@ export_rang <- function(rang, path, rang_as_comment = TRUE, verbose = TRUE, lib 
     } else {
         cat(paste0("lib <- \"", as.character(lib), "\"\n"), file = con)
     }
-    cat(paste0("cran_mirror <- \"", cran_mirror, "\"\n"), file = con)
+    cat(paste0("cran.mirror <- \"", cran_mirror, "\"\n"), file = con)
     if(!is.null(rang$bioc_version)) {
-        cat(paste0("bioc_mirror <- \"", "https://bioconductor.org/packages/",rang$bioc_version,"/", "\"\n"), file = con)
+        cat(paste0("bioc.mirror <- \"", "https://bioconductor.org/packages/",rang$bioc_version,"/", "\"\n"), file = con)
     }
     writeLines(readLines(system.file("footer.R", package = "rang")), con = con)
     if (isTRUE(rang_as_comment)) {
@@ -391,7 +391,7 @@ export_renv <- function(rang, path = ".") {
     names(pkg_list) <- pkg_df$x
     for(i in seq_len(nrow(pkg_df))){
         pkg_list[[i]][["Package"]] <- pkg_df$x[i]
-        pkg_list[[i]][["Version"]] <- pkg_df$version[i] 
+        pkg_list[[i]][["Version"]] <- pkg_df$version[i]
         if(pkg_df$source[i]=="cran"){
             pkg_list[[i]][["Source"]] <- "Repository"
             pkg_list[[i]][["Repository"]] <- "CRAN"
@@ -461,7 +461,7 @@ dockerize <- function(rang, output_dir, materials_dir = NULL, image = c("r-ver",
                       cran_mirror = "https://cran.r-project.org/", check_cran_mirror = TRUE,
                       bioc_mirror = "https://bioconductor.org/packages/",
                       no_rocker = FALSE,
-                      debian_version = c("lenny", "etch", "squeeze", "wheezy", "jessie", "stretch")) {
+                      debian_version = c("lenny", "squeeze", "wheezy", "jessie", "stretch")) {
     if (length(rang$ranglets) == 0) {
         warning("Nothing to dockerize.")
         return(invisible(NULL))
@@ -472,7 +472,7 @@ dockerize <- function(rang, output_dir, materials_dir = NULL, image = c("r-ver",
     if (!grepl("^ubuntu", rang$os)) {
         stop("System dependencies of ", rang$os, " can't be dockerized.", call. = FALSE)
     }
-    if (utils::compareVersion(rang$r_version, "2.1") == -1) {
+    if (utils::compareVersion(rang$r_version, "1.3.1") == -1) {
         stop("`dockerize` doesn't support this R version (yet):", rang$r_version, call. = FALSE)
     }
     if (!is.null(materials_dir) && !(dir.exists(materials_dir))) {
