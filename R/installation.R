@@ -322,7 +322,7 @@
 export_rang <- function(rang, path, rang_as_comment = TRUE, verbose = TRUE, lib = NA,
                             cran_mirror = "https://cran.r-project.org/", check_cran_mirror = TRUE,
                             bioc_mirror = "https://bioconductor.org/packages/") {
-    if (utils::compareVersion(rang$r_version, "2.1") == -1) {
+    if (utils::compareVersion(rang$r_version, "1.3.1") == -1) {
         stop("`export_rang` doesn't support this R version (yet).")
     }
     if (length(rang$ranglets) == 0) {

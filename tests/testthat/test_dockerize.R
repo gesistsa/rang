@@ -107,8 +107,8 @@ test_that("Docker R < 2.1", {
     temp_dir <- .generate_temp_dir()
     expect_error(dockerize(rang_rio, output_dir = temp_dir), NA)
     rang_rio <- readRDS("../testdata/rang_rio_old.RDS")
-    rang_rio$r_version <- "2.0.0"
-    expect_error(dockerize(rang_rio, output_dir = temp_dir))
+##    rang_rio$r_version <- "2.0.0"
+##    expect_error(dockerize(rang_rio, output_dir = temp_dir))
 })
 
 test_that(".group_sysreqs and issue #21", {
