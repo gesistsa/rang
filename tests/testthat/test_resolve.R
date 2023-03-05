@@ -310,3 +310,10 @@ test_that("issue 102 confusion between github and local pkgref", {
     expect_equal(.parse_pkgref(unique(graph$ranglets[[1]]$original$x_pkgref), FALSE), "local")
     setwd(original_wd)
 })
+
+test_that("Rgraphviz", {
+    skip_if_offline()
+    skip_on_cran()
+    x <- resolve("bioc::biocGraph", snapshot_date = "2023-01-01")
+    expect_true("bioc::Rgraphviz" %in% names(x$ranglets[[1]]$deps))
+})
