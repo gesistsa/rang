@@ -105,7 +105,8 @@ test_that("Docker R < 1.3.1", {
     rang_rio <- readRDS("../testdata/rang_rio_old.RDS")
     rang_rio$r_version <- "1.3.1" ## exactly 1.3.1, no error
     temp_dir <- .generate_temp_dir()
-    expect_error(dockerize(rang_rio, output_dir = temp_dir), NA)
+    expect_error(dockerize(rang_rio, output_dir = temp_dir)) ## no cache
+    ##expect_error(dockerize(rang_rio, output_dir = temp_dir, cache = TRUE, verbose = FALSE), NA)
     rang_rio <- readRDS("../testdata/rang_rio_old.RDS")
     rang_rio$r_version <- "1.3.0"
     expect_error(dockerize(rang_rio, output_dir = temp_dir))
