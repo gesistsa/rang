@@ -101,14 +101,14 @@ test_that("Dockerize R < 3.1 and >= 2.1", {
     expect_true(any(grepl("^RUN mkdir", Dockerfile)))
 })
 
-test_that("Docker R < 2.1", {
+test_that("Docker R < 1.3.1", {
     rang_rio <- readRDS("../testdata/rang_rio_old.RDS")
-    rang_rio$r_version <- "2.1.0" ## exactly 2.1.0, no error
+    rang_rio$r_version <- "1.3.1" ## exactly 1.3.1, no error
     temp_dir <- .generate_temp_dir()
     expect_error(dockerize(rang_rio, output_dir = temp_dir), NA)
     rang_rio <- readRDS("../testdata/rang_rio_old.RDS")
-##    rang_rio$r_version <- "2.0.0"
-##    expect_error(dockerize(rang_rio, output_dir = temp_dir))
+    rang_rio$r_version <- "1.3.0"
+    expect_error(dockerize(rang_rio, output_dir = temp_dir))
 })
 
 test_that(".group_sysreqs and issue #21", {

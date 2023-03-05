@@ -180,3 +180,8 @@ test_that("renv export unknown source", {
   graph$ranglets[[1]]$original$x_pkgref <- "errr::or"
   expect_error(export_rang(graph, temp_dir))
 })
+
+test_that("Super ancient special packages", {
+    graph <- readRDS("../testdata/superancientsna.RDS")
+    expect_error(.generate_installation_order(graph), NA)
+})
