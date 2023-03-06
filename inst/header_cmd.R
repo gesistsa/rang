@@ -5,21 +5,19 @@ current.r.version <- NA
 bioc.mirror <- NA
 path <- "cache" ## cache must have been enforced
 
-.tempfile <- function(tmpdir = tempfile(), fileext = ".tar.gz") {
-    file.path(tmpdir,
-    paste(paste(sample(c(LETTERS, letters), 20, replace = TRUE), collapse = ""), fileext, sep = ""))
-}
-
 .build.raw.tarball <- function(raw.tarball.path, x, version, tarball.path, current.r.version) {
     vignetteflag <- "--no-vignettes"
-    tmp.dir <- .tempfile(fileext = "")
+    tmp.dir <- tempfile()
     dir.create(tmp.dir)
     system(command = paste("tar", "-zxf ", raw.tarball.path, "-C", tmp.dir))
     pkg.dir <- list.files(path = tmp.dir, full.names = TRUE)[1]
     new.pkg.dir <- file.path(tmp.dir, x)
     file.rename(pkg.dir, new.pkg.dir)
-    res <- system(command = paste("R", "CMD", "build", vignetteflag, new.pkg.dir))
     expected.tarball.path <- paste(x, "_", version, ".tar.gz", sep = "")
+    res <- system(command = paste("R", "CMD", "build", vignetteflag, new.pkg.dir))
+    if (!file.exists(expected.tarball.path)) {
+        res <- system(command = paste("R", "CMD", "build", new.pkg.dir))
+    }
     stopifnot(file.exists(expected.tarball.path))
     file.rename(expected.tarball.path, tarball.path)
     return(tarball.path)
@@ -29,7 +27,9 @@ path <- "cache" ## cache must have been enforced
     vignetteflag <- "--no-vignettes"
     expected.tarball.path <- paste(x, "_", version, ".tar.gz", sep = "")
     res <- system(command = paste("R", "CMD", "build", vignetteflag, dir.pkg.path))
-    expected.tarball.path <- paste(x, "_", version, ".tar.gz", sep = "")
+    if (!file.exists(expected.tarball.path)) {
+        res <- system(command = paste("R", "CMD", "build", dir.pkg.path))
+    }
     stopifnot(file.exists(expected.tarball.path))
     file.rename(expected.tarball.path, tarball.path)
     return(tarball.path)

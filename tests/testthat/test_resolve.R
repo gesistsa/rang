@@ -294,12 +294,31 @@ test_that("dockerize local package as tarball", {
     expect_error(suppressWarnings(graph <- resolve("local::../testdata/askpass", snapshot_date = "2023-01-01")), NA)
     expect_error(dockerize(graph, output_dir = temp_dir)) ## cache = FALSE
     temp_dir <- .generate_temp_dir()
-    expect_error(dockerize(graph, output_dir = temp_dir, cache = TRUE, verbose = FALSE), NA) ## cache = FALSE
+    expect_error(dockerize(graph, output_dir = temp_dir, cache = TRUE, verbose = FALSE), NA)
     expect_true(file.exists(file.path(temp_dir, "cache", "sys_3.4.1.tar.gz")))
     expect_true(dir.exists(file.path(temp_dir, "cache", "dir_askpass_1.1")))
     x <- readLines(file.path(temp_dir, "rang.R"))
     expect_true(any(grepl("^## ## WARNING", x)))
 })
+
+test_that("Rgraphviz", {
+    skip_if_offline()
+    skip_on_cran()
+    x <- resolve("bioc::biocGraph", snapshot_date = "2023-01-01")
+    expect_true("bioc::Rgraphviz" %in% names(x$ranglets[[1]]$deps))
+})
+
+test_that("dockerize R1.3.1 local", {
+    skip_if_offline()
+    skip_on_cran()
+    expect_error(suppressWarnings(graph <- resolve("../testdata/sna_0.3.tar.gz", snapshot_date = "2001-09-11")), NA)
+    temp_dir <- .generate_temp_dir()
+    expect_error(dockerize(graph, output_dir = temp_dir, cache = TRUE, verbose = FALSE), NA)
+    x <- readLines(file.path(temp_dir, "rang.R"))
+    expect_true(any(grepl("^## DEBUG INFO: CMD", x)))
+})
+
+## always keep this at the very last
 
 test_that("issue 102 confusion between github and local pkgref", {
     skip_if_offline()
@@ -309,11 +328,4 @@ test_that("issue 102 confusion between github and local pkgref", {
     expect_error(suppressWarnings(graph <- resolve("local::./askpass", snapshot_date = "2023-01-01")), NA)
     expect_equal(.parse_pkgref(unique(graph$ranglets[[1]]$original$x_pkgref), FALSE), "local")
     setwd(original_wd)
-})
-
-test_that("Rgraphviz", {
-    skip_if_offline()
-    skip_on_cran()
-    x <- resolve("bioc::biocGraph", snapshot_date = "2023-01-01")
-    expect_true("bioc::Rgraphviz" %in% names(x$ranglets[[1]]$deps))
 })
