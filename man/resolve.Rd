@@ -5,17 +5,17 @@
 \title{Resolve Dependencies Of R Packages}
 \usage{
 resolve(
-  pkgs,
+  pkgs = ".",
   snapshot_date,
   no_enhances = TRUE,
   no_suggests = TRUE,
-  get_sysreqs = TRUE,
+  query_sysreqs = TRUE,
   os = "ubuntu-20.04",
   verbose = FALSE
 )
 }
 \arguments{
-\item{pkgs}{character vector of R packages to resolve}
+\item{pkgs}{\code{pkgs} can be 1) a character vector of R packages to resolve, 2) a path to a \href{https://rstudio.github.io/renv/articles/lockfile.html}{\code{renv} lockfile}, or 3) a data structure that \code{\link[=as_pkgrefs]{as_pkgrefs()}} can convert to a character vector of package references. For 1) \code{pkgs} can be either in shorthands, e.g. "rtoot", "ropensci/readODS", or in package references, e.g. "cran::rtoot", "github::ropensci/readODS". Please refer to the \href{https://r-lib.github.io/pkgdepends/reference/pkg_refs.html}{Package References documentation} of \code{pak} for details. Currently, this package supports only cran and github packages. For 2) \code{\link[=as_pkgrefs]{as_pkgrefs()}} support the output of \code{\link[=sessionInfo]{sessionInfo()}}, a renv lockfile or a single directory. If it is a single directory, all R scripts are scanned for R packages used using \code{\link[renv:dependencies]{renv::dependencies()}}. Currently, the default is to scan the R scripts in the current working directory. Please also note that this scanning only assumes there are CRAN and Bioconductor packages. We strongly recommend checking whether this is really the case (see example below).}
 
 \item{snapshot_date}{Snapshot date, if not specified, assume to be a month ago}
 
@@ -23,17 +23,27 @@ resolve(
 
 \item{no_suggests}{logical, whether to ignore packages in the "Suggests" field}
 
-\item{get_sysreqs}{logical, whether to query for System Requirements}
+\item{query_sysreqs}{logical, whether to query for System Requirements. Important: Archived CRAN can't be queried for system requirements. Those
+packages are assumed to have no system requirement.}
 
 \item{os}{character, which OS to query for system requirements}
 
 \item{verbose}{logical, whether to display messages}
 }
 \value{
-S3 object \code{granlist}
+a \code{rang} S3 object with the following items
+\item{call}{original function call}
+\item{ranglets}{List of dependency graphs of all packages in \code{pkgs}}
+\item{snapshot_date}{\code{snapshot_date}}
+\item{no_enhances}{\code{no_enhances}}
+\item{no_suggests}{\code{no_suggests}}
+\item{unresolved_pkgsrefs}{Packages that can't be resolved}
+\item{sysreqs}{System requirements as Linux commands}
+\item{r_version}{The latest R version as of \code{snapshot_date}}
+\item{os}{\code{os}}
 }
 \description{
-This function recursively queries dependencies of R packages at a specific snapshot time. The dependency graph can then be used to recreate the computing environment. The data on dependencies are provided by R-hub.
+This function recursively queries dependencies of R packages at a specific snapshot time. The dependency graph can then be used to recreate the computational environment. The data on dependencies are provided by R-hub.
 }
 \examples{
 \donttest{
@@ -41,8 +51,21 @@ if (interactive()) {
     graph <- resolve(pkgs = c("openNLP", "LDAvis", "topicmodels", "quanteda"),
                 snapshot_date = "2020-01-16")
     graph
+    ## to resolve github packages
+    gh_graph <- resolve(pkgs = c("https://github.com/schochastics/rtoot"),
+                   snapshot_date = "2022-11-28")
+    gh_graph
+    ## scanning
+    graph <- resolve(snapshot_date = "2022-11-28")
+    ## But we recommend this:
+    pkgs <- as_pkgrefs(".")
+    pkgs ## check the accuracy
+    graph <- resolve(pkgs, snapshot_date = "2022-11-28")
 }
 }
+}
+\references{
+\href{https://r-lib.github.io/pkgdepends/reference/pkg_refs.html}{Package References}
 }
 \seealso{
 \code{\link[=dockerize]{dockerize()}}

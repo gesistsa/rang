@@ -1,4 +1,12 @@
 ^README\.Rmd$
+^README\.html$
 ^LICENSE\.md$
 ^paper
 ^\.github$
+^cran-comments\.md$
+^CRAN-SUBMISSION$
+^.editorconfig$
+^.codecov.yml$
+^.*\.Rproj$
+^\.Rproj\.user$
+tests/.renvignore

@@ -7,6 +7,6 @@
 # * https://testthat.r-lib.org/reference/test_package.html#special-files
 
 library(testthat)
-library(gran)
+library(rang)
 
-test_check("gran")
+test_check("rang")
