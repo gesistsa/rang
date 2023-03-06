@@ -447,7 +447,8 @@ export_renv <- function(rang, path = ".") {
 #' This applies only to R version >= 3.1
 #' @param cache logical, whether to cache the packages now. Please note that the system requirements are not cached. For query with non-CRAN packages, this option is strongly recommended. For query with local packages, this must be TRUE regardless of R version. For R version < 3.1, this must be also TRUE if there is any non-CRAN packages.
 #' @param no_rocker logical, whether to skip using Rocker images even when an appropriate version is available. Please keep this as `TRUE` unless you know what you are doing
-#' @param debian_version, when Rocker images are not used, which EOL version of Debian to use. Can only be "lenny", "etch", "squeeze", "wheezy", "jessie", "stretch". Please keep this as default "lenny" unless you know what you are doing
+#' @param debian_version when Rocker images are not used, which EOL version of Debian to use. Can only be "lenny", "etch", "squeeze", "wheezy", "jessie", "stretch". Please keep this as default "lenny" unless you know what you are doing
+#' @param skip_r17 logical, whether to skip R 1.7.x. Currently, it is not possible to compile R 1.7.x (R 1.7.0 and R 1.7.1) with the method provided by  `rang`. It affects `snapshot_date` from 2003-04-16 to 2003-10-07. When `skip_r17` is TRUE and `snapshot_date` is within the aforementioned range, R 1.8.0 is used instead.
 #' @param ... arguments to be passed to `dockerize`
 #' @return `output_dir`, invisibly
 #' @inheritParams export_rang
@@ -470,7 +471,8 @@ dockerize <- function(rang, output_dir, materials_dir = NULL, image = c("r-ver",
                       cran_mirror = "https://cran.r-project.org/", check_cran_mirror = TRUE,
                       bioc_mirror = "https://bioconductor.org/packages/",
                       no_rocker = FALSE,
-                      debian_version = c("lenny", "squeeze", "wheezy", "jessie", "stretch")) {
+                      debian_version = c("lenny", "squeeze", "wheezy", "jessie", "stretch"),
+                      skip_r17 = TRUE) {
     if (length(rang$ranglets) == 0) {
         warning("Nothing to dockerize.")
         return(invisible(NULL))
@@ -509,16 +511,20 @@ dockerize <- function(rang, output_dir, materials_dir = NULL, image = c("r-ver",
     if (isTRUE(cache)) {
         .cache_pkgs(rang, output_dir, cran_mirror, bioc_mirror, verbose)
     }
+    if (isTRUE(skip_r17) && rang$r_version %in% c("1.7.0", "1.7.1")) {
+        r_version <- "1.8.0"
+    } else {
+        r_version <- rang$r_version
+    }
     if (.is_r_version_older_than(rang, "3.1") || isTRUE(no_rocker)) {
         file.copy(system.file("compile_r.sh", package = "rang"), file.path(output_dir, "compile_r.sh"),
                   overwrite = TRUE)
-
-        dockerfile_content <- .generate_debian_eol_dockerfile_content(r_version = rang$r_version,
+        dockerfile_content <- .generate_debian_eol_dockerfile_content(r_version = r_version,
                                                                       sysreqs_cmd = sysreqs_cmd, lib = lib,
                                                                       cache = cache,
                                                                       debian_version = debian_version)
     } else {
-        dockerfile_content <- .generate_rocker_dockerfile_content(r_version = rang$r_version,
+        dockerfile_content <- .generate_rocker_dockerfile_content(r_version = r_version,
                                                                   sysreqs_cmd = sysreqs_cmd, lib = lib,
                                                                   cache = cache, image = image)
     }

@@ -318,6 +318,21 @@ test_that("dockerize R1.3.1 local", {
     expect_true(any(grepl("^## DEBUG INFO: CMD", x)))
 })
 
+test_that("skip_r17", {
+    skip_if_offline()
+    skip_on_cran()
+    expect_error(suppressWarnings(graph <- resolve("../testdata/sna_0.3.tar.gz", snapshot_date = "2003-04-17")), NA)
+    expect_equal(graph$r_version, "1.7.0")
+    temp_dir <- .generate_temp_dir()
+    expect_error(dockerize(graph, output_dir = temp_dir, cache = TRUE, verbose = FALSE), NA) ## skip_r17 = TRUE
+    x <- readLines(file.path(temp_dir, "Dockerfile"))
+    expect_true(any(grepl("^RUN bash compile_r\\.sh 1\\.8\\.0", x)))
+    expect_error(dockerize(graph, output_dir = temp_dir, cache = TRUE, verbose = FALSE, skip_r17 = FALSE), NA)
+    x <- readLines(file.path(temp_dir, "Dockerfile"))
+    expect_false(any(grepl("^RUN bash compile_r\\.sh 1\\.8\\.0", x)))
+    expect_true(any(grepl("^RUN bash compile_r\\.sh 1\\.7\\.0", x)))
+})
+
 ## always keep this at the very last
 
 test_that("issue 102 confusion between github and local pkgref", {
