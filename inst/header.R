@@ -81,7 +81,6 @@ if (file.exists("cache")) {
     }
     expected.tarball.path <- paste(x, "_", version, ".tar.gz", sep = "")
     res <- system(command = paste("R", "CMD", "build", vignetteflag, dir.pkg.path))
-    expected.tarball.path <- paste(x, "_", version, ".tar.gz", sep = "")
     stopifnot(file.exists(expected.tarball.path))
     file.rename(expected.tarball.path, tarball.path)
     return(tarball.path)
