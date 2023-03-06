@@ -33,7 +33,7 @@ The ability to reconstruct the computational environment is one of the most impo
 
 `renv` [@renvrpkg] (and its derivatives such as `jetpack` and its predecessor `packrat`) takes a similar approach to Python's `virtualenv` and Ruby's `Gem` to pin down the exact version of R packages using a "lock file". `containerit` [@nuest:2019] takes the current state of the computational environment and "containerize" it as a Dockerfile. But `containerit` does not pin down the exact version of R packages. Other solutions such as `groundhog` [@groundhogrpkg] and `checkpoint` [@checkpointrpkg] depend on the availability of The Microsoft R Application Network (MRAN), which will be shut down on July 1st, 2023. 
 
-These solutions are better for prospective usage, i.e. using them now to ensure the reproducibility of the current research for future researchers. `rang` mostly targets retrospective usage, i.e. using `rang` to reconstruct historical R computational environments which have not been completely declared. One can think of `rang` as an archaeological tool. In the following examples, `rang` is used to enable the reproducibility of published literature.
+These solutions are better for prospective usage, i.e. using them now to ensure the reproducibility of the current research for future researchers. `rang` mostly targets retrospective usage, i.e. using `rang` to reconstruct historical R computational environments which have not been completely declared. One can think of `rang` as an archaeological tool. In Section 3, `rang` is used to enable the reproducibility of published literature.
 
 # Basic usage
 
@@ -209,7 +209,7 @@ The same file can also be "rescued" by `rang`.
 
 [^groundhog]: http://datacolada.org/100
 
-## Recover a removed R package
+## Recover a removed R package: maxent
 
 The R package `maxent` introduces a machine learning algorithm with a small memory footprint and was available on CRAN until 2019. A software paper was published by the original authors in 2012 [@jurka:2012]. The R package was also used in some subsequent automated content analytic papers [e.g. @loercher:2017:D].
 
@@ -228,15 +228,24 @@ dockerize(maxent, "maxentdir", cache = TRUE)
 
 [^speed]: On an interesting historical note: The original paper reported, based on a benchmark, that "the algorithm is very fast; `maxent` uses only 135.4 megabytes of RAM and finishes in 53.3 seconds." On a modest computer in 2023 with a dockerized R 2.15.0, the benchmark finishes in 4 seconds.
 
+## Recover a removed R package: ptproc
+
+The R package `ptproc` was published as a paper in 2003 [@peng:2003:MDP]. But the package has been removed from CRAN for over a decade (at least). The only release on CRAN was on 2002-10-10. The package is still listed in the "Handling and Analyzing Spatio-Temporal Data" CRAN Task View. As of writing, the package is still downloadable from the original author's website [^peng].
+
+Despite this over-a-decade removal, there is evidence that the package is still being sought for. As late as 2017, there are blog posts on how to install the long obsolete package on modern R [^blog].
+
+[^peng]: https://www.biostat.jhsph.edu/~rpeng/software/
+
+[^blog]: https://blog.mathandpencil.com/installing-ptproc-on-osx and https://tomaxent.com/2017/03/16/Installing-ptproc-on-Ubuntu-16-04-LTS/
+
 ## Recover a removed Bioconductor package
 
 Similar to CRAN, Bioconductor is a series of repositories of R package for bioinformatics and computational biology. Also similar to CRAN, packages can get removed over time.
 
-The Bioconductor package `Sushi` has been deprecated by the original authors and is removed from Bioconductor version 3.16 (2022-11-02). It is a data visualization tool for genomic data and was used in various online tutorials and papers, including the original paper announcing the package by the original authors [@phanstiel:2014:S].
+The Bioconductor package `Sushi` has been deprecated by the original authors and is removed from Bioconductor version 3.16 (2022-11-02). It is a data visualization tool for genomic data and was used in many online tutorials and papers, including the original paper announcing the package by the original authors [@phanstiel:2014:S].
 
+# Producing a research compendium
 
-
-# Generating a research compendium
 
 # Conclusion
 
