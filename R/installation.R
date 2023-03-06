@@ -229,6 +229,10 @@
     invisible(output_dir)
 }
 
+.is_r_version_older_than <- function(rang, r_version = "1.3.1") {
+    utils::compareVersion(rang$r_version, r_version) == -1
+}
+
 .insert_cache_dir <- function(dockerfile_content) {
     rang_line <- which(dockerfile_content == "RUN Rscript rang.R")
     c(dockerfile_content[1:(rang_line - 1)],
@@ -322,7 +326,7 @@
 export_rang <- function(rang, path, rang_as_comment = TRUE, verbose = TRUE, lib = NA,
                             cran_mirror = "https://cran.r-project.org/", check_cran_mirror = TRUE,
                             bioc_mirror = "https://bioconductor.org/packages/") {
-    if (utils::compareVersion(rang$r_version, "2.1") == -1) {
+    if (.is_r_version_older_than(rang, "1.3.1")) {
         stop("`export_rang` doesn't support this R version (yet).")
     }
     if (length(rang$ranglets) == 0) {
@@ -335,14 +339,19 @@ export_rang <- function(rang, path, rang_as_comment = TRUE, verbose = TRUE, lib 
             stop(cran_mirror, "does not appear to be a valid CRAN mirror.", call. = FALSE)
         }
     }
-    if (utils::compareVersion(rang$r_version, "3.3") == -1) { #20
+    if (.is_r_version_older_than(rang, "3.3")) { #20
         cran_mirror <- .normalize_url(cran_mirror, https = FALSE)
     }
     installation_order <- .generate_installation_order(rang)
     file.create(path)
     con <- file(path, open="w")
-    writeLines(readLines(system.file("header.R", package = "rang")), con = con)
-    cat("installation_order <- ", file = con)
+    if (.is_r_version_older_than(rang, "2.1")) {
+        header_file <- "header_cmd.R"
+    } else {
+        header_file <- "header.R"
+    }
+    writeLines(readLines(system.file(header_file, package = "rang")), con = con)
+    cat("installation.order <- ", file = con)
     dput(installation_order, file = con)
     cat("\n", file = con)
     cat(paste0("verbose <- ", as.character(verbose), "\n"), file = con)
@@ -351,9 +360,9 @@ export_rang <- function(rang, path, rang_as_comment = TRUE, verbose = TRUE, lib 
     } else {
         cat(paste0("lib <- \"", as.character(lib), "\"\n"), file = con)
     }
-    cat(paste0("cran_mirror <- \"", cran_mirror, "\"\n"), file = con)
+    cat(paste0("cran.mirror <- \"", cran_mirror, "\"\n"), file = con)
     if(!is.null(rang$bioc_version)) {
-        cat(paste0("bioc_mirror <- \"", "https://bioconductor.org/packages/",rang$bioc_version,"/", "\"\n"), file = con)
+        cat(paste0("bioc.mirror <- \"", "https://bioconductor.org/packages/",rang$bioc_version,"/", "\"\n"), file = con)
     }
     writeLines(readLines(system.file("footer.R", package = "rang")), con = con)
     if (isTRUE(rang_as_comment)) {
@@ -391,7 +400,7 @@ export_renv <- function(rang, path = ".") {
     names(pkg_list) <- pkg_df$x
     for(i in seq_len(nrow(pkg_df))){
         pkg_list[[i]][["Package"]] <- pkg_df$x[i]
-        pkg_list[[i]][["Version"]] <- pkg_df$version[i] 
+        pkg_list[[i]][["Version"]] <- pkg_df$version[i]
         if(pkg_df$source[i]=="cran"){
             pkg_list[[i]][["Source"]] <- "Repository"
             pkg_list[[i]][["Repository"]] <- "CRAN"
@@ -438,7 +447,8 @@ export_renv <- function(rang, path = ".") {
 #' This applies only to R version >= 3.1
 #' @param cache logical, whether to cache the packages now. Please note that the system requirements are not cached. For query with non-CRAN packages, this option is strongly recommended. For query with local packages, this must be TRUE regardless of R version. For R version < 3.1, this must be also TRUE if there is any non-CRAN packages.
 #' @param no_rocker logical, whether to skip using Rocker images even when an appropriate version is available. Please keep this as `TRUE` unless you know what you are doing
-#' @param debian_version, when Rocker images are not used, which EOL version of Debian to use. Can only be "lenny", "etch", "squeeze", "wheezy", "jessie", "stretch". Please keep this as default "lenny" unless you know what you are doing
+#' @param debian_version when Rocker images are not used, which EOL version of Debian to use. Can only be "lenny", "etch", "squeeze", "wheezy", "jessie", "stretch". Please keep this as default "lenny" unless you know what you are doing
+#' @param skip_r17 logical, whether to skip R 1.7.x. Currently, it is not possible to compile R 1.7.x (R 1.7.0 and R 1.7.1) with the method provided by  `rang`. It affects `snapshot_date` from 2003-04-16 to 2003-10-07. When `skip_r17` is TRUE and `snapshot_date` is within the aforementioned range, R 1.8.0 is used instead.
 #' @param ... arguments to be passed to `dockerize`
 #' @return `output_dir`, invisibly
 #' @inheritParams export_rang
@@ -461,7 +471,8 @@ dockerize <- function(rang, output_dir, materials_dir = NULL, image = c("r-ver",
                       cran_mirror = "https://cran.r-project.org/", check_cran_mirror = TRUE,
                       bioc_mirror = "https://bioconductor.org/packages/",
                       no_rocker = FALSE,
-                      debian_version = c("lenny", "etch", "squeeze", "wheezy", "jessie", "stretch")) {
+                      debian_version = c("lenny", "squeeze", "wheezy", "jessie", "stretch"),
+                      skip_r17 = TRUE) {
     if (length(rang$ranglets) == 0) {
         warning("Nothing to dockerize.")
         return(invisible(NULL))
@@ -472,17 +483,18 @@ dockerize <- function(rang, output_dir, materials_dir = NULL, image = c("r-ver",
     if (!grepl("^ubuntu", rang$os)) {
         stop("System dependencies of ", rang$os, " can't be dockerized.", call. = FALSE)
     }
-    if (utils::compareVersion(rang$r_version, "2.1") == -1) {
+    if (.is_r_version_older_than(rang, "1.3.1")) {
         stop("`dockerize` doesn't support this R version (yet):", rang$r_version, call. = FALSE)
     }
     if (!is.null(materials_dir) && !(dir.exists(materials_dir))) {
         stop(paste0("The folder ", materials_dir, " does not exist"), call. = FALSE)
     }
     need_cache <- (isTRUE(any(grepl("^github::", .extract_pkgrefs(rang)))) &&
-                   utils::compareVersion(rang$r_version, "3.1") == -1) ||
+                   .is_r_version_older_than(rang, "3.1")) ||
         (isTRUE(any(grepl("^bioc::", .extract_pkgrefs(rang)))) &&
-         utils::compareVersion(rang$r_version, "3.3") == -1) ||
-        (isTRUE(any(grepl("^local::", .extract_pkgrefs(rang)))))
+         .is_r_version_older_than(rang, "3.3")) ||
+        (isTRUE(any(grepl("^local::", .extract_pkgrefs(rang))))) ||
+        .is_r_version_older_than(rang, "2.1")
     if (isTRUE(need_cache) && isFALSE(cache)) {
         stop("Packages must be cached. Please set `cache` = TRUE.", call. = FALSE)
     }
@@ -499,16 +511,20 @@ dockerize <- function(rang, output_dir, materials_dir = NULL, image = c("r-ver",
     if (isTRUE(cache)) {
         .cache_pkgs(rang, output_dir, cran_mirror, bioc_mirror, verbose)
     }
-    if (utils::compareVersion(rang$r_version, "3.1") == -1 || isTRUE(no_rocker)) {
+    if (isTRUE(skip_r17) && rang$r_version %in% c("1.7.0", "1.7.1")) {
+        r_version <- "1.8.0"
+    } else {
+        r_version <- rang$r_version
+    }
+    if (.is_r_version_older_than(rang, "3.1") || isTRUE(no_rocker)) {
         file.copy(system.file("compile_r.sh", package = "rang"), file.path(output_dir, "compile_r.sh"),
                   overwrite = TRUE)
-
-        dockerfile_content <- .generate_debian_eol_dockerfile_content(r_version = rang$r_version,
+        dockerfile_content <- .generate_debian_eol_dockerfile_content(r_version = r_version,
                                                                       sysreqs_cmd = sysreqs_cmd, lib = lib,
                                                                       cache = cache,
                                                                       debian_version = debian_version)
     } else {
-        dockerfile_content <- .generate_rocker_dockerfile_content(r_version = rang$r_version,
+        dockerfile_content <- .generate_rocker_dockerfile_content(r_version = r_version,
                                                                   sysreqs_cmd = sysreqs_cmd, lib = lib,
                                                                   cache = cache, image = image)
     }

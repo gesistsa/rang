@@ -64,17 +64,17 @@ test_that("integration of mirror selection to `export_rang` #18", {
     temp_r <- tempfile(fileext = ".R")
     export_rang(rang_ok, path = temp_r) ## cran_mirror = "https://cran.r-project.org/"
     x <- readLines(temp_r)
-    expect_true(any(grepl("^cran_mirror <- \"https://cran\\.r\\-project\\.org/\"", x)))
+    expect_true(any(grepl("^cran.mirror <- \"https://cran\\.r\\-project\\.org/\"", x)))
     export_rang(rang_ok, path = temp_r, cran_mirror = "cran.r-project.org")
     x <- readLines(temp_r)
-    expect_true(any(grepl("^cran_mirror <- \"https://cran\\.r\\-project\\.org/\"", x)))
+    expect_true(any(grepl("^cran.mirror <- \"https://cran\\.r\\-project\\.org/\"", x)))
     export_rang(rang_ok, path = temp_r, cran_mirror = "https://cloud.r-project.org/")
     x <- readLines(temp_r)
-    expect_true(any(grepl("^cran_mirror <- \"https://cloud\\.r\\-project\\.org/\"", x)))
+    expect_true(any(grepl("^cran.mirror <- \"https://cloud\\.r\\-project\\.org/\"", x)))
     expect_error(export_rang(rang_ok, path = temp_r, cran_mirror = "https://www.chainsawriot.com/"))
     expect_error(export_rang(rang_ok, path = temp_r, cran_mirror = "https://www.chainsawriot.com/", check_cran_mirror = FALSE), NA)
     x <- readLines(temp_r)
-    expect_true(any(grepl("^cran_mirror <- \"https://www\\.chainsawriot\\.com/\"", x)))
+    expect_true(any(grepl("^cran.mirror <- \"https://www\\.chainsawriot\\.com/\"", x)))
 })
 
 test_that("integration of https to `export_rang` #20", {
@@ -83,29 +83,29 @@ test_that("integration of https to `export_rang` #20", {
     temp_r <- tempfile(fileext = ".R")
     export_rang(rang_ok, path = temp_r) ## cran_mirror = "https://cran.r-project.org/"
     x <- readLines(temp_r)
-    expect_true(any(grepl("^cran_mirror <- \"https://cran\\.r\\-project\\.org/\"", x)))
+    expect_true(any(grepl("^cran.mirror <- \"https://cran\\.r\\-project\\.org/\"", x)))
     rang_ok <- readRDS("../testdata/rang_ok.RDS")
     rang_ok$r_version <- "3.3.0"
     temp_r <- tempfile(fileext = ".R")
     export_rang(rang_ok, path = temp_r) ## cran_mirror = "https://cran.r-project.org/"
     x <- readLines(temp_r)
-    expect_true(any(grepl("^cran_mirror <- \"https://cran\\.r\\-project\\.org/\"", x)))
+    expect_true(any(grepl("^cran.mirror <- \"https://cran\\.r\\-project\\.org/\"", x)))
     rang_ok <- readRDS("../testdata/rang_ok.RDS")
     rang_ok$r_version <- "3.2.0"
     temp_r <- tempfile(fileext = ".R")
     export_rang(rang_ok, path = temp_r) ## cran_mirror = "https://cran.r-project.org/"
     x <- readLines(temp_r)
-    expect_false(any(grepl("^cran_mirror <- \"https://cran\\.r\\-project\\.org/\"", x)))
-    expect_true(any(grepl("^cran_mirror <- \"http://cran\\.r\\-project\\.org/\"", x)))
+    expect_false(any(grepl("^cran.mirror <- \"https://cran\\.r\\-project\\.org/\"", x)))
+    expect_true(any(grepl("^cran.mirror <- \"http://cran\\.r\\-project\\.org/\"", x)))
 })
 
-test_that("Docker R < 2.1", {
+test_that("Docker R < 1.3.1", {
     rang_rio <- readRDS("../testdata/rang_rio_old.RDS")
-    rang_rio$r_version <- "2.1.0" ## exactly 2.1.0, no error
+    rang_rio$r_version <- "1.3.1" ## exactly 1.3.1, no error
     temp_r <- tempfile(fileext = ".R")
     expect_error(export_rang(rang_rio, path = temp_r), NA)
     rang_rio <- readRDS("../testdata/rang_rio_old.RDS")
-    rang_rio$r_version <- "2.0.0"
+    rang_rio$r_version <- "1.0.0"
     expect_error(export_rang(rang_rio, path = temp_r))
 })
 
@@ -179,4 +179,9 @@ test_that("renv export unknown source", {
   graph <- readRDS("../testdata/rang_ok.RDS")
   graph$ranglets[[1]]$original$x_pkgref <- "errr::or"
   expect_error(export_rang(graph, temp_dir))
+})
+
+test_that("Super ancient special packages", {
+    graph <- readRDS("../testdata/superancientsna.RDS")
+    expect_error(.generate_installation_order(graph), NA)
 })

@@ -20,7 +20,8 @@ dockerize(
   check_cran_mirror = TRUE,
   bioc_mirror = "https://bioconductor.org/packages/",
   no_rocker = FALSE,
-  debian_version = c("lenny", "etch", "squeeze", "wheezy", "jessie", "stretch")
+  debian_version = c("lenny", "squeeze", "wheezy", "jessie", "stretch"),
+  skip_r17 = TRUE
 )
 
 dockerize_rang(...)
@@ -57,7 +58,9 @@ and \code{\link[=download.file]{download.file()}}.}
 
 \item{no_rocker}{logical, whether to skip using Rocker images even when an appropriate version is available. Please keep this as \code{TRUE} unless you know what you are doing}
 
-\item{debian_version, }{when Rocker images are not used, which EOL version of Debian to use. Can only be "lenny", "etch", "squeeze", "wheezy", "jessie", "stretch". Please keep this as default "lenny" unless you know what you are doing}
+\item{debian_version}{when Rocker images are not used, which EOL version of Debian to use. Can only be "lenny", "etch", "squeeze", "wheezy", "jessie", "stretch". Please keep this as default "lenny" unless you know what you are doing}
+
+\item{skip_r17}{logical, whether to skip R 1.7.x. Currently, it is not possible to compile R 1.7.x (R 1.7.0 and R 1.7.1) with the method provided by  \code{rang}. It affects \code{snapshot_date} from 2003-04-16 to 2003-10-07. When \code{skip_r17} is TRUE and \code{snapshot_date} is within the aforementioned range, R 1.8.0 is used instead.}
 
 \item{...}{arguments to be passed to \code{dockerize}}
 }

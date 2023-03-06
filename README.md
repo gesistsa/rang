@@ -193,7 +193,7 @@ With any browser, go to: `local:8787`. The default username is
 `rang` can still be used to recreate computational environments for R \<
 3.1.0. The Dockerfile generated is based on Debian Lenny (5.0) and the
 requested version of R is compiled from source. As of writing, this
-method works for R \< 3.1.0 but not R \< 2.1.0. The `image` parameter is
+method works for R \< 3.1.0 but not R \< 1.3.1. The `image` parameter is
 ignored in this case.
 
 ``` r
