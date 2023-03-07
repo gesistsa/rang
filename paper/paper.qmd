@@ -183,9 +183,7 @@ All R scripts ran fine inside the container and the figures generated are the sa
 
 The study by @trisovic:2022 evaluates the reproducibility of R scripts shared on Dataverse. They found that 75\% of R scripts cannot be successfully executed. Among these failed R scripts is an R script shared by @beck:2019:EGD.
 
-This R script has been "rescued" by the author of the R package `groundhog` [@groundhogrpkg], as demonstrated in a blog post [^groundhog]. We were wondering if `rang` can also be used to rescue the concerned R script.
-
-The date of the R script, as indicated on Dataverse, is 2018-12-12. This date is used as the snapshot date.
+This R script has been "rescued" by the author of the R package `groundhog` [@groundhogrpkg], as demonstrated in a blog post [^groundhog]. We were wondering if `rang` can also be used to "rescue" the concerned R script. The date of the R script, as indicated on Dataverse, is 2018-12-12. This date is used as the snapshot date.
 
 ```r
 graph <- resolve(c("foreign", "bife"), snapshot_date = "2018-12-12")
@@ -211,9 +209,7 @@ The same file can also be "rescued" by `rang`.
 
 ## Recover a removed R package: maxent
 
-The R package `maxent` introduces a machine learning algorithm with a small memory footprint and was available on CRAN until 2019. A software paper was published by the original authors in 2012 [@jurka:2012]. The R package was also used in some subsequent automated content analytic papers [e.g. @loercher:2017:D].
-
-Despite the covert editing of the package by a staffer of CRAN [^evidence], the package was removed from CRAN in 2019 [^checkerror]. We attempted to install the second last (the original submitted version) and last (with covert editing) versions of `maxent` on R 4.2.2. Both of them didn't work.
+The R package `maxent` introduces a machine learning algorithm with a small memory footprint and was available on CRAN until 2019. A software paper was published by the original authors in 2012 [@jurka:2012]. The R package was also used in some subsequent automated content analytic papers [e.g. @loercher:2017:D]. Despite the covert editing of the package by a staffer of CRAN [^evidence], the package was removed from CRAN in 2019 [^checkerror]. We attempted to install the second last (the original submitted version) and last (with covert editing) versions of `maxent` on R 4.2.2. Both of them didn't work.
 
 Using `rang`, we are able to reconstruct a computational environment with R 2.15.0 (2012-03-30) to run all code snippets published in @jurka:2012 [^speed]. For removed CRAN packages, we strongly recommend querying the Github read-only mirror of CRAN instead (https://github.com/cran). It is because in this way, the resolved system requirements have a higher chance of being correct.
 
@@ -226,13 +222,58 @@ dockerize(maxent, "maxentdir", cache = TRUE)
 
 [^evidence]: https://github.com/cran/maxent/commit/9d46c6aad27a1f41a78907b170ddd9a586192be9
 
-[^speed]: On an interesting historical note: The original paper reported, based on a benchmark, that "the algorithm is very fast; `maxent` uses only 135.4 megabytes of RAM and finishes in 53.3 seconds." On a modest computer in 2023 with a dockerized R 2.15.0, the benchmark finishes in 4 seconds.
+[^speed]: On an interesting historical side note: The original paper reported ---based on a benchmark--- that "the algorithm is very fast; `maxent` uses only 135.4 megabytes of RAM and finishes in 53.3 seconds." On a modest computer in 2023 with a dockerized R 2.15.0, the benchmark finishes in 4 seconds.
 
 ## Recover a removed R package: ptproc
 
-The R package `ptproc` was published as a paper in 2003 [@peng:2003:MDP]. But the package has been removed from CRAN for over a decade (at least). The only release on CRAN was on 2002-10-10. The package is still listed in the "Handling and Analyzing Spatio-Temporal Data" CRAN Task View. As of writing, the package is still downloadable from the original author's website [^peng].
+The software paper of the R package `ptproc` was published in 2003 and introduced multidimensional point process models [@peng:2003:MDP]. But the package has been removed from CRAN for over a decade (at least). The only release on CRAN was on 2002-10-10. The package is still listed in the "Handling and Analyzing Spatio-Temporal Data" CRAN Task View despite being uninstallable without modification on any modern R system (see below). As of writing, the package, as a tarball file (tar.gz), is still downloadable from the original author's website [^peng].
 
-Despite this over-a-decade removal, there is evidence that the package is still being sought for. As late as 2017, there are blog posts on how to install the long obsolete package on modern R [^blog].
+Even with this over-a-decade removal and new packages with similar functionalities have been created, there is evidence that `ptproc` is still being sought for. As late as 2017, there are blog posts on how to install the long obsolete package on modern R [^blog]. The package is extremely challenging to install on a modern R system because the package was written before the introduction of name space management in R 1.7.0 [@RN-2003-001]. In other words, the available tarball file from the original author's website does not contain a `NAMESPACE` file as all other modern R packages do.
+
+The oldest version of R that `rang` can support, as of writing, is R 1.3.1. `rang` is probably the only solution available that can support the 1.x series of R (i.e. before 2004-10-04). Similar to the case of `maxent` above, a Docker image with the available tarball file of `ptproc` can be generated with two lines of code.
+
+```r
+graph <- resolve("ptproc", snapshot_date = "2004-07-01")
+dockerize(graph, "~/dev/misc/ptproc", cache = TRUE)
+```
+
+Suppose we have an R script called "peng.R" like this (extracted from @peng:2003:MDP)
+
+```r
+require(ptproc)
+
+set.seed(1000)
+x <- cbind(runif(100), runif(100), runif(100))
+hPois.cond.int <- function(params, eval.pts, pts = NULL, data = NULL, TT = NULL) {
+    mu <- params[1]
+    if(is.null(TT))
+        rep(mu, nrow(eval.pts))
+    else {
+        vol <- prod(apply(TT, 2, diff))
+        mu * vol
+    }
+}
+ppm <- ptproc(pts = x, cond.int = hPois.cond.int, params = 50,
+              ranges = cbind(c(0,1), c(0,1), c(0,1)))
+fit <- ptproc.fit(ppm, optim.control = list(trace = 2), method = "BFGS")
+summary(fit)
+```
+
+One can integrate `rang` into a BASH script to completely automate the batch execution of the above R script.
+
+```bash
+Rscript -e "require(rang); dockerize(resolve('ptproc', '2004-07-01'),
+'pengdocker', cache = TRUE)"
+docker build -t pengimg ./pengdocker
+docker run -d --rm --name "pengcontainer" -ti pengimg
+docker cp peng.R pengcontainer:/peng.R
+docker exec pengcontainer R CMD BATCH peng.R
+docker exec pengcontainer cat peng.Rout
+docker cp pengcontainer:/peng.Rout peng.Rout
+docker stop pengcontainer
+```
+
+The file `peng.Rout` contains the execution results of the script from inside the Docker container.
 
 [^peng]: https://www.biostat.jhsph.edu/~rpeng/software/
 
@@ -242,9 +283,9 @@ Despite this over-a-decade removal, there is evidence that the package is still 
 
 Similar to CRAN, Bioconductor is a series of repositories of R package for bioinformatics and computational biology. Also similar to CRAN, packages can get removed over time.
 
-The Bioconductor package `Sushi` has been deprecated by the original authors and is removed from Bioconductor version 3.16 (2022-11-02). It is a data visualization tool for genomic data and was used in many online tutorials and papers, including the original paper announcing the package by the original authors [@phanstiel:2014:S].
+The Bioconductor package `Sushi` has been deprecated by the original authors and is removed from Bioconductor version 3.16 (2022-11-02). It is a data visualization tool for genomic data and was used in many online tutorials and scientific papers, including the original paper announcing the package by the original authors [@phanstiel:2014:S].
 
-# Producing a research compendium
+# Preparing research compendia with long-term computational reproducibility
 
 
 # Conclusion
