@@ -122,11 +122,12 @@ dockerize(graph, output_dir = "quanteda_docker",
           image = "rstudio")
 ```
 
-The above code snippet can be executed with the generated container without any problem.
+The above code snippet can be executed with the generated container without any problem (@fig-figure1).
 
 ```{r}
 #| fig.cap: The code snippet running in a R 3.5.1 container created with rang
 #| echo: FALSE
+#| label: fig-figure1
 knitr::include_graphics("quanteda_rstudio.png", dpi = 300)
 ```
 
@@ -226,18 +227,20 @@ dockerize(maxent, "maxentdir", cache = TRUE)
 
 ## Recover a removed R package: ptproc
 
-The software paper of the R package `ptproc` was published in 2003 and introduced multidimensional point process models [@peng:2003:MDP]. But the package has been removed from CRAN for over a decade (at least). The only release on CRAN was on 2002-10-10. The package is still listed in the "Handling and Analyzing Spatio-Temporal Data" CRAN Task View despite being uninstallable without modification on any modern R system (see below). As of writing, the package, as a tarball file (tar.gz), is still downloadable from the original author's website [^peng].
+The software paper of the R package `ptproc` was published in 2003 and introduced multidimensional point process models [@peng:2003:MDP]. But the package has been removed from CRAN for over a decade (at least). The only release on CRAN was on 2002-10-10. The package is still listed in the "Handling and Analyzing Spatio-Temporal Data" CRAN Task View [^taskview] despite being uninstallable without modification on any modern R system (see below). As of writing, the package, as a tarball file (tar.gz), is still downloadable from the original author's website [^peng].
+
+[^taskview]: https://cran.r-project.org/web/views/SpatioTemporal.html
 
 Even with this over-a-decade removal and new packages with similar functionalities have been created, there is evidence that `ptproc` is still being sought for. As late as 2017, there are blog posts on how to install the long obsolete package on modern R [^blog]. The package is extremely challenging to install on a modern R system because the package was written before the introduction of name space management in R 1.7.0 [@RN-2003-001]. In other words, the available tarball file from the original author's website does not contain a `NAMESPACE` file as all other modern R packages do.
 
-The oldest version of R that `rang` can support, as of writing, is R 1.3.1. `rang` is probably the only solution available that can support the 1.x series of R (i.e. before 2004-10-04). Similar to the case of `maxent` above, a Docker image with the available tarball file of `ptproc` can be generated with two lines of code.
+The oldest version of R that `rang` can support, as of writing, is R 1.3.1. `rang` is probably the only solution available that can support the 1.x series of R (i.e. before 2004-10-04). Similar to the case of `maxent` above, a Dockerfile to generate a Docker image with `ptproc` installed can be generated with two lines of code.
 
 ```r
 graph <- resolve("ptproc", snapshot_date = "2004-07-01")
 dockerize(graph, "~/dev/misc/ptproc", cache = TRUE)
 ```
 
-Suppose we have an R script called "peng.R" like this (extracted from @peng:2003:MDP)
+Suppose we have an R script, extracted from @peng:2003:MDP, called "peng.R" like this:
 
 ```r
 require(ptproc)
@@ -265,6 +268,7 @@ One can integrate `rang` into a BASH script to completely automate the batch exe
 Rscript -e "require(rang); dockerize(resolve('ptproc', '2004-07-01'),
 'pengdocker', cache = TRUE)"
 docker build -t pengimg ./pengdocker
+## launching a container in daemon mode -d
 docker run -d --rm --name "pengcontainer" -ti pengimg
 docker cp peng.R pengcontainer:/peng.R
 docker exec pengcontainer R CMD BATCH peng.R
@@ -273,20 +277,106 @@ docker cp pengcontainer:/peng.Rout peng.Rout
 docker stop pengcontainer
 ```
 
-The file `peng.Rout` contains the execution results of the script from inside the Docker container.
+The file `peng.Rout` contains the execution results of the script from inside the Docker container. As the random seed was preserved by the original author [@peng:2003:MDP], the above BASH script can perfectly reproduce the analysis [^random].
 
 [^peng]: https://www.biostat.jhsph.edu/~rpeng/software/
 
 [^blog]: https://blog.mathandpencil.com/installing-ptproc-on-osx and https://tomaxent.com/2017/03/16/Installing-ptproc-on-Ubuntu-16-04-LTS/
 
+[^random]: It is also important to note that the random number generator (RNG) of R has been changed several times over the course of the development. In this case, we are using the same generation of RNG as @peng:2003:MDP.
+
 ## Recover a removed Bioconductor package
 
 Similar to CRAN, Bioconductor is a series of repositories of R package for bioinformatics and computational biology. Also similar to CRAN, packages can get removed over time.
 
-The Bioconductor package `Sushi` has been deprecated by the original authors and is removed from Bioconductor version 3.16 (2022-11-02). It is a data visualization tool for genomic data and was used in many online tutorials and scientific papers, including the original paper announcing the package by the original authors [@phanstiel:2014:S].
+The Bioconductor package `Sushi` has been deprecated by the original authors and is removed from Bioconductor version 3.16 (2022-11-02). `Sushi` is a data visualization tool for genomic data and was used in many online tutorials and scientific papers, including the original paper announcing the package by the original authors [@phanstiel:2014:S].
+
+`rang` has native support for Bioconductor packages since 0.2. We obtained the R script `"PaperFigure.R"` from the Github repo of `Sushi` [^sushi], which generates the figure in @phanstiel:2014:S. Similar to the above case of `ptproc`, we made a completely automated BASH script to run `"PaperFigure.R"` and get the generated figure out of the container (@fig-figure2). We made no modification to `"PaperFigure.R"`.
+
+```sh
+Rscript -e "require(rang); dockerize(resolve('Sushi', '2014-06-05'),
+'sushidocker', no_rocker = TRUE, cache = TRUE)"
+docker build -t sushiimg ./sushidocker
+docker run -d --rm --name "sushicontainer" -ti sushiimg
+docker cp PaperFigure.R sushicontainer:/PaperFigure.R
+docker exec sushicontainer mkdir vignettes
+docker exec sushicontainer R CMD BATCH PaperFigure.R
+docker cp sushicontainer:/vignettes/Figure_1.pdf sushi_figure1.pdf
+docker stop sushicontainer
+```
+
+```{r}
+#| fig.cap: The figure from the batch execution of `PaperFigure.R` inside a Docker container generated by `rang`
+#| echo: FALSE
+#| label: fig-figure2
+knitr::include_graphics("sushi_figure1.pdf", dpi = 300)
+```
+
+[^sushi]: https://github.com/PhanstielLab/Sushi/blob/master/vignettes/PaperFigure.R
 
 # Preparing research compendia with long-term computational reproducibility
 
+The above six examples show how useful it is for `rang` reconstructing tricky computational environments which have not been completely declared in the literature. Although we position `rang` mostly as an archaeological tool, we also think that `rang` can also be used to prepare research compendia of current research. We can't predict the future but research compendia generated by `rang` would probably have long-term computational reproducibility.
+
+To demonstrate this point, we took the recent paper by @oser:2022:HPE. This paper was selected because 1) the paper was published in *Political Communication*, a high impact journal that awards Open Science Badges; 2) shared data and R code are available; and most importantly, 3) the shared R code is well-written. In the repository of this paper, we based on the materials shared by @oser:2022:HPE and prepared a research compendium that should have long-term computational reproducibility. The research compendium is similar to the Executable Compendium suggested by the Turing way.
+
+The preparation of the research compendium is easy as `rang` can scan a materials directory for all R packages used [^dmetar].
+
+```r
+require(rang)
+## meta-analysis is the directory of all shared materials
+cran_pkgs <- as_pkgrefs("meta-analysis") 
+
+## dmetar is an undeclared github package: MathiasHarrer/dmetar
+cran_pkgs[cran_pkgs == "cran::dmetar"] <- "MathiasHarrer/dmetar"
+x <- resolve(cran_pkgs, "2021-08-11", verbose = TRUE)
+print(x, all_pkgs = TRUE)
+dockerize(x, "oser_docker", materials_dir = "meta-analysis", cache = TRUE)
+```
+
+The above R script is saved as `oser.R`. The central piece of the executable compendium is the `Makefile`.
+
+```Makefile
+rmd = "rmarkdown::render('materials/README.Rmd', output_file = 'reproduced.html')"
+resolve:
+	Rscript oser.R
+build: oser_docker
+	docker build -t oserimg oser_docker
+render:
+	docker run -d --rm --name "osercontainer" -ti oserimg
+	docker exec osercontainer Rscript -e ${rmd}
+	docker cp osercontainer:/materials/reproduced.html oser_README.html
+	docker stop osercontainer
+export:
+	docker save oserimg | gzip > oserimg.tar.gz
+rebuild: oserimg.tar.gz
+	docker load < oserimg.tar.gz
+all: resolve build render
+	echo "finished"
+```
+
+With this `Makefile`, once can create the Dockerfile with `make resolve`, build the Docker image with `make build`, render the RMarkdown file inside the container with `make render`, export the built Docker image with `make export`, and rebuild the exported Docker image with `make rebuild`.
+
+The structure of the executable compendium looks like this:
+
+```bash
+Makefile
+oser.R
+meta-analysis/
+README.md
+oser_docker/
+oserimg.tar.gz
+```
+
+In this executable compendium, only the first four elements are essential. The directory `oser_docker` (116 MB) contains cached R packages, Dockerfile, and a further copy of the directory `meta-analysis/` to be transferred into the Docker image. That can be regenerated by running `make resolve`. However, having this directory preserved insures against the situations of some R packages used in the project are no longer available or any of the information providers used by `rang` for resolving the dependency relationships being not available. (Or in the rare circumstance of `rang` is no longer available.)
+
+`oserimg.tar.gz` (667 MB) is a backup copy of the Docker image. This can be regenerated by running `make export`. Preserving this file insurces against all the situations mentioned above, but also the situations of Docker Hub and the software repositories used by the dockerized operating system being not available. As a matter of fact, when `oserimg.tar.gz` is available it is possible to run `make rebuild` and `make render` even without internet access, provided that only Docker and make have been preinstalled. Of course, there is still an extremely rare situation where Docker (the program) itself is no longer available. However, it is possible to convert the image file for use on other containerization solutions such as Singularity [^singularity].
+
+Sharing of research artefacts less than 1G is not as challenging as it used to be. Zenodo, for example, allows the sharing of 50G of files. Therefore, sharing of the last two components of the executable compendium prepared with `rang` is at least possible on Zenodo. However, for data repositories with more restrictions on data size, sharing the executable compendium without the last two parts could be considered sufficient. For that, run `make all` will generate all the things needed for reproducing the analysis inside a container.
+
+[^singularity]: https://docs.sylabs.io/guides/3.0/user-guide/singularity_and_docker.html
+
+[^dmetar]: We detected a minor issue in the code base that an undeclared Github package is used. But it can be easily solved, as in the Psychological Science example above.
 
 # Conclusion
 
