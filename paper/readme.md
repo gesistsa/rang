@@ -1,6 +1,6 @@
 ## Readme
 
-You'll need to clone the following repo here.
+You need to clone the following repo here.
 
 ```sh
 git clone https://github.com/Joe-Hilgard/vvg-2d4d.git
@@ -18,5 +18,14 @@ And install the quarto extension
 
 ```sh
 quarto install extension quarto-journals/plos
+make render
 ```
 
+# The executable compendium
+
+`oser/` is the executable compendium based on `rang`. Please refer to the README for more information. In order to reproduce the whole analysis, just:
+
+```sh
+cd oser
+make
+```
