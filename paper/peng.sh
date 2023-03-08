@@ -1,4 +1,4 @@
-Rscript -e "devtools::load_all(); dockerize(resolve('ptproc', '2004-07-01'), 'pengdocker', cache = TRUE)"
+Rscript -e "require(rang); dockerize(resolve('ptproc', '2004-07-01'), 'pengdocker', cache = TRUE)"
 docker build -t pengimg ./pengdocker
 docker run -d --rm --name "pengcontainer" -ti pengimg
 docker cp peng.R pengcontainer:/peng.R
