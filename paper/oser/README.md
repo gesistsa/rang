@@ -1,6 +1,6 @@
 # Executable compendium of Oser et al. (2022)
 
-This is enhanced from the [original data and code](http://doi.org/10.17605/OSF.IO/AF5DR) shared by Oser et al. (2022) for their article "How Political Efficacy Relates to Online and Offline Political Participation: A Multilevel Meta-analysis" in *Political Communication* ((doi)[https://doi.org/10.1080/10584609.2022.2086329]).
+This is enhanced from the [original data and code](http://doi.org/10.17605/OSF.IO/AF5DR) shared by Oser et al. (2022) for their article "How Political Efficacy Relates to Online and Offline Political Participation: A Multilevel Meta-analysis" in *Political Communication* ([doi](https://doi.org/10.1080/10584609.2022.2086329)).
 
 In order to run this executable compendium, the following components are needed.
 
@@ -17,6 +17,8 @@ All the instructions to execute the analysis in batch is available in the provid
 * `make export`: export the Docker image
 * `make rebuild`: rebuild the exported Docker image
 * `make all`: running `make resolve`, `make build`, and `make render`
+
+The complete version of the executable compendium is available here: https://doi.org/10.5281/zenodo.7708417
 
 # Disclaimer
 
