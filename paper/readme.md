@@ -17,7 +17,7 @@ unzip("meta-analysis replication files.zip", exdir = "oser")
 And install the quarto extension
 
 ```sh
-quarto install extension quarto-journals/plos
+quarto install extension mikemahoney218/quarto-arxiv
 make render
 ```
 
