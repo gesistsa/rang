@@ -41,7 +41,7 @@ and \code{\link[=download.file]{download.file()}}.}
 This function exports the results from \code{\link[=resolve]{resolve()}} to an installation script that can be run in a fresh R environment.
 }
 \details{
-The idea behind this is to determine the installation order of R packages locally. Then, the installation script can be depolyed to another
+The idea behind this is to determine the installation order of R packages locally. Then, the installation script can be deployed to another
 fresh R session to install R packages. \code{\link[=dockerize]{dockerize()}} is a more reasonable way because a fresh R session with all system requirements
 is provided. The current approach does not work in R < 2.1.0.
 }

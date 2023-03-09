@@ -23,7 +23,7 @@ The goal of rang (Reconstructing Ancient Number-crunching Gears) [^gesis] is to 
 
 Although this package can also be used to ensure the current R computational environment can be reconstructed by future researchers, this package gears towards reconstructing historical R computational environments which have not been completely declared. For the former purpose, packages such as [renv](https://github.com/rstudio/renv/), [groundhog](https://github.com/CredibilityLab/groundhog), [miniCRAN](https://github.com/andrie/miniCRAN), and [Require](https://github.com/PredictiveEcology/Require) should be used. One can think of rang as an archaeological tool.
 
-To reconstruct a historical R computational environment, this package assumes only the availability of source packages on CRAN. The reconstruction procedures have been tested in several vintage versions of R.
+To reconstruct a historical R computational environment, this package assumes only the availability of source packages online. The reconstruction procedures have been tested in several vintage versions of R.
 
 Please cite this package as:
 

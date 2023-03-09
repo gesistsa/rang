@@ -309,7 +309,7 @@
 #' @param check_cran_mirror logical, whether to check the CRAN mirror
 #' @param bioc_mirror character, which Bioconductor mirror to use
 #' @return `path`, invisibly
-#' @details The idea behind this is to determine the installation order of R packages locally. Then, the installation script can be depolyed to another
+#' @details The idea behind this is to determine the installation order of R packages locally. Then, the installation script can be deployed to another
 #' fresh R session to install R packages. [dockerize()] is a more reasonable way because a fresh R session with all system requirements
 #' is provided. The current approach does not work in R < 2.1.0.
 #' @export
@@ -401,11 +401,11 @@ export_renv <- function(rang, path = ".") {
     for(i in seq_len(nrow(pkg_df))){
         pkg_list[[i]][["Package"]] <- pkg_df$x[i]
         pkg_list[[i]][["Version"]] <- pkg_df$version[i]
-        if(pkg_df$source[i]=="cran"){
+        if(pkg_df$source[i] == "cran") {
             pkg_list[[i]][["Source"]] <- "Repository"
             pkg_list[[i]][["Repository"]] <- "CRAN"
         #   pkg_list[[i]][["Requirements"]] <- c()
-        } else if(pkg_df$source[i]=="github"){
+        } else if(pkg_df$source[i] == "github") {
             pkg_list[[i]][["Source"]] <- "GitHub"
             pkg_list[[i]][["RemoteType"]] <- "GitHub"
             pkg_list[[i]][["RemoteHost"]] <- "api.github.com"
@@ -414,18 +414,18 @@ export_renv <- function(rang, path = ".") {
             pkg_list[[i]][["RemoteRef"]] = "HEAD"
             pkg_list[[i]][["RemoteSha"]] = pkg_df$uid[i]
         #   pkg_list[[i]][["Requirements"]] <- c()
-        } else if(pkg_df$source[i]=="bioc"){
+        } else if(pkg_df$source[i] == "bioc") {
             pkg_list[[i]][["Source"]] <- "Bioconductor"
             # pkg_list[[i]][["git_url"]] <- paste0("https://git.bioconductor.org/packages/",pkg_df$x[i])
             # pkg_list[[i]][["git_branch"]] <- ""
             # pkg_list[[i]][["git_last_commit"]] <- ""
             # pkg_list[[i]][["git_last_commit_date"]] <- ""
             # pkg_list[[i]][["Requirements"]] <- c()
-        } else if(pkg_df$source[i]=="local"){
+        } else if(pkg_df$source[i] == "local") {
             pkg_list[[i]][["Source"]] <- "Local"
             pkg_list[[i]][["RemoteType"]] <- "local"
             pkg_list[[i]][["RemoteUrl"]] <- pkg_df$uid[i]
-        } else{
+        } else {
           stop("source not supported")
         }
     }

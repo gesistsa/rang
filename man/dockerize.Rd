@@ -72,7 +72,7 @@ This function exports the result from \code{\link[=resolve]{resolve()}} to a Doc
 For R version < 3.1.0, the Dockerfile is based on Debian and it compiles R from source.
 }
 \details{
-The idea behind this is to determine the installation order of R packages locally. Then, the installation script can be depolyed to another
+The idea behind this is to determine the installation order of R packages locally. Then, the installation script can be deployed to another
 fresh R session to install R packages. \code{\link[=dockerize]{dockerize()}} is a more reasonable way because a fresh R session with all system requirements
 is provided. The current approach does not work in R < 2.1.0.
 }

@@ -23,7 +23,7 @@ purpose, packages such as [renv](https://github.com/rstudio/renv/),
 One can think of rang as an archaeological tool.
 
 To reconstruct a historical R computational environment, this package
-assumes only the availability of source packages on CRAN. The
+assumes only the availability of source packages online. The
 reconstruction procedures have been tested in several vintage versions
 of R.
 
