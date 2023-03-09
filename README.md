@@ -27,6 +27,12 @@ assumes only the availability of source packages on CRAN. The
 reconstruction procedures have been tested in several vintage versions
 of R.
 
+Please cite this package as:
+
+Chan CH, Schoch D (2023) rang: Reconstructing reproducible R
+computational environments. arXiv
+preprint:[2303.04758](https://doi.org/10.48550/arXiv.2303.04758)
+
 ## Installation
 
 You can install the development version of rang like so:
