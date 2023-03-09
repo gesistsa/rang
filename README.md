@@ -50,11 +50,11 @@ install.packages("rang")
 ## Example
 
 To obtain the dependency graph of R packages, use `resolve`. Currently,
-this package supports both CRAN and Github packages.
+this package supports CRAN, Bioconductor, GitHub, and local packages.
 
 ``` r
 library(rang)
-x <- resolve(pkgs = c("sna", "schochastics/rtoot"), snapshot_date = "2022-11-30")
+x <- resolve(pkgs = c("sna", "schochastics/rtoot", "S4Vectors"), snapshot_date = "2022-11-30")
 ```
 
 ``` r
