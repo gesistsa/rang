@@ -256,7 +256,7 @@ maxent <- resolve("cran/maxent", "2012-06-10")
 dockerize(maxent, "maxentdir", cache = TRUE)
 ```
 
-[^checkerror]: [https://cran-archive.r-project.org/web/checks/2019/2019-03-05_check_results_maxent.html](https://cran-archive.r-project.org/web/checks/2019/2019-03-05_check_results_maxent.html)
+[^checkerror]: This is the check log: [https://cran-archive.r-project.org/web/checks/2019/2019-03-05_check_results_maxent.html](https://cran-archive.r-project.org/web/checks/2019/2019-03-05_check_results_maxent.html) Here, we said the package `maxent` was "removed from CRAN" as per what the webpage ([https://cran.r-project.org/web/packages/maxent/index.html](https://cran.r-project.org/web/packages/maxent/index.html)) is written. However, the terminology as stated in the [CRAN Policies](https://cran.r-project.org/web/packages/policies.html#Source-packages) is "archived", quote: "Packages will not normally be removed from CRAN: however, they may be archived, including at the maintainer’s request." As all CRAN packages have all the submitted versions archived, we find this terminology confusing. Therefore, we use "removed" packages throughout this paper to indicate packages that cannot be installed by the usual method, i.e. `install.packages` but still have the old versions archived on CRAN.
 
 [^evidence]: [https://github.com/cran/maxent/commit/9d46c6aad27a1f41a78907b170ddd9a586192be9](https://github.com/cran/maxent/commit/9d46c6aad27a1f41a78907b170ddd9a586192be9)
 
