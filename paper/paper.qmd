@@ -41,13 +41,13 @@ The DevOps (software development and IT operations) community is also confronted
 
 To build a container, one needs to write a plain text declarative description of the required computational environment. Inside this declarative description, it should pin down all four Components mentioned above. For Docker, it is in the form of a plain text file called `Dockerfile`. This `Dockerfile` is then used as the recipe to build a Docker image, where the four Components are assembled. Then, one can launch a container with the built Docker image.
 
-There has been many papers written on how containerization solutions such as Docker can be helpful also to foster computational reproducibility of science [e.g. @nuest:2019;@peikert:2021:RDA;@boettiger:2017:IR]. Although tutorials are available [e.g. @nuest:2019], providing a declarative description of the computational environment in the form of Dockerfile is far from the standard code sharing practice. This might be due to a lack of (DevOps) skills of most scientists to create a Dockerfile [@kim:2018:E]. But there are many tools available to automate the process [e.g. @nuest:2019]. The case in point described in this paper, `rang`, is one of them. We argue that `rang` is the only easy-to-use solution available that can pin down and restore all four components without the reliance on any commercial service <!-- such as MRAN -->.
+There has been many papers written on how containerization solutions such as Docker can be helpful also to foster computational reproducibility of science [e.g. @nuest:2019;@peikert:2021:RDA;@boettiger:2017:IR]. Although tutorials are available [e.g. @nuest:2019], providing a declarative description of the computational environment in the form of `Dockerfile` is far from the standard code sharing practice. This might be due to a lack of (DevOps) skills of most scientists to create a `Dockerfile` [@kim:2018:E]. But there are many tools available to automate the process [e.g. @nuest:2019]. The case in point described in this paper, `rang`, is one of them. We argue that `rang` is the only easy-to-use solution available that can pin down and restore all four components without the reliance on any commercial service <!-- such as MRAN -->.
 
 ## Existing solutions
 
 `renv` [@renvrpkg] (and its derivatives such as `jetpack` and its predecessor `packrat`) takes a similar approach to Python's `virtualenv` and Ruby's `Gem` to pin down the exact version of R packages using a "lock file". Other solutions such as `checkpoint` [@checkpointrpkg] depend on the availability of The Microsoft R Application Network (MRAN, a time-stamped daily backup of CRAN), which will be shut down on July 1st, 2023. `groundhog` [@groundhogrpkg] used to depend on MRAN but has a plan to switch to their home-grown R package repository. These solution can effectively pin down Component C and D. But they can only restore component D. Also, for solutions depending on MRAN, there is a limit on how far back this reproducibility can go, since MRAN can only go back as far as September 17, 2014. Additionally, it only covers CRAN packages.
 
-`containerit` [@nuest:2019] takes the current state of the computational environment and documents it as a Dockerfile. `containerit` makes the assumption that Component A has a weak influence on computational reproducibility and therefore defaults to Linux-based Rocker base images [@boettiger:2017:IR]. In this way, it fixes Component A. But `containerit` does not pin down the exact version of R packages. Therefore, it can pin down components A, B, C, but only a part of component D. `dockta` is another containerization solution that can potentially pin down all components due to the fact that MRAN is used. But it also suffers from the same limitations mentioned above.
+`containerit` [@nuest:2019] takes the current state of the computational environment and documents it as a `Dockerfile`. `containerit` makes the assumption that Component A has a weak influence on computational reproducibility and therefore defaults to Linux-based Rocker base images [@boettiger:2017:IR]. In this way, it fixes Component A. But `containerit` does not pin down the exact version of R packages. Therefore, it can pin down components A, B, C, but only a part of component D. `dockta` is another containerization solution that can potentially pin down all components due to the fact that MRAN is used. But it also suffers from the same limitations mentioned above.
 
 It is also worth mentioning that MRAN is not the only archival service. Posit also provides a free (*gratis*) time-stamped daily backup of CRAN and Bioconductor (a series of repositories of R package for bioinformatics and computational biology) called Posit Public Package Manager [^posit]. It can goes as far back as October 10, 2017.
 
@@ -168,7 +168,7 @@ knitr::include_graphics("quanteda_rstudio.png", dpi = 300)
 
 ## Psychological Science
 
- @cruewell:2023:WB evaluate the computational reproducibility of 14 articles published in *Psyhocological Science*. Among these articles, the paper by @hilgard:2019:NEG has been rated as having "package dependency issues".
+Crüwell et al. [@cruewell:2023:WB] evaluate the computational reproducibility of 14 articles published in *Psyhocological Science*. Among these articles, the paper by Hilgard et al. [@hilgard:2019:NEG] has been rated as having "package dependency issues".
 
 All data and computer code are available from GitHub with the last commit on 2019-01-17 [^hilgard]. The R code contains a list of R packages used in the project as `library()` statements, including an R package on GitHub that is written by the main author of that paper. However, we identified one package (`compute.es`) that was not written in those `library()` statements but used with the namespace operator, i.e. `compute.es::tes()`. This undocumented package can be detected by `renv::dependencies()`, which is the provider of the scanning function of `rang`.
 
@@ -184,7 +184,7 @@ r_pkgs[r_pkgs == "cran::hilhard"] <- "Joe-Hilgard/hilgard"
 graph <- resolve(r_pkgs, snapshot_date = "2019-01-17")
 ```
 
-When running `dockerize()`, one can take advantage of the `materials_dir` parameter to transfer the shared materials from @hilgard:2019:NEG into the Docker image.
+When running `dockerize()`, one can take advantage of the `materials_dir` parameter to transfer the shared materials from Hilgard et al. [@hilgard:2019:NEG] into the Docker image.
 
 ```r
 dockerize(graph, "hilgard", materials_dir = "vvg-2d4d", cache = TRUE)
@@ -214,11 +214,11 @@ do
 done
 ```
 
-All R scripts ran fine inside the container and the figures generated are the same as the ones in @hilgard:2019:NEG.
+All R scripts ran fine inside the container and the figures generated are the same as the ones in Hilgard et al. [@hilgard:2019:NEG].
 
 ## Political Analysis
 
-The study by @trisovic:2022 evaluates the reproducibility of R scripts shared on Dataverse. They found that 75\% of R scripts cannot be successfully executed. Among these failed R scripts is an R script shared by @beck:2019:EGD.
+The study by Trisovic et al. [@trisovic:2022] evaluates the reproducibility of R scripts shared on Dataverse. They found that 75\% of R scripts cannot be successfully executed. Among these failed R scripts is an R script shared by Beck [@beck:2019:EGD].
 
 This R script has been "rescued" by the author of the R package `groundhog` [@groundhogrpkg], as demonstrated in a blog post [^groundhog]. We were wondering if `rang` can also be used to "rescue" the concerned R script. The date of the R script, as indicated on Dataverse, is 2018-12-12. This date is used as the snapshot date.
 
@@ -249,7 +249,7 @@ The same file can thus also be "rescued" by `rang`.
 
 The R package `maxent` introduces a machine learning algorithm with a small memory footprint and was available on CRAN until 2019. A software paper was published by the original authors in 2012 [@jurka:2012]. The R package was also used in some subsequent automated content analytic papers [e.g. @loercher:2017:D]. Despite the covert editing of the package by a staffer of CRAN [^evidence], the package was removed from CRAN in 2019 [^checkerror]. We attempted to install the second last (the original submitted version) and last (with covert editing) versions of `maxent` on R 4.2.2. Both of them didn't work.
 
-Using `rang`, we are able to reconstruct a computational environment with R 2.15.0 (2012-03-30) to run all code snippets published in @jurka:2012 [^speed]. For removed CRAN packages, we strongly recommend querying the Github read-only mirror of CRAN instead (https://github.com/cran). It is because in this way, the resolved system requirements have a higher chance of being correct.
+Using `rang`, we are able to reconstruct a computational environment with R 2.15.0 (2012-03-30) to run all code snippets published in Jurka [@jurka:2012] [^speed]. For removed CRAN packages, we strongly recommend querying the Github read-only mirror of CRAN instead (https://github.com/cran). It is because in this way, the resolved system requirements have a higher chance of being correct.
 
 ```r
 maxent <- resolve("cran/maxent", "2012-06-10")
@@ -270,14 +270,14 @@ The software paper of the R package `ptproc` was published in 2003 and introduce
 
 Even with this over-a-decade removal and new packages with similar functionalities have been created, there is evidence that `ptproc` is still being sought for. As late as 2017, there are blog posts on how to install the long obsolete package on modern versions of R [^blog]. The package is extremely challenging to install on a modern R system because the package was written before the introduction of name space management in R 1.7.0 [@RN-2003-001]. In other words, the available tarball files from the original author's website and CRAN do not contain a `NAMESPACE` file like all other modern R packages do.
 
-The oldest version of R that `rang` can support, as of writing, is R 1.3.1. `rang` is probably the only solution available that can support the 1.x series of R (i.e. before 2004-10-04). Similar to the case of `maxent` above, a Dockerfile to assemble a Docker image with `ptproc` installed can be generated with two lines of code.
+The oldest version of R that `rang` can support, as of writing, is R 1.3.1. `rang` is probably the only solution available that can support the 1.x series of R (i.e. before 2004-10-04). Similar to the case of `maxent` above, a `Dockerfile` to assemble a Docker image with `ptproc` installed can be generated with two lines of code.
 
 ```r
 graph <- resolve("ptproc", snapshot_date = "2004-07-01")
 dockerize(graph, "~/dev/misc/ptproc", cache = TRUE)
 ```
 
-Suppose we have an R script, extracted from @peng:2003:MDP, called "peng.R" like this:
+Suppose we have an R script, extracted from Peng [@peng:2003:MDP], called "peng.R" like this:
 
 ```r
 require(ptproc)
@@ -321,13 +321,13 @@ The file `peng.Rout` contains the execution results of the script from inside th
 
 [^blog]: [https://blog.mathandpencil.com/installing-ptproc-on-osx](https://blog.mathandpencil.com/installing-ptproc-on-osx) and [https://tomaxent.com/2017/03/16/Installing-ptproc-on-Ubuntu-16-04-LTS/](https://tomaxent.com/2017/03/16/Installing-ptproc-on-Ubuntu-16-04-LTS/)
 
-[^random]: It is also important to note that the random number generator (RNG) of R has been changed several times over the course of the development. In this case, we are using the same generation of RNG as @peng:2003:MDP.
+[^random]: It is also important to note that the random number generator (RNG) of R has been changed several times over the course of the development. In this case, we are using the same generation of RNG as Peng [@peng:2003:MDP].
 
 ## Recover a removed Bioconductor package
 
 Similar to CRAN, packages can also be removed over time from Bioconductor. The Bioconductor package `Sushi` has been deprecated by the original authors and is removed from Bioconductor version 3.16 (2022-11-02). `Sushi` is a data visualization tool for genomic data and was used in many online tutorials and scientific papers, including the original paper announcing the package by the original authors [@phanstiel:2014:S].
 
-`rang` has native support for Bioconductor packages since version 0.2. We obtained the R script `"PaperFigure.R"` from the Github repository of `Sushi` [^sushi], which generates the figure in @phanstiel:2014:S. Similar to the above case of `ptproc`, we made a completely automated BASH script to run `"PaperFigure.R"` and get the generated figure out of the container (@fig-figure2). We made no modification to `"PaperFigure.R"`.
+`rang` has native support for Bioconductor packages since version 0.2. We obtained the R script `"PaperFigure.R"` from the Github repository of `Sushi` [^sushi], which generates the figure in the original paper [@phanstiel:2014:S]. Similar to the above case of `ptproc`, we made a completely automated BASH script to run `"PaperFigure.R"` and get the generated figure out of the container (@fig-figure2). We made no modification to `"PaperFigure.R"`.
 
 ```sh
 Rscript -e "require(rang); dockerize(resolve('Sushi', '2014-06-05'),
@@ -354,7 +354,7 @@ knitr::include_graphics("sushi_figure1.pdf", dpi = 300)
 
 The above six examples show how powerful `rang` is to reconstruct tricky computational environments which have not been completely declared in the literature. Although we position `rang` mostly as an archaeological tool, we think that `rang` can also be used to prepare research compendia of current research. We can't predict the future but research compendia generated by `rang` would probably have long-term computational reproducibility.
 
-To demonstrate this point, we took the recent paper by @oser:2022:HPE. This paper was selected because 1) the paper was published in *Political Communication*, a high impact journal that awards Open Science Badges; 2) shared data and R code are available; and most importantly, 3) the shared R code is well-written. In the repository of this paper, we based on the materials shared by @oser:2022:HPE and prepared a research compendium that should have long-term computational reproducibility. The research compendium is similar to the Executable Compendium suggested by the Turing way.
+To demonstrate this point, we took the recent paper by Oser et al. [@oser:2022:HPE]. This paper was selected because 1) the paper was published in *Political Communication*, a high impact journal that awards Open Science Badges; 2) shared data and R code are available; and most importantly, 3) the shared R code is well-written. In the repository of this paper, we based on the materials shared by Oser et al. [@oser:2022:HPE] and prepared a research compendium that should have long-term computational reproducibility. The research compendium is similar to the Executable Compendium suggested by the Turing way.
 
 The preparation of the research compendium is easy as `rang` can scan a materials directory for all R packages used [^dmetar].
 
@@ -396,7 +396,7 @@ rebuild: ${handle}img.tar.gz
 	docker load < ${handle}img.tar.gz
 ```
 
-With this `Makefile`, one can create the Dockerfile with `make resolve`, build the Docker image with `make build`, render the RMarkdown file inside the container with `make render`, export the built Docker image with `make export`, and rebuild the exported Docker image with `make rebuild`.
+With this `Makefile`, one can create the `Dockerfile` with `make resolve`, build the Docker image with `make build`, render the RMarkdown file inside the container with `make render`, export the built Docker image with `make export`, and rebuild the exported Docker image with `make rebuild`.
 
 The structure of the entire executable compendium looks like this:
 
@@ -409,7 +409,7 @@ oserdocker/
 oserimg.tar.gz
 ```
 
-In this executable compendium, only the first four elements are essential. The directory `oserdocker` (116 MB) contains cached R packages, a Dockerfile, and a verbatim copy of the directory `meta-analysis/` to be transferred into the Docker image. That can be regenerated by running `make resolve`. However, having this directory preserved insures against the situations that some R packages used in the project were no longer available or any of the information providers used by `rang` for resolving the dependency relationships were not available. (Or in the rare circumstance of `rang` is no longer available.)
+In this executable compendium, only the first four elements are essential. The directory `oserdocker` (116 MB) contains cached R packages, a `Dockerfile`, and a verbatim copy of the directory `meta-analysis/` to be transferred into the Docker image. That can be regenerated by running `make resolve`. However, having this directory preserved insures against the situations that some R packages used in the project were no longer available or any of the information providers used by `rang` for resolving the dependency relationships were not available. (Or in the rare circumstance of `rang` is no longer available.)
 
 `oserimg.tar.gz` (667 MB) is a backup copy of the Docker image. This can be regenerated by running `make export`. Preserving this file insures against all the situations mentioned above, but also the situations of Docker Hub (the hosting service provided by Docker for base images such as Rocker) and the software repositories used by the dockerized operating system being not available. When `oserimg.tar.gz` is available, it is possible to run `make rebuild` and `make render` even without internet access (provided that Docker and `make` have been installed before). Of course, there is still an extremely rare situation where Docker (the program) itself is no longer available [^make]. However, it is possible to convert the image file for use on other containerization solutions such as Singularity [^singularity], if Docker is really not available anymore.
 
