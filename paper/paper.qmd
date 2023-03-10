@@ -47,7 +47,7 @@ There has been many papers written on how containerization solutions such as Doc
 
 `renv` [@renvrpkg] (and its derivatives such as `jetpack` and its predecessor `packrat`) takes a similar approach to Python's `virtualenv` and Ruby's `Gem` to pin down the exact version of R packages using a "lock file". Other solutions such as `checkpoint` [@checkpointrpkg] depend on the availability of The Microsoft R Application Network (MRAN, a time-stamped daily backup of CRAN), which will be shut down on July 1st, 2023. `groundhog` [@groundhogrpkg] used to depend on MRAN but has a plan to switch to their home-grown R package repository. These solution can effectively pin down Component C and D. But they can only restore component D. Also, for solutions depending on MRAN, there is a limit on how far back this reproducibility can go, since MRAN can only go back as far as September 17, 2014. Additionally, it only covers CRAN packages.
 
-`containerit` [@nuest:2019] takes the current state of the computational environment and documents it as a Dockerfile. `containerit` makes the assumption that Component A has a weak influence on computational reproducibility and therefore defaults to Linux-based Rocker images. In this way, it fixes Component A. But `containerit` does not pin down the exact version of R packages. Therefore, it can pin down components A, B, C, but only a part of component D. `dockta` is another containerization solution that can potentially pin down all components due to the fact that MRAN is used. But it also suffers from the same limitations mentioned above.
+`containerit` [@nuest:2019] takes the current state of the computational environment and documents it as a Dockerfile. `containerit` makes the assumption that Component A has a weak influence on computational reproducibility and therefore defaults to Linux-based Rocker base images [@boettiger:2017:IR]. In this way, it fixes Component A. But `containerit` does not pin down the exact version of R packages. Therefore, it can pin down components A, B, C, but only a part of component D. `dockta` is another containerization solution that can potentially pin down all components due to the fact that MRAN is used. But it also suffers from the same limitations mentioned above.
 
 It is also worth mentioning that MRAN is not the only archival service. Posit also provides a free (*gratis*) time-stamped daily backup of CRAN and Bioconductor (a series of repositories of R package for bioinformatics and computational biology) called Posit Public Package Manager [^posit]. It can goes as far back as October 10, 2017.
 
@@ -78,9 +78,9 @@ The resolved result is an S3 object called `rang`. The information contained in 
 dockerize(graph, output_dir = "docker")
 ```
 
-For R >= 3.1, the images from the Rocker project are used [@boettiger:2017:IR]. For R < 3.1 but >= 1.3.1, a custom image based on Debian is used. As of writing, `rang` does not support R < 1.3.1, i.e. snapshot date earlier than 2001-08-31 (which is 13 years earlier than all solutions depending on MRAN). There are two features of `dockerize()` that are important for future reproducibility.
+For R >= 3.1, the base images from the Rocker project are used [@boettiger:2017:IR]. For R < 3.1 but >= 1.3.1, a custom base image based on Debian is used. As of writing, `rang` does not support R < 1.3.1, i.e. snapshot date earlier than 2001-08-31 (which is 13 years earlier than all solutions depending on MRAN). There are two features of `dockerize()` that are important for future reproducibility.
 
-1. By default, the container building process downloads source packages from their sources and then compiles them. This step depends on the future availability of R packages on CRAN (which is extremely likely to be the case in the near future, given the continuous availability since 1997-04-23) [^1], Bioconductor, and Github. However, it is also possible to cache (or archive) the source packages now. The archived R packages can then be used instead during the building process. The significance of this step in terms of long-term computational reproducibility will be discussed in Section 4.
+1. By default, the Docker image building process downloads source packages from their sources and then compiles them. This step depends on the future availability of R packages on CRAN (which is extremely likely to be the case in the near future, given the continuous availability since 1997-04-23) [^1], Bioconductor, and Github. However, it is also possible to cache (or archive) the source packages now. The archived R packages can then be used instead during the building process. The significance of this step in terms of long-term computational reproducibility will be discussed in Section 4.
 
 [^1]: [https://stat.ethz.ch/pipermail/r-announce/1997/000001.html](https://stat.ethz.ch/pipermail/r-announce/1997/000001.html)
 
@@ -95,14 +95,14 @@ dockerize(graph, output_dir = "docker", cache = TRUE,
           lib = "anotherlibrary")
 ```
 
-For the sake of completeness, the instructions for building and running the Docker container on Unix-like systems are included here.
+For the sake of completeness, the instructions for building the Docker image and running the Docker container on Unix-like systems are included here.
 
 ```bash
 cd docker
 ## might need to sudo
-docker build -t rang .
+docker build -t rangimg .
 ## interactive environment
-docker run --rm --name "rangtest" -ti rang
+docker run --rm --name "rangcontainer" -ti rangimg
 ```
 
 ## Project scanning
@@ -411,7 +411,7 @@ oserimg.tar.gz
 
 In this executable compendium, only the first four elements are essential. The directory `oserdocker` (116 MB) contains cached R packages, a Dockerfile, and a verbatim copy of the directory `meta-analysis/` to be transferred into the Docker image. That can be regenerated by running `make resolve`. However, having this directory preserved insures against the situations that some R packages used in the project were no longer available or any of the information providers used by `rang` for resolving the dependency relationships were not available. (Or in the rare circumstance of `rang` is no longer available.)
 
-`oserimg.tar.gz` (667 MB) is a backup copy of the Docker image. This can be regenerated by running `make export`. Preserving this file insures against all the situations mentioned above, but also the situations of Docker Hub and the software repositories used by the dockerized operating system being not available. When `oserimg.tar.gz` is available, it is possible to run `make rebuild` and `make render` even without internet access (provided that Docker and `make` have been installed before). Of course, there is still an extremely rare situation where Docker (the program) itself is no longer available [^make]. However, it is possible to convert the image file for use on other containerization solutions such as Singularity [^singularity], if Docker is really not available anymore.
+`oserimg.tar.gz` (667 MB) is a backup copy of the Docker image. This can be regenerated by running `make export`. Preserving this file insures against all the situations mentioned above, but also the situations of Docker Hub (the hosting service provided by Docker for base images such as Rocker) and the software repositories used by the dockerized operating system being not available. When `oserimg.tar.gz` is available, it is possible to run `make rebuild` and `make render` even without internet access (provided that Docker and `make` have been installed before). Of course, there is still an extremely rare situation where Docker (the program) itself is no longer available [^make]. However, it is possible to convert the image file for use on other containerization solutions such as Singularity [^singularity], if Docker is really not available anymore.
 
 Sharing of research artifacts less than 1G is not as challenging as it used to be. Zenodo, for example, allows the sharing of 50G of files. Therefore, sharing of the last two components of the executable compendium prepared with `rang` is at least possible on Zenodo [^zenodo]. However, for data repositories with more restrictions on data size, sharing the executable compendium without the last two parts could be considered sufficient. For that, run `make` will make the default target `all` and generate all the things needed for reproducing the analysis inside a container.
 
