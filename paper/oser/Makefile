@@ -4,6 +4,8 @@ output_file = '${output_file}')"
 handle=oser
 local_file=${handle}_README.html
 
+.PHONY: all resolve build render export rebuild
+
 all: resolve build render
 	echo "finished"
 resolve:
