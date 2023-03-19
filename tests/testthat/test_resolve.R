@@ -75,16 +75,16 @@ test_that("cache #17", {
     x <- readLines(file.path(temp_dir, "Dockerfile"))
     expect_false(any(grepl("^COPY cache", x)))
     expect_false(dir.exists(file.path(temp_dir, "cache")))
-    expect_false(file.exists(file.path(temp_dir, "cache", "LDAvis_0.3.2.tar.gz")))
-    expect_false(file.exists(file.path(temp_dir, "cache", "proxy_0.4-27.tar.gz")))
-    expect_false(file.exists(file.path(temp_dir, "cache", "RJSONIO_1.3-1.6.tar.gz")))
+    expect_false(file.exists(file.path(temp_dir, "cache/rpkgs", "LDAvis_0.3.2.tar.gz")))
+    expect_false(file.exists(file.path(temp_dir, "cache/rpkgs", "proxy_0.4-27.tar.gz")))
+    expect_false(file.exists(file.path(temp_dir, "cache/rpkgs", "RJSONIO_1.3-1.6.tar.gz")))
     expect_silent(dockerize(rang_ok, output_dir = temp_dir, cache = TRUE, verbose = FALSE))
     x <- readLines(file.path(temp_dir, "Dockerfile"))
     expect_true(any(grepl("^COPY cache", x)))
-    expect_true(dir.exists(file.path(temp_dir, "cache")))
-    expect_true(file.exists(file.path(temp_dir, "cache", "LDAvis_0.3.2.tar.gz")))
-    expect_true(file.exists(file.path(temp_dir, "cache", "proxy_0.4-27.tar.gz")))
-    expect_true(file.exists(file.path(temp_dir, "cache", "RJSONIO_1.3-1.6.tar.gz")))
+    expect_true(dir.exists(file.path(temp_dir, "cache/rpkgs")))
+    expect_true(file.exists(file.path(temp_dir, "cache/rpkgs", "LDAvis_0.3.2.tar.gz")))
+    expect_true(file.exists(file.path(temp_dir, "cache/rpkgs", "proxy_0.4-27.tar.gz")))
+    expect_true(file.exists(file.path(temp_dir, "cache/rpkgs", "RJSONIO_1.3-1.6.tar.gz")))
     ## expect_output(dockerize(rang_ok, output_dir = temp_dir, cache = TRUE, verbose = TRUE))
 })
 
@@ -97,13 +97,13 @@ test_that("cache for R < 3.1 and R >= 2.1", {
     dockerize(rang_rio, output_dir = temp_dir, cache = TRUE, verbose = FALSE)
     x <- readLines(file.path(temp_dir, "Dockerfile"))
     expect_true(any(grepl("^COPY cache", x)))
-    expect_true(dir.exists(file.path(temp_dir, "cache")))
-    expect_true(file.exists(file.path(temp_dir, "cache", "rio_0.1.1.tar.gz")))
-    expect_true(file.exists(file.path(temp_dir, "cache", "stringr_0.6.2.tar.gz")))
-    expect_true(file.exists(file.path(temp_dir, "cache", "digest_0.6.3.tar.gz")))
-    expect_true(file.exists(file.path(temp_dir, "cache", "foreign_0.8-54.tar.gz")))
-    expect_true(file.exists(file.path(temp_dir, "cache", "evaluate_0.4.7.tar.gz")))
-    expect_true(file.exists(file.path(temp_dir, "cache", "testthat_0.7.1.tar.gz")))
+    expect_true(dir.exists(file.path(temp_dir, "cache/rpkgs")))
+    expect_true(file.exists(file.path(temp_dir, "cache/rpkgs", "rio_0.1.1.tar.gz")))
+    expect_true(file.exists(file.path(temp_dir, "cache/rpkgs", "stringr_0.6.2.tar.gz")))
+    expect_true(file.exists(file.path(temp_dir, "cache/rpkgs", "digest_0.6.3.tar.gz")))
+    expect_true(file.exists(file.path(temp_dir, "cache/rpkgs", "foreign_0.8-54.tar.gz")))
+    expect_true(file.exists(file.path(temp_dir, "cache/rpkgs", "evaluate_0.4.7.tar.gz")))
+    expect_true(file.exists(file.path(temp_dir, "cache/rpkgs", "testthat_0.7.1.tar.gz")))
 })
 
 test_that("github correct querying; also #25", {
@@ -169,13 +169,13 @@ test_that("cache bioc pkgs", {
     dockerize(rang_bioc, output_dir = temp_dir) ## cache = FALSE
     x <- readLines(file.path(temp_dir, "Dockerfile"))
     expect_false(any(grepl("^COPY cache", x)))
-    expect_false(dir.exists(file.path(temp_dir, "cache")))
-    expect_false(file.exists(file.path(temp_dir, "cache", "BiocGenerics_0.44.0.tar.gz")))
+    expect_false(dir.exists(file.path(temp_dir, "cache/rpkgs")))
+    expect_false(file.exists(file.path(temp_dir, "cache/rpkgs", "BiocGenerics_0.44.0.tar.gz")))
     expect_silent(dockerize(rang_bioc, output_dir = temp_dir, cache = TRUE, verbose = FALSE))
     x <- readLines(file.path(temp_dir, "Dockerfile"))
     expect_true(any(grepl("^COPY cache", x)))
-    expect_true(dir.exists(file.path(temp_dir, "cache")))
-    expect_true(file.exists(file.path(temp_dir, "cache", "BiocGenerics_0.44.0.tar.gz")))
+    expect_true(dir.exists(file.path(temp_dir, "cache/rpkgs")))
+    expect_true(file.exists(file.path(temp_dir, "cache/rpkgs", "BiocGenerics_0.44.0.tar.gz")))
 })
 
 test_that("issue 68, correct querying of bioc packages from major releases", {
@@ -230,7 +230,7 @@ test_that("issue 89", {
     expect_equal(x$ranglets[["bioc::GenomeInfoDbData"]]$original$x_uid, "data/annotation")
     temp_dir <- .generate_temp_dir()
     expect_error(dockerize(x, output_dir = temp_dir, cache = TRUE, verbose = FALSE), NA)
-    expect_true(file.exists(file.path(temp_dir, "cache", "GenomeInfoDbData_1.2.9.tar.gz")))
+    expect_true(file.exists(file.path(temp_dir, "cache/rpkgs", "GenomeInfoDbData_1.2.9.tar.gz")))
 })
 
 test_that("integration of renv to resolve", {
@@ -283,8 +283,8 @@ test_that("dockerize local package as tarball", {
     expect_error(dockerize(graph, output_dir = temp_dir)) ## cache = FALSE
     temp_dir <- .generate_temp_dir()
     expect_error(dockerize(graph, output_dir = temp_dir, cache = TRUE, verbose = FALSE), NA) ## cache = FALSE
-    expect_true(file.exists(file.path(temp_dir, "cache", "sys_3.4.1.tar.gz")))
-    expect_true(file.exists(file.path(temp_dir, "cache", "raw_askpass_1.1.tar.gz")))
+    expect_true(file.exists(file.path(temp_dir, "cache/rpkgs", "sys_3.4.1.tar.gz")))
+    expect_true(file.exists(file.path(temp_dir, "cache/rpkgs", "raw_askpass_1.1.tar.gz")))
 })
 
 test_that("dockerize local package as tarball", {
@@ -295,8 +295,8 @@ test_that("dockerize local package as tarball", {
     expect_error(dockerize(graph, output_dir = temp_dir)) ## cache = FALSE
     temp_dir <- .generate_temp_dir()
     expect_error(dockerize(graph, output_dir = temp_dir, cache = TRUE, verbose = FALSE), NA)
-    expect_true(file.exists(file.path(temp_dir, "cache", "sys_3.4.1.tar.gz")))
-    expect_true(dir.exists(file.path(temp_dir, "cache", "dir_askpass_1.1")))
+    expect_true(file.exists(file.path(temp_dir, "cache/rpkgs", "sys_3.4.1.tar.gz")))
+    expect_true(dir.exists(file.path(temp_dir, "cache/rpkgs", "dir_askpass_1.1")))
     x <- readLines(file.path(temp_dir, "rang.R"))
     expect_true(any(grepl("^## ## WARNING", x)))
 })

@@ -110,125 +110,6 @@
                      as.character(check_cran_mirror), bioc_txt ,")"), con = con)
 }
 
-.query_mirror_validity <- function(mirror) {
-    if (mirror == "https://cran.r-project.org/") {
-        return(TRUE)
-    }
-    all_mirrors <- utils::getCRANmirrors()$URL
-    mirror %in% all_mirrors
-}
-
-.normalize_url <- function(mirror, https = TRUE) {
-    if (grepl("^http://", mirror)) {
-        mirror <- gsub("^http://", "https://", mirror)
-    }
-    if (!grepl("^https://", mirror)) {
-        mirror <- paste0("https://", mirror)
-    }
-    if (!grepl("/$", mirror)) {
-        mirror <- paste0(mirror, "/")
-    }
-    if (grepl("/+$", mirror)) {
-        mirror <- gsub("/+$", "/", mirror)
-    }
-    if (isTRUE(https)) {
-        return(mirror)
-    } else {
-        return(gsub("^https://", "http://", mirror))
-    }
-}
-
-.check_tarball_path <- function(tarball_path, x, dir = FALSE) {
-    ## raise error when tarball_path doesn't exist
-    if ((isFALSE(dir) && isFALSE(file.exists(tarball_path))) ||
-        (isTRUE(dir) && isFALSE(dir.exists(tarball_path)))) {
-        stop(x, " can't be cached.", call. = FALSE)
-    }
-    invisible()
-}
-
-.cache_pkg_cran <- function(x, version, cache_dir, cran_mirror, verbose) {
-    url <- paste(cran_mirror, "src/contrib/Archive/", x, "/", x, "_", version, ".tar.gz", sep = "")
-    tarball_path <- file.path(cache_dir, paste(x, "_", version, ".tar.gz", sep = ""))
-    tryCatch({
-        suppressWarnings(utils::download.file(url, destfile = tarball_path, quiet = !verbose))
-    }, error = function(e) {
-        ## is the current latest
-        url <- paste(cran_mirror, "src/contrib/", x, "_", version, ".tar.gz", sep = "")
-        utils::download.file(url, destfile = tarball_path, quiet = !verbose)
-    })
-    .check_tarball_path(tarball_path, x)
-}
-
-.cache_pkg_bioc <- function(x, version, cache_dir, bioc_mirror, bioc_version, verbose, uid) {
-    url <- paste(bioc_mirror, bioc_version, "/", uid, "/src/contrib/", x, "_", version, ".tar.gz", sep = "")
-    tarball_path <- file.path(cache_dir, paste(x, "_", version, ".tar.gz", sep = ""))
-    suppressWarnings(utils::download.file(url, destfile = tarball_path, quiet = !verbose))
-    .check_tarball_path(tarball_path, x)
-}
-
-.cache_pkg_github <- function(x, version, handle, source, uid, cache_dir, verbose) {
-    sha <- uid
-    tarball_path <- file.path(cache_dir, paste("raw_", x, "_", version, ".tar.gz", sep = ""))
-    utils::download.file(paste("https://api.github.com/repos/", handle, "/tarball/", sha, sep = ""), destfile = tarball_path,
-                         quiet = !verbose)
-    .check_tarball_path(tarball_path, x)
-}
-
-.cache_pkg_local <- function(x, version, cache_dir, uid) {
-    local_path <- uid
-    tarball_path <- file.path(cache_dir, paste("raw_", x, "_", version, ".tar.gz", sep = ""))
-    if (isTRUE(grepl("\\.tar.gz$|\\.tgz$", local_path))) {
-        ## it could be a valid source package, but don't trust it blindly, mark it as raw_
-        ## similar to github packages
-        file.copy(local_path, tarball_path)
-        return(.check_tarball_path(tarball_path, x))
-    }
-    if (.is_directory(local_path)) {
-        dir_pkg_path <- file.path(cache_dir, paste("dir_", x, "_", version, sep = ""))
-        res <- file.copy(from = local_path, to = cache_dir, recursive = TRUE, overwrite = TRUE)
-        res <- file.rename(from = file.path(cache_dir, x), to = dir_pkg_path)
-        return(.check_tarball_path(dir_pkg_path, x, dir = TRUE))
-    }
-}
-
-.cache_pkgs <- function(rang, output_dir, cran_mirror, bioc_mirror, verbose) {
-    installation_order <- .generate_installation_order(rang)
-    cache_dir <- file.path(output_dir, "cache")
-    if (!dir.exists(cache_dir)) {
-        dir.create(cache_dir)
-    }
-    for (i in seq(from = 1, to = nrow(installation_order), by = 1)) {
-        x <- installation_order$x[i]
-        source <- installation_order$source[i]
-        version <- installation_order$version[i]
-        handle <- installation_order$handle[i]
-        uid <- installation_order$uid[i]
-        if (source == "cran") {
-            .cache_pkg_cran(x = x, version = version, cache_dir = cache_dir,
-                        cran_mirror = cran_mirror, verbose = verbose)
-        }
-        if (source == "github") {
-            ## please note that these cached packages are not built
-            .cache_pkg_github(x = x, version = version, handle = handle,
-                          source = source, uid = uid,
-                          cache_dir = cache_dir, verbose = verbose)
-        }
-        if(source == "bioc") {
-            .cache_pkg_bioc(x = x, version = version, cache_dir = cache_dir,
-                            bioc_mirror = bioc_mirror, bioc_version = rang$bioc_version, verbose = verbose,
-                            uid = uid)
-        }
-        if(source == "local") {
-            ## please note that these cached packages are not built
-            .cache_pkg_local(x = x, version = version, cache_dir = cache_dir, uid = uid)
-        }
-
-    }
-    ## For #14, cache R source in the future here
-    invisible(output_dir)
-}
-
 .is_r_version_older_than <- function(rang, r_version = "1.3.1") {
     utils::compareVersion(rang$r_version, r_version) == -1
 }
@@ -261,7 +142,10 @@
         dockerfile_content[7] <- paste0("RUN mkdir ", lib, " && bash compile_r.sh ", r_version)
     }
     if (isTRUE(cache)) {
-        dockerfile_content <- c(dockerfile_content[1:5], "COPY cache ./cache", dockerfile_content[6:8])
+        dockerfile_content <- c(dockerfile_content[1:5], "COPY cache/rpkgs ./cache/rpkgs", dockerfile_content[6:8])
+        dockerfile_content <- append(dockerfile_content, "COPY cache/rsrc ./cache/rsrc", after = 6)
+        dockerfile_content[1] <- "ADD cache/debian/rootfs.tar.xz /"
+        dockerfile_content <- c("FROM scratch", dockerfile_content)
     }
     return(dockerfile_content)
 }
@@ -508,13 +392,13 @@ dockerize <- function(rang, output_dir, materials_dir = NULL, image = c("r-ver",
     export_rang(rang = rang, path = rang_path, rang_as_comment = rang_as_comment,
                     verbose = verbose, lib = lib, cran_mirror = cran_mirror,
                     check_cran_mirror = check_cran_mirror, bioc_mirror = bioc_mirror)
-    if (isTRUE(cache)) {
-        .cache_pkgs(rang, output_dir, cran_mirror, bioc_mirror, verbose)
-    }
     if (isTRUE(skip_r17) && rang$r_version %in% c("1.7.0", "1.7.1")) {
         r_version <- "1.8.0"
     } else {
         r_version <- rang$r_version
+    }
+    if (isTRUE(cache)) {
+        .cache_pkgs(rang, output_dir, cran_mirror, bioc_mirror, verbose)
     }
     if (.is_r_version_older_than(rang, "3.1") || isTRUE(no_rocker)) {
         file.copy(system.file("compile_r.sh", package = "rang"), file.path(output_dir, "compile_r.sh"),
@@ -523,6 +407,12 @@ dockerize <- function(rang, output_dir, materials_dir = NULL, image = c("r-ver",
                                                                       sysreqs_cmd = sysreqs_cmd, lib = lib,
                                                                       cache = cache,
                                                                       debian_version = debian_version)
+        if (isTRUE(cache)) {
+            .cache_rsrc(r_version = r_version, output_dir = output_dir,
+                        verbose = verbose)
+            .cache_debian(debian_version = debian_version, output_dir = output_dir,
+                          verbose = verbose)
+        }
     } else {
         dockerfile_content <- .generate_rocker_dockerfile_content(r_version = r_version,
                                                                   sysreqs_cmd = sysreqs_cmd, lib = lib,
