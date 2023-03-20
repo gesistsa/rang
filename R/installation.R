@@ -114,59 +114,6 @@
     utils::compareVersion(rang$r_version, r_version) == -1
 }
 
-.insert_cache_dir <- function(dockerfile_content) {
-    rang_line <- which(dockerfile_content == "RUN Rscript rang.R")
-    c(dockerfile_content[1:(rang_line - 1)],
-      "COPY cache ./cache",
-      dockerfile_content[rang_line:length(dockerfile_content)])
-}
-
-.insert_materials_dir <- function(dockerfile_content) {
-    rang_line <- which(dockerfile_content == "COPY rang.R ./rang.R")
-    c(dockerfile_content[1:rang_line],
-      "COPY materials/ ./materials/",
-      dockerfile_content[(rang_line + 1):length(dockerfile_content)])
-}
-
-.generate_debian_eol_dockerfile_content<- function(r_version, lib, sysreqs_cmd, cache, debian_version = "lenny") {
-    dockerfile_content <- c(
-        paste0("FROM debian/eol:", debian_version),
-        "ENV TZ UTC",
-        "RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && apt-get update -qq && apt-get install wget locales build-essential r-base-dev  -y",
-        "COPY rang.R ./rang.R",
-        "COPY compile_r.sh ./compile_r.sh",
-        paste("RUN", sysreqs_cmd),
-        paste("RUN bash compile_r.sh", r_version),
-        "CMD [\"R\"]")
-    if (!is.na(lib)) {
-        dockerfile_content[7] <- paste0("RUN mkdir ", lib, " && bash compile_r.sh ", r_version)
-    }
-    if (isTRUE(cache)) {
-        dockerfile_content <- c(dockerfile_content[1:5], "COPY cache/rpkgs ./cache/rpkgs", dockerfile_content[6:8])
-        dockerfile_content <- append(dockerfile_content, "COPY cache/rsrc ./cache/rsrc", after = 6)
-        dockerfile_content[1] <- "ADD cache/debian/rootfs.tar.xz /"
-        dockerfile_content <- c("FROM scratch", dockerfile_content)
-    }
-    return(dockerfile_content)
-}
-
-.generate_rocker_dockerfile_content <- function(r_version, lib, sysreqs_cmd, cache, image) {
-    dockerfile_content <- c("", "", "COPY rang.R ./rang.R", "RUN Rscript rang.R", "CMD [\"R\"]")
-    if (!is.na(lib)) {
-        dockerfile_content[4] <- paste0("RUN mkdir ", lib, " && Rscript rang.R")
-    }
-    dockerfile_content[1] <- paste0("FROM rocker/", image, ":", r_version)
-    dockerfile_content[2] <- paste("RUN", sysreqs_cmd)
-    if (image == "rstudio") {
-        dockerfile_content[5] <- "EXPOSE 8787"
-        dockerfile_content[6] <- "CMD [\"/init\"]"
-    }
-    if (isTRUE(cache)) {
-        dockerfile_content <- .insert_cache_dir(dockerfile_content)
-    }
-    return(dockerfile_content)
-}
-
 .generate_docker_readme <- function(output_dir,image) {
     file.create(file.path(output_dir,"README"))
     con <- file(file.path(output_dir,"README"), open="w")
@@ -428,7 +375,7 @@ dockerize <- function(rang, output_dir, materials_dir = NULL, image = c("r-ver",
                   recursive = TRUE)
         dockerfile_content <- .insert_materials_dir(dockerfile_content)
     }
-    writeLines(dockerfile_content, file.path(output_dir, "Dockerfile"))
+    .write_dockerfile(dockerfile_content, file.path(output_dir, "Dockerfile"))
     .generate_docker_readme(output_dir = output_dir,image = image)
     invisible(output_dir)
 }

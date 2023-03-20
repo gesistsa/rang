@@ -143,11 +143,7 @@
     if (!dir.exists(cache_dir)) {
         dir.create(cache_dir, recursive = TRUE)
     }
-    sha <- .gh(paste0("/repos/debuerreotype/docker-debian-eol-artifacts/branches/dist-",
-                      debian_version))$commit$sha
-
-    debian_image_url <- .gh(paste0("/repos/debuerreotype/docker-debian-eol-artifacts/contents/",
-                                   debian_version, "/amd64/rootfs.tar.xz"), ref = sha)$download_url
+    debian_image_url <- debian_urls[debian_version]
     rootfs_path <- file.path(cache_dir, "rootfs.tar.xz")
     download.file(debian_image_url, destfile = rootfs_path, quiet = !verbose)
     if (!file.exists(rootfs_path)) {
