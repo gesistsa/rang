@@ -56,7 +56,7 @@ NULL
 
 ## internal data generation
 ## ---
-### Supported OS Versions
+## ### Supported OS Versions
 ## supported_os <- c("trusty" = "ubuntu-14.04", "xenial" = "ubuntu-16.04", "bionic" = "ubuntu-18.04", "focal" = "ubuntu-20.04", "centos-6", "centos-7", "centos-8", "redhat-6", "redhat-7", "redhat-8")
 ## ### R version history
 ## cached_rver <- .rver()
@@ -64,7 +64,15 @@ NULL
 ## ### Bioconductor version history
 ## cached_biocver <- .biocver()
 ## attr(cached_biocver, "newest_date") <- max(cached_biocver$date)
-## usethis::use_data(supported_os, cached_rver, cached_biocver, internal = TRUE, overwrite = TRUE)
+## debian_version <- c("lenny", "squeeze", "wheezy", "jessie", "stretch")
+## .get_debian_urls <- function(debian_version, output_dir, verbose) {
+##     sha <- .gh(paste0("/repos/debuerreotype/docker-debian-eol-artifacts/branches/dist-",
+##                       debian_version))$commit$sha
+##     .gh(paste0("/repos/debuerreotype/docker-debian-eol-artifacts/contents/",
+##                debian_version, "/amd64/rootfs.tar.xz"), ref = sha)$download_url
+## }
+## debian_urls <- sapply(debian_version, .get_debian_urls)
+## usethis::use_data(supported_os, cached_rver, cached_biocver, debian_urls, internal = TRUE, overwrite = TRUE)
 
 ## test data upgrade
 ## ---
