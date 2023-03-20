@@ -104,6 +104,11 @@ test_that("cache for R < 3.1 and R >= 2.1", {
     expect_true(file.exists(file.path(temp_dir, "cache/rpkgs", "foreign_0.8-54.tar.gz")))
     expect_true(file.exists(file.path(temp_dir, "cache/rpkgs", "evaluate_0.4.7.tar.gz")))
     expect_true(file.exists(file.path(temp_dir, "cache/rpkgs", "testthat_0.7.1.tar.gz")))
+    ## Debian & rsrc
+    expect_true(dir.exists(file.path(temp_dir, "cache/rsrc")))
+    expect_true(file.exists(file.path(temp_dir, "cache/rsrc", "R-3.0.1.tar.gz")))
+    expect_true(dir.exists(file.path(temp_dir, "cache/debian")))
+    expect_true(file.exists(file.path(temp_dir, "cache/debian", "rootfs.tar.xz")))
 })
 
 test_that("github correct querying; also #25", {
@@ -331,6 +336,12 @@ test_that("skip_r17", {
     x <- readLines(file.path(temp_dir, "Dockerfile"))
     expect_false(any(grepl("^RUN bash compile_r\\.sh 1\\.8\\.0", x)))
     expect_true(any(grepl("^RUN bash compile_r\\.sh 1\\.7\\.0", x)))
+    ## debian & rsrc
+    expect_true(dir.exists(file.path(temp_dir, "cache/rsrc")))
+    expect_true(file.exists(file.path(temp_dir, "cache/rsrc", "R-1.7.0.tgz")))
+    expect_true(dir.exists(file.path(temp_dir, "cache/debian")))
+    expect_true(file.exists(file.path(temp_dir, "cache/debian", "rootfs.tar.xz")))
+
 })
 
 ## always keep this at the very last

@@ -111,9 +111,7 @@
             ## please note that these cached packages are not built
             .cache_pkg_local(x = x, version = version, cache_dir = cache_dir, uid = uid)
         }
-
     }
-    ## For #14, cache R source in the future here
     invisible(output_dir)
 }
 
