@@ -76,7 +76,7 @@ pkgs <- as_pkgrefs(".")
 
 * `rang` does not support reconstructing computational environments with R < 1.3.1 (i.e. `snapshot_date` < "2001-08-31 14:58") yet
 * `dockerize()` can only generate Debian/Ubuntu-based Docker images; it also means that packages depending on non-Linux specific features (e.g. WinBUGS) do not work.
-* `dockerize(cache = TRUE)` does not cache [R source code](https://cran.r-project.org/src/base/) (yet) and System Requirements (in `deb` packages)
+* `dockerize(cache = TRUE)` does not cache ~~[R source code](https://cran.r-project.org/src/base/) (yet) and~~ (available in rang >= 0.2.1) System Requirements (in `deb` packages)
 * `query_sysreqs()` (as well as `resolve(query_sysreqs = TRUE)`) queries for System Requirements based on the latest version of the packages on CRAN / Github. Therefore:
     * Removed CRAN packages are assumed to have no System Requirements
 	* R Packages with changed System Requirements between `snapshot_date` and the date of running `resolve()` might produce incorrect System Requirements
