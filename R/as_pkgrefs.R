@@ -41,6 +41,9 @@ as_pkgrefs.character <- function(x, bioc_version = NULL, ...) {
     if(.is_directory(x)) {
       return(.extract_pkgrefs_dir(x,bioc_version))
     }
+    if(.is_DESCRIPTION(x)){
+        return(.extract_pkgrefs_DESCRIPTION(x))
+    }
     return(.normalize_pkgs(pkgs = x, bioc_version = bioc_version))
 }
 
@@ -88,6 +91,23 @@ as_pkgrefs.sessionInfo <- function(x, ...) {
     return(paste0("cran::", handle))
 }
 
+.extract_pkgrefs_DESCRIPTION <- function(path){
+    descr <- read.dcf(path)
+    types <- colnames(descr)
+    refs <- c()
+    if("Imports"%in%types){
+        imports <- descr[,"Imports"]
+        imports <- strsplit(imports,",[\n]*")[[1]]
+        refs <- c(refs,paste0("cran::",gsub("\\(.*\\)","",imports)))
+    }
+    if("Remotes"%in%types){
+        remotes <- descr[,"Remotes"]
+        remotes <- strsplit(remotes,",[\n]*")[[1]]
+        refs <- c(refs,paste0("github::",gsub("\\(.*\\)","",remotes)))
+    }
+    trimws(refs,"both")
+}
+
 .is_renv_lockfile <- function(path) {
     # assuming all renv lockfiles are called renv.lock and path is only length 1
     if(length(path)!=1) {
@@ -123,3 +143,18 @@ as_pkgrefs.sessionInfo <- function(x, ...) {
     warning("scanning directories for R packages cannot detect github packages.",call. = FALSE)
     return(.normalize_pkgs(pkgs = pkgs, bioc_version = bioc_version))
 }
+
+.is_DESCRIPTION <- function(path) {
+    # assuming all DESCRIPTION files are called DESCRIPTION and path is only length 1
+    if(length(path)!=1) {
+        return(FALSE)
+    }
+    if(isFALSE(file.exists(path))) {
+        return(FALSE)
+    }
+    if (isFALSE(basename(path) == "DESCRIPTION")) {
+        return(FALSE)
+    }
+    TRUE
+}
+

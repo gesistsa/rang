@@ -1,0 +1,23 @@
+Package: mzesalike
+Title: Xaringan Template With MZES Theme
+Version: 0.0.3
+Authors@R: 
+    person(given = "Chung-hong",
+           family = "Chan",
+           role = c("aut", "cre"),
+           email = "chainsawtiney@gmail.com",
+           comment = c(ORCID = "0000-0002-6232-7530"))
+Description: Create professional looking HTML5 slides with MZES theme.
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+Imports:
+    xaringan,
+    xaringanExtra (>= 0.0.14),
+    leaflet,
+    fontawesome
+Remotes:
+    yihui/xaringan,
+    chainsawriot/xaringanExtra,
+    rstudio/fontawesome
+RoxygenNote: 7.1.0
