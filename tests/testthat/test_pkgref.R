@@ -139,6 +139,16 @@ test_that("as_pkgrefs directory", {
     expect_equal(res, c("bioc::BiocGenerics", "cran::rtoot"))
 })
 
+## as_pkgrefs.character (DESCRIPTION)
+test_that("as_pkgrefs DESCRIPTION", {
+    res <- suppressWarnings(as_pkgrefs("../testdata/DESCRIPTION",bioc_version = "3.16"))
+    expect_equal(res, c("cran::xaringan", "cran::xaringanExtra", "cran::leaflet", "cran::fontawesome", 
+                        "github::yihui/xaringan", "github::chainsawriot/xaringanExtra", 
+                        "github::rstudio/fontawesome"))
+})
+
+
+
 ## .is_*
 
 test_that(".is_pkgref", {
