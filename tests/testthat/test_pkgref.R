@@ -141,13 +141,10 @@ test_that("as_pkgrefs directory", {
 
 ## as_pkgrefs.character (DESCRIPTION)
 test_that("as_pkgrefs DESCRIPTION", {
-    res <- suppressWarnings(as_pkgrefs("../testdata/DESCRIPTION",bioc_version = "3.16"))
-    expect_equal(res, c("cran::xaringan", "cran::xaringanExtra", "cran::leaflet", "cran::fontawesome", 
-                        "github::yihui/xaringan", "github::chainsawriot/xaringanExtra", 
+    res <- suppressWarnings(as_pkgrefs("../testdata/mzesalike/DESCRIPTION",bioc_version = "3.16"))
+    expect_equal(res, c("cran::leaflet", "github::yihui/xaringan", "github::chainsawriot/xaringanExtra",
                         "github::rstudio/fontawesome"))
 })
-
-
 
 ## .is_*
 

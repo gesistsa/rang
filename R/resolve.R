@@ -150,7 +150,7 @@
 }
 
 # parse a description file from github repo
-.parse_desc <- function(descr_df, snapshot_date) {
+.parse_desc <- function(descr_df, snapshot_date = "2019-08-31", remotes = FALSE) {
     types <- c("Depends","LinkingTo","Imports","Suggests","Enhances")
     depends <- descr_df[["Depends"]]
     imports <- descr_df[["Imports"]]
@@ -162,9 +162,14 @@
     if(!is.null(suggests)) suggests <- trimws(strsplit(suggests, ",[\n]*")[[1]])
     if(!is.null(enhances)) enhances <- trimws(strsplit(enhances, ",[\n]*")[[1]])
     if(!is.null(depends))  depends <- trimws(strsplit(depends, ",[\n]*")[[1]])
-    raw_deps <- list(
-        depends, linking, imports, suggests, enhances
-    )
+    if (isFALSE(remotes)) {
+        raw_deps <- list(depends, linking, imports, suggests, enhances)
+    } else {
+        types <- c(types, "Remotes")
+        remotes <- descr_df[["Remotes"]]
+        if(!is.null(remotes))  remotes <- trimws(strsplit(remotes, ",[\n]*")[[1]])
+        raw_deps <- list(depends, linking, imports, suggests, enhances, remotes)
+    }
     type <- lapply(seq_along(raw_deps), function(x) rep(types[x], length(raw_deps[[x]])))
     version <- vapply(unlist(raw_deps), .extract_version, character(1), USE.NAMES = FALSE)
     deps <- gsub("\\s*\\(.*\\)","",unlist(raw_deps))

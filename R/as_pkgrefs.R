@@ -41,8 +41,8 @@ as_pkgrefs.character <- function(x, bioc_version = NULL, ...) {
     if(.is_directory(x)) {
       return(.extract_pkgrefs_dir(x,bioc_version))
     }
-    if(.is_DESCRIPTION(x)){
-        return(.extract_pkgrefs_DESCRIPTION(x))
+    if(.is_DESCRIPTION(x)) {
+        return(.extract_pkgrefs_DESCRIPTION(x, bioc_version))
     }
     return(.normalize_pkgs(pkgs = x, bioc_version = bioc_version))
 }
@@ -91,21 +91,35 @@ as_pkgrefs.sessionInfo <- function(x, ...) {
     return(paste0("cran::", handle))
 }
 
-.extract_pkgrefs_DESCRIPTION <- function(path){
-    descr <- read.dcf(path)
-    types <- colnames(descr)
-    refs <- c()
-    if("Imports"%in%types){
-        imports <- descr[,"Imports"]
-        imports <- strsplit(imports,",[\n]*")[[1]]
-        refs <- c(refs,paste0("cran::",gsub("\\(.*\\)","",imports)))
+.extract_pkgrefs_DESCRIPTION <- function(path, bioc_version = NULL) {
+    descr_df <- as.data.frame(read.dcf(path))
+    pkg_dep_df <- .parse_desc(descr_df, remotes = TRUE)
+    if (isFALSE("y" %in% colnames(pkg_dep_df))) {
+        stop("No dependencies listed in the DESCRIPTION file.", call. = FALSE)
     }
-    if("Remotes"%in%types){
-        remotes <- descr[,"Remotes"]
-        remotes <- strsplit(remotes,",[\n]*")[[1]]
-        refs <- c(refs,paste0("github::",gsub("\\(.*\\)","",remotes)))
+    pkgrefs <- .normalize_pkgs(pkg_dep_df$y, bioc_version = bioc_version)
+    .remove_overlapped_pkgrefs(pkgrefs)
+}
+
+.remove_overlapped_pkgrefs <- function(pkgrefs) {
+    ## Eliminate all github/cran duplicates, github has precedence
+    grouped_pkgrefs <- .group_pkgrefs_by_source(pkgrefs)
+    if (is.null(grouped_pkgrefs$github)) {
+        ## no possible overlap
+        return(pkgrefs)
     }
-    trimws(refs,"both")
+    for (handle in grouped_pkgrefs$github) {
+        pkgname <- strsplit(handle, "/")[[1]][2]
+        cran_version <- paste0("cran::", pkgname)
+        bioc_version <- paste0("bioc::", pkgname)
+        if (cran_version %in% pkgrefs) {
+            pkgrefs <- setdiff(pkgrefs, cran_version)
+        }
+        if (bioc_version %in% pkgrefs) {
+            pkgrefs <- setdiff(pkgrefs, bioc_version)
+        }
+    }
+    return(pkgrefs)
 }
 
 .is_renv_lockfile <- function(path) {
@@ -157,4 +171,3 @@ as_pkgrefs.sessionInfo <- function(x, ...) {
     }
     TRUE
 }
-
