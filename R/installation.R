@@ -297,7 +297,8 @@ export_renv <- function(rang, path = ".") {
 #' }
 #' }
 #' @export
-dockerize <- function(rang, output_dir, materials_dir = NULL, image = c("r-ver", "rstudio", "tidyverse", "verse", "geospatial"),
+dockerize <- function(rang, output_dir, materials_dir = NULL, post_installation_steps = "",
+                      image = c("r-ver", "rstudio", "tidyverse", "verse", "geospatial"),
                       rang_as_comment = TRUE, cache = FALSE, verbose = TRUE, lib = NA,
                       cran_mirror = "https://cran.r-project.org/", check_cran_mirror = TRUE,
                       bioc_mirror = "https://bioconductor.org/packages/",
@@ -353,7 +354,8 @@ dockerize <- function(rang, output_dir, materials_dir = NULL, image = c("r-ver",
         dockerfile_content <- .generate_debian_eol_dockerfile_content(r_version = r_version,
                                                                       sysreqs_cmd = sysreqs_cmd, lib = lib,
                                                                       cache = cache,
-                                                                      debian_version = debian_version)
+                                                                      debian_version = debian_version,
+                                                                      post_installation_steps = post_installation_steps)
         if (isTRUE(cache)) {
             .cache_rsrc(r_version = r_version, output_dir = output_dir,
                         verbose = verbose)
@@ -363,7 +365,8 @@ dockerize <- function(rang, output_dir, materials_dir = NULL, image = c("r-ver",
     } else {
         dockerfile_content <- .generate_rocker_dockerfile_content(r_version = r_version,
                                                                   sysreqs_cmd = sysreqs_cmd, lib = lib,
-                                                                  cache = cache, image = image)
+                                                                  cache = cache, image = image,
+                                                                  post_installation_steps = post_installation_steps)
     }
     if (!(is.null(materials_dir))) {
         materials_subdir_in_output_dir <- file.path(output_dir, "materials")
