@@ -44,7 +44,7 @@
     if (!is.na(lib)) {
         dockerfile_content$RUN <- append(dockerfile_content$RUN, paste0("RUN mkdir ", lib, " && Rscript rang.R"))
     } else {
-        dockerfile_content$RUN <- append(dockerfile_content$RUN, "Rscript rang.R")
+        dockerfile_content$RUN <- append(dockerfile_content$RUN, "RUN Rscript rang.R")
     }
     if (isTRUE(cache)) {
         dockerfile_content$COPY <- append(dockerfile_content$COPY, "COPY cache ./cache")

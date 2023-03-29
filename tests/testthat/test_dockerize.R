@@ -36,6 +36,8 @@ test_that("integration of #16 in dockerize()", {
     dockerize(rang = rang_ok, output_dir = temp_dir, verbose = FALSE)
     x <- readLines(file.path(temp_dir, "rang.R"))
     expect_true(any(grepl("^verbose <- FALSE", x)))
+    Dockerfile <- readLines(file.path(temp_dir, "Dockerfile"))
+    expect_true(any(grepl("^RUN Rscript rang\\.R", Dockerfile)))
     ## lib
     dockerize(rang = rang_ok, output_dir = temp_dir) ## lib = NA
     x <- readLines(file.path(temp_dir, "rang.R"))
@@ -47,6 +49,7 @@ test_that("integration of #16 in dockerize()", {
     expect_true(any(grepl("^lib <- \"abc\"", x)))
     Dockerfile <- readLines(file.path(temp_dir, "Dockerfile"))
     expect_true(any(grepl("^RUN mkdir", Dockerfile)))
+    expect_false(any(grepl("^RUN Rscript rang\\.R", Dockerfile)))
     ## #123
     expect_equal(tail(Dockerfile, 1), "CMD [\"R\"]")
 })
