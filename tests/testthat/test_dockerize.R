@@ -166,7 +166,8 @@ test_that("material_dir, existing, no subdir, #23", {
     dockerize(graph, output_dir = temp_dir, materials_dir = fake_material_dir)
     expect_true(dir.exists(file.path(temp_dir, "materials")))
     expect_equal(list.files(file.path(temp_dir, "materials")), character(0))
-    expect_true(any(readLines(file.path(temp_dir, "Dockerfile")) == "COPY materials/ ./materials/"))
+    Dockerfile <- readLines(file.path(temp_dir, "Dockerfile"))
+    expect_true(any(Dockerfile == "COPY materials/ ./materials/"))
     expect_equal(tail(Dockerfile, 1), "CMD [\"R\"]")
     ## Will only test post 3.1.0 from now on
     ## some files in fake_material_dir
@@ -220,7 +221,7 @@ test_that("readme issue #50", {
 test_that("#123 rstudio", {
     graph <- readRDS("../testdata/graph.RDS")
     temp_dir <- .generate_temp_dir()
-    dockerize(rang_ok, output_dir = temp_dir, image = "rstudio")
+    dockerize(graph, output_dir = temp_dir, image = "rstudio")
     dockerfile <- readLines(file.path(temp_dir, "Dockerfile"))
     expect_true("EXPOSE 8787" %in% dockerfile)
     expect_equal(tail(dockerfile, 1), "CMD [\"/init\"]")
