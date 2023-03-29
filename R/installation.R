@@ -297,7 +297,7 @@ export_renv <- function(rang, path = ".") {
 #' }
 #' }
 #' @export
-dockerize <- function(rang, output_dir, materials_dir = NULL, post_installation_steps = "",
+dockerize <- function(rang, output_dir, materials_dir = NULL, post_installation_steps = NULL,
                       image = c("r-ver", "rstudio", "tidyverse", "verse", "geospatial"),
                       rang_as_comment = TRUE, cache = FALSE, verbose = TRUE, lib = NA,
                       cran_mirror = "https://cran.r-project.org/", check_cran_mirror = TRUE,
