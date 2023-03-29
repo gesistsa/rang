@@ -11,7 +11,7 @@ as_pkgrefs(x, ...)
 
 \method{as_pkgrefs}{default}(x, ...)
 
-\method{as_pkgrefs}{character}(x, bioc_version = NULL, ...)
+\method{as_pkgrefs}{character}(x, bioc_version = NULL, no_enhances = TRUE, no_suggests = TRUE, ...)
 
 \method{as_pkgrefs}{sessionInfo}(x, ...)
 }
