@@ -1,0 +1,30 @@
+Package: rrcompendium
+Title: Partial Reproduction of Boettiger Ecology Letters 2018;21:1255–1267 with rrtools
+Version: 0.0.0.9000
+Authors@R:
+    person(given = "Anna",
+           family = "Krystalli",
+           role = c("aut", "cre"),
+           email = "annakrystalli@googlemail.com")
+Description: This repository contains the research compendium of the partial 
+    reproduction of Boettiger Ecology Letters 2018;21:1255–1267. The compendium 
+    contains all data, code, and text associated with this sub-section of the 
+    analysis.
+License: MIT + file LICENSE
+ByteCompile: true
+Encoding: UTF-8
+LazyData: true
+URL: https://github.com/annakrystalli/rrcompendium
+BugReports: https://github.com/annakrystalli/rrcompendium/issues
+Imports: 
+    bookdown,
+    dplyr,
+    readr,
+    ggplot2 (>= 3.0.0),
+    ggthemes (>= 3.5.0),
+    here (>= 0.1),
+    knitr (>= 1.20),
+    rticles (>= 0.6)
+RoxygenNote: 6.1.0
+Suggests: 
+    testthat

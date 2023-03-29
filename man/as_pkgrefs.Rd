@@ -22,6 +22,10 @@ as_pkgrefs(x, ...)
 
 \item{bioc_version}{character. When x is a character vector, version of Bioconductor to search for package names. NULL indicates not
 search for Bioconductor.}
+
+\item{no_enhances}{logical, when parsing DESCRIPTION, whether to ignore packages in the "Enhances" field}
+
+\item{no_suggests}{logical, when parsing DESCRIPTION, whether to ignore packages in the "Suggests" field}
 }
 \value{
 a vector of package references
