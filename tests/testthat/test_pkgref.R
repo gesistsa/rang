@@ -139,6 +139,37 @@ test_that("as_pkgrefs directory", {
     expect_equal(res, c("bioc::BiocGenerics", "cran::rtoot"))
 })
 
+## as_pkgrefs.character (DESCRIPTION)
+test_that("as_pkgrefs DESCRIPTION", {
+    ## Real application
+    res <- suppressWarnings(as_pkgrefs("../testdata/rrcompendium-complete/DESCRIPTION"))
+    expect_equal(res, c("cran::bookdown", "cran::dplyr", "cran::readr", "cran::ggplot2", "cran::ggthemes", "cran::here", "cran::knitr", "cran::rticles"))
+    ## Less real application
+    res <- suppressWarnings(as_pkgrefs("../testdata/askpass/DESCRIPTION", bioc_version = "3.16"))
+    expect_equal(res, c("cran::sys"))
+    res <- suppressWarnings(as_pkgrefs("../testdata/askpass/DESCRIPTION", bioc_version = "3.16", no_suggests = FALSE))
+    expect_equal(res, c("cran::sys", "cran::testthat"))
+    ## Bioc
+    res <- suppressWarnings(as_pkgrefs("../testdata/chipseq/DESCRIPTION", bioc_version = "3.16"))
+    expect_equal(res, c("bioc::BiocGenerics", "bioc::S4Vectors", "bioc::IRanges", "bioc::GenomicRanges", "bioc::ShortRead", "cran::lattice"))
+    expect_error(suppressWarnings(as_pkgrefs("../testdata/Rcpp/DESCRIPTION",
+                                             bioc_version = "3.16", no_suggests = TRUE)))
+    expect_error(suppressWarnings(as_pkgrefs("../testdata/Rcpp/DESCRIPTION",
+                                             bioc_version = "3.16", no_suggests = FALSE)), NA)
+    ## Github precendence
+    res <- suppressWarnings(as_pkgrefs("../testdata/mzesalike/DESCRIPTION", bioc_version = "3.16"))
+    expect_equal(res, c("cran::leaflet", "github::yihui/xaringan", "github::chainsawriot/xaringanExtra",
+                        "github::rstudio/fontawesome"))
+    desc <- read.dcf("../testdata/chipseq/DESCRIPTION")
+    tempered_desc <- cbind(desc, matrix("Bioconductor/GenomicRanges"))
+    dimnames(tempered_desc)[[2]][13] <- "Remotes"
+    tempered_desc_path <- file.path(tempdir(), "DESCRIPTION")
+    write.dcf(tempered_desc, tempered_desc_path)
+    res <- suppressWarnings(as_pkgrefs(tempered_desc_path, bioc_version = "3.16"))
+    expect_false("bioc::GenomicRanges" %in% res)
+    expect_true("github::Bioconductor/GenomicRanges" %in% res)
+})
+
 ## .is_*
 
 test_that(".is_pkgref", {
@@ -183,4 +214,9 @@ test_that(".is_local", {
 test_that(".is_local precedes .is_github", {
     expect_false(.is_github("~/helloworld"))
     expect_false(.is_github("./helloworld"))
+})
+
+test_that(".is_DESCRIPTION", {
+    expect_true(.is_DESCRIPTION("../testdata/mzesalike/DESCRIPTION"))
+    expect_false(.is_DESCRIPTION("../testdata/rang_6.RDS"))
 })

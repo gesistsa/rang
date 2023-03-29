@@ -150,7 +150,7 @@
 }
 
 # parse a description file from github repo
-.parse_desc <- function(descr_df, snapshot_date) {
+.parse_desc <- function(descr_df, snapshot_date = "2019-08-31", remotes = FALSE) {
     types <- c("Depends","LinkingTo","Imports","Suggests","Enhances")
     depends <- descr_df[["Depends"]]
     imports <- descr_df[["Imports"]]
@@ -162,9 +162,14 @@
     if(!is.null(suggests)) suggests <- trimws(strsplit(suggests, ",[\n]*")[[1]])
     if(!is.null(enhances)) enhances <- trimws(strsplit(enhances, ",[\n]*")[[1]])
     if(!is.null(depends))  depends <- trimws(strsplit(depends, ",[\n]*")[[1]])
-    raw_deps <- list(
-        depends, linking, imports, suggests, enhances
-    )
+    if (isFALSE(remotes)) {
+        raw_deps <- list(depends, linking, imports, suggests, enhances)
+    } else {
+        types <- c(types, "Remotes")
+        remotes <- descr_df[["Remotes"]]
+        if(!is.null(remotes))  remotes <- trimws(strsplit(remotes, ",[\n]*")[[1]])
+        raw_deps <- list(depends, linking, imports, suggests, enhances, remotes)
+    }
     type <- lapply(seq_along(raw_deps), function(x) rep(types[x], length(raw_deps[[x]])))
     version <- vapply(unlist(raw_deps), .extract_version, character(1), USE.NAMES = FALSE)
     deps <- gsub("\\s*\\(.*\\)","",unlist(raw_deps))
@@ -203,10 +208,7 @@
 
 ## We should consider Imports, Depends, LinkingTo, and Enhances in normal cases
 
-.extract_queryable_dependencies <- function(dep_df, no_enhances = TRUE, no_suggests = TRUE) {
-    if (!"y" %in% colnames(dep_df)) {
-        return(NULL)
-    }
+.generate_disabled_types <- function(no_enhances = TRUE, no_suggests = TRUE) {
     disabled_types <- c()
     if (isTRUE(no_suggests)) {
         disabled_types <- c(disabled_types, "Suggests")
@@ -214,6 +216,14 @@
     if (isTRUE(no_enhances)) {
         disabled_types <- c(disabled_types, "Enhances")
     }
+    return(disabled_types)
+}
+
+.extract_queryable_dependencies <- function(dep_df, no_enhances = TRUE, no_suggests = TRUE) {
+    if (!"y" %in% colnames(dep_df)) {
+        return(NULL)
+    }
+    disabled_types <- .generate_disabled_types(no_enhances = no_enhances, no_suggests = no_suggests)
     res <- dep_df[!dep_df$type %in% disabled_types &
                   dep_df$y != "R" & !(dep_df$y %in%
                                       c("datasets", "utils", "grDevices", "graphics", "stats", "methods", "tools",
@@ -310,7 +320,8 @@ resolve <- function(pkgs = ".", snapshot_date, no_enhances = TRUE, no_suggests =
     }
     snapshot_date <- .extract_date(pkgs = pkgs, date = snapshot_date, verbose = verbose)
     bioc_version <- .generate_bioc_version(snapshot_date = snapshot_date, pkgs = pkgs)
-    pkgrefs <- as_pkgrefs(pkgs, bioc_version = bioc_version)
+    pkgrefs <- as_pkgrefs(pkgs, bioc_version = bioc_version, no_enhances = no_enhances,
+                          no_suggests = no_suggests)
     .check_local_in_pkgrefs(pkgrefs)
     output <- list()
     output$call <- match.call()
