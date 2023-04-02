@@ -52,6 +52,10 @@ test_that("integration of #16 in dockerize()", {
     expect_false(any(grepl("^RUN Rscript rang\\.R", Dockerfile)))
     ## #123
     expect_equal(tail(Dockerfile, 1), "CMD [\"R\"]")
+    ## post
+    dockerize(rang = rang_ok, output_dir = temp_dir, post_installation_steps = "RUN date")
+    Dockerfile <- readLines(file.path(temp_dir, "Dockerfile"))
+    expect_equal(Dockerfile[length(Dockerfile) -1], "RUN date")
 })
 
 test_that("integration of #18 in dockerize()", {
@@ -106,6 +110,9 @@ test_that("Dockerize R < 3.1 and >= 2.1", {
     Dockerfile <- readLines(file.path(temp_dir, "Dockerfile"))
     expect_true(any(grepl("^RUN mkdir", Dockerfile)))
     expect_equal(tail(Dockerfile, 1), "CMD [\"R\"]")
+    dockerize(rang_rio, output_dir = temp_dir, lib = "abc", post_installation_step = "RUN date")
+    Dockerfile <- readLines(file.path(temp_dir, "Dockerfile"))
+    expect_equal(Dockerfile[length(Dockerfile) -1], "RUN date")
 })
 
 test_that("Docker R < 1.3.1", {

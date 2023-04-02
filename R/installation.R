@@ -295,6 +295,12 @@ export_renv <- function(rang, path = ".") {
 #'     graph <- resolve(pkgs = c("openNLP", "LDAvis", "topicmodels", "quanteda"),
 #'                     snapshot_date = "2020-01-16")
 #'     dockerize(graph, ".")
+#'     ## An example of using post_installation_steps to install quarto
+#'     install_quarto <- c("RUN apt-get install -y curl git && \\
+#'     curl -LO https://quarto.org/download/latest/quarto-linux-amd64.deb && \\
+#'     dpkg -i quarto-linux-amd64.deb && \\
+#'     quarto install tool tinytex")
+#'     dockerize(graph, ".", post_installation_steps = install_quarto)
 #' }
 #' }
 #' @export
