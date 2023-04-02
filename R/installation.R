@@ -274,12 +274,13 @@ export_renv <- function(rang, path = ".") {
 #' For R version < 3.1.0, the Dockerfile is based on Debian and it compiles R from source.
 #' @param output_dir character, where to put the Docker file and associated content
 #' @param materials_dir character, path to the directory containing additional resources (e.g. analysis scripts) to be copied into `output_dir` and in turn into the Docker container
+#' @param post_installation_steps character, additional steps to be added before the `CMD` part of the Dockerfile, see an example below
 #' @param image character, which versioned Rocker image to use. Can only be "r-ver", "rstudio", "tidyverse", "verse", "geospatial"
 #' This applies only to R version >= 3.1
 #' @param cache logical, whether to cache the packages now. Please note that the system requirements are not cached. For query with non-CRAN packages, this option is strongly recommended. For query with local packages, this must be TRUE regardless of R version. For R version < 3.1, this must be also TRUE if there is any non-CRAN packages.
 #' @param no_rocker logical, whether to skip using Rocker images even when an appropriate version is available. Please keep this as `TRUE` unless you know what you are doing
 #' @param debian_version when Rocker images are not used, which EOL version of Debian to use. Can only be "lenny", "etch", "squeeze", "wheezy", "jessie", "stretch". Please keep this as default "lenny" unless you know what you are doing
-#' @param skip_r17 logical, whether to skip R 1.7.x. Currently, it is not possible to compile R 1.7.x (R 1.7.0 and R 1.7.1) with the method provided by  `rang`. It affects `snapshot_date` from 2003-04-16 to 2003-10-07. When `skip_r17` is TRUE and `snapshot_date` is within the aforementioned range, R 1.8.0 is used instead.
+#' @param skip_r17 logical, whether to skip R 1.7.x. Currently, it is not possible to compile R 1.7.x (R 1.7.0 and R 1.7.1) with the method provided by  `rang`. It affects `snapshot_date` from 2003-04-16 to 2003-10-07. When `skip_r17` is TRUE and `snapshot_date` is within the aforementioned range, R 1.8.0 is used instead
 #' @param ... arguments to be passed to `dockerize`
 #' @return `output_dir`, invisibly
 #' @inheritParams export_rang
@@ -294,10 +295,17 @@ export_renv <- function(rang, path = ".") {
 #'     graph <- resolve(pkgs = c("openNLP", "LDAvis", "topicmodels", "quanteda"),
 #'                     snapshot_date = "2020-01-16")
 #'     dockerize(graph, ".")
+#'     ## An example of using post_installation_steps to install quarto
+#'     install_quarto <- c("RUN apt-get install -y curl git && \\
+#'     curl -LO https://quarto.org/download/latest/quarto-linux-amd64.deb && \\
+#'     dpkg -i quarto-linux-amd64.deb && \\
+#'     quarto install tool tinytex")
+#'     dockerize(graph, ".", post_installation_steps = install_quarto)
 #' }
 #' }
 #' @export
-dockerize <- function(rang, output_dir, materials_dir = NULL, image = c("r-ver", "rstudio", "tidyverse", "verse", "geospatial"),
+dockerize <- function(rang, output_dir, materials_dir = NULL, post_installation_steps = NULL,
+                      image = c("r-ver", "rstudio", "tidyverse", "verse", "geospatial"),
                       rang_as_comment = TRUE, cache = FALSE, verbose = TRUE, lib = NA,
                       cran_mirror = "https://cran.r-project.org/", check_cran_mirror = TRUE,
                       bioc_mirror = "https://bioconductor.org/packages/",
@@ -353,7 +361,8 @@ dockerize <- function(rang, output_dir, materials_dir = NULL, image = c("r-ver",
         dockerfile_content <- .generate_debian_eol_dockerfile_content(r_version = r_version,
                                                                       sysreqs_cmd = sysreqs_cmd, lib = lib,
                                                                       cache = cache,
-                                                                      debian_version = debian_version)
+                                                                      debian_version = debian_version,
+                                                                      post_installation_steps = post_installation_steps)
         if (isTRUE(cache)) {
             .cache_rsrc(r_version = r_version, output_dir = output_dir,
                         verbose = verbose)
@@ -363,7 +372,8 @@ dockerize <- function(rang, output_dir, materials_dir = NULL, image = c("r-ver",
     } else {
         dockerfile_content <- .generate_rocker_dockerfile_content(r_version = r_version,
                                                                   sysreqs_cmd = sysreqs_cmd, lib = lib,
-                                                                  cache = cache, image = image)
+                                                                  cache = cache, image = image,
+                                                                  post_installation_steps = post_installation_steps)
     }
     if (!(is.null(materials_dir))) {
         materials_subdir_in_output_dir <- file.path(output_dir, "materials")

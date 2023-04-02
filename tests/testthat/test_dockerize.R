@@ -36,6 +36,8 @@ test_that("integration of #16 in dockerize()", {
     dockerize(rang = rang_ok, output_dir = temp_dir, verbose = FALSE)
     x <- readLines(file.path(temp_dir, "rang.R"))
     expect_true(any(grepl("^verbose <- FALSE", x)))
+    Dockerfile <- readLines(file.path(temp_dir, "Dockerfile"))
+    expect_true(any(grepl("^RUN Rscript rang\\.R", Dockerfile)))
     ## lib
     dockerize(rang = rang_ok, output_dir = temp_dir) ## lib = NA
     x <- readLines(file.path(temp_dir, "rang.R"))
@@ -47,6 +49,13 @@ test_that("integration of #16 in dockerize()", {
     expect_true(any(grepl("^lib <- \"abc\"", x)))
     Dockerfile <- readLines(file.path(temp_dir, "Dockerfile"))
     expect_true(any(grepl("^RUN mkdir", Dockerfile)))
+    expect_false(any(grepl("^RUN Rscript rang\\.R", Dockerfile)))
+    ## #123
+    expect_equal(tail(Dockerfile, 1), "CMD [\"R\"]")
+    ## post
+    dockerize(rang = rang_ok, output_dir = temp_dir, post_installation_steps = "RUN date")
+    Dockerfile <- readLines(file.path(temp_dir, "Dockerfile"))
+    expect_equal(Dockerfile[length(Dockerfile) -1], "RUN date")
 })
 
 test_that("integration of #18 in dockerize()", {
@@ -95,10 +104,15 @@ test_that("Dockerize R < 3.1 and >= 2.1", {
     expect_true(file.exists(file.path(temp_dir, "compile_r.sh")))
     Dockerfile <- readLines(file.path(temp_dir, "Dockerfile"))
     expect_true(any(grepl("^RUN bash compile_r.sh 3.0.1", Dockerfile)))
+    expect_equal(tail(Dockerfile, 1), "CMD [\"R\"]")
     ## lib
     dockerize(rang_rio, output_dir = temp_dir, lib = "abc")
     Dockerfile <- readLines(file.path(temp_dir, "Dockerfile"))
     expect_true(any(grepl("^RUN mkdir", Dockerfile)))
+    expect_equal(tail(Dockerfile, 1), "CMD [\"R\"]")
+    dockerize(rang_rio, output_dir = temp_dir, lib = "abc", post_installation_step = "RUN date")
+    Dockerfile <- readLines(file.path(temp_dir, "Dockerfile"))
+    expect_equal(Dockerfile[length(Dockerfile) -1], "RUN date")
 })
 
 test_that("Docker R < 1.3.1", {
@@ -162,7 +176,9 @@ test_that("material_dir, existing, no subdir, #23", {
     dockerize(graph, output_dir = temp_dir, materials_dir = fake_material_dir)
     expect_true(dir.exists(file.path(temp_dir, "materials")))
     expect_equal(list.files(file.path(temp_dir, "materials")), character(0))
-    expect_true(any(readLines(file.path(temp_dir, "Dockerfile")) == "COPY materials/ ./materials/"))
+    Dockerfile <- readLines(file.path(temp_dir, "Dockerfile"))
+    expect_true(any(Dockerfile == "COPY materials/ ./materials/"))
+    expect_equal(tail(Dockerfile, 1), "CMD [\"R\"]")
     ## Will only test post 3.1.0 from now on
     ## some files in fake_material_dir
     temp_dir <- .generate_temp_dir()
@@ -210,6 +226,15 @@ test_that("readme issue #50", {
     expect_true(file.exists(file.path(temp_dir, "README")))
     content <- readLines(file.path(temp_dir, "README"))
     expect_true(any(grepl(temp_dir, content)))
+})
+
+test_that("#123 rstudio", {
+    graph <- readRDS("../testdata/graph.RDS")
+    temp_dir <- .generate_temp_dir()
+    dockerize(graph, output_dir = temp_dir, image = "rstudio")
+    dockerfile <- readLines(file.path(temp_dir, "Dockerfile"))
+    expect_true("EXPOSE 8787" %in% dockerfile)
+    expect_equal(tail(dockerfile, 1), "CMD [\"/init\"]")
 })
 
 test_that("dockerize with bioc #58", {

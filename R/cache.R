@@ -1,3 +1,6 @@
+#' @importFrom utils download.file
+NULL
+
 .query_mirror_validity <- function(mirror) {
     if (mirror == "https://cran.r-project.org/") {
         return(TRUE)

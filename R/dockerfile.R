@@ -10,7 +10,8 @@
     dockerfile_content
 }
 
-.generate_debian_eol_dockerfile_content <- function(r_version, lib, sysreqs_cmd, cache, debian_version = "lenny") {
+.generate_debian_eol_dockerfile_content <- function(r_version, lib, sysreqs_cmd, cache, debian_version = "lenny",
+                                                    post_installation_steps = NULL) {
     dockerfile_content <- list(
         FROM = c(paste0("FROM debian/eol:", debian_version)),
         chores = c("ENV TZ UTC",
@@ -28,32 +29,36 @@
                                           c("COPY cache/rpkgs ./cache/rpkgs", "COPY cache/rsrc ./cache/rsrc"))
         dockerfile_content$FROM <- c("FROM scratch", "ADD cache/debian/rootfs.tar.xz /")
     }
+    dockerfile_content$RUN <- append(dockerfile_content$RUN, post_installation_steps)
     return(dockerfile_content)
 }
 
-.generate_rocker_dockerfile_content <- function(r_version, lib, sysreqs_cmd, cache, image) {
+.generate_rocker_dockerfile_content <- function(r_version, lib, sysreqs_cmd, cache, image,
+                                                post_installation_steps = NULL) {
     dockerfile_content <- list(
         FROM = c(paste0("FROM rocker/", image, ":", r_version)),
         chores = NULL,
         COPY = c("COPY rang.R ./rang.R"),
         RUN = c(paste("RUN", sysreqs_cmd)),
-        "CMD [\"R\"]")
+        CMD = c("CMD [\"R\"]"))
     if (!is.na(lib)) {
         dockerfile_content$RUN <- append(dockerfile_content$RUN, paste0("RUN mkdir ", lib, " && Rscript rang.R"))
     } else {
-        dockerfile_content$RUN <- append(dockerfile_content$RUN, "Rscript rang.R")
+        dockerfile_content$RUN <- append(dockerfile_content$RUN, "RUN Rscript rang.R")
     }
     if (isTRUE(cache)) {
         dockerfile_content$COPY <- append(dockerfile_content$COPY, "COPY cache ./cache")
     }
     if (image == "rstudio") {
-        dockerfile_content$RUN <- c("EXPOSE 8787", "CMD [\"/init\"]")
+        dockerfile_content$CMD <- c("EXPOSE 8787", "CMD [\"/init\"]")
     }
+    dockerfile_content$RUN <- append(dockerfile_content$RUN, post_installation_steps)
     return(dockerfile_content)
 }
 
 .write_dockerfile <- function(dockerfile_content, path) {
     content <- c(dockerfile_content$FROM, dockerfile_content$chores,
-                 dockerfile_content$COPY, dockerfile_content$RUN)
+                 dockerfile_content$COPY, dockerfile_content$RUN,
+                 dockerfile_content$CMD)
     writeLines(content, path)
 }
