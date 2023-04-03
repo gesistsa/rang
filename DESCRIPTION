@@ -28,7 +28,8 @@ Imports:
     utils,
     httr,
     vctrs,
-    renv
+    renv,
+    here
 Depends: 
     R (>= 3.5.0)
 VignetteBuilder: knitr
