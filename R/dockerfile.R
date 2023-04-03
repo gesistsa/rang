@@ -14,8 +14,8 @@
                                                     post_installation_steps = NULL) {
     dockerfile_content <- list(
         FROM = c(paste0("FROM debian/eol:", debian_version)),
-        chores = c("ENV TZ UTC",
-                   "RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && apt-get update -qq && apt-get install wget locales build-essential r-base-dev  -y"),
+        ENV = c("ENV TZ UTC",
+                   "RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && apt-get update -qq && apt-get install wget locales build-essential r-base-dev  -y", "ENV RANG_PATH rang.R"),
         COPY = c("COPY rang.R ./rang.R", "COPY compile_r.sh ./compile_r.sh"),
         RUN = c(paste("RUN", sysreqs_cmd)),
         CMD = c("CMD [\"R\"]"))
@@ -37,14 +37,14 @@
                                                 post_installation_steps = NULL) {
     dockerfile_content <- list(
         FROM = c(paste0("FROM rocker/", image, ":", r_version)),
-        chores = NULL,
+        ENV = c("ENV RANG_PATH rang.R"),
         COPY = c("COPY rang.R ./rang.R"),
         RUN = c(paste("RUN", sysreqs_cmd)),
         CMD = c("CMD [\"R\"]"))
     if (!is.na(lib)) {
-        dockerfile_content$RUN <- append(dockerfile_content$RUN, paste0("RUN mkdir ", lib, " && Rscript rang.R"))
+        dockerfile_content$RUN <- append(dockerfile_content$RUN, paste0("RUN mkdir ", lib, " && Rscript $RANG_PATH"))
     } else {
-        dockerfile_content$RUN <- append(dockerfile_content$RUN, "RUN Rscript rang.R")
+        dockerfile_content$RUN <- append(dockerfile_content$RUN, "RUN Rscript $RANG_PATH")
     }
     if (isTRUE(cache)) {
         dockerfile_content$COPY <- append(dockerfile_content$COPY, "COPY cache ./cache")
@@ -57,7 +57,7 @@
 }
 
 .write_dockerfile <- function(dockerfile_content, path) {
-    content <- c(dockerfile_content$FROM, dockerfile_content$chores,
+    content <- c(dockerfile_content$FROM, dockerfile_content$ENV,
                  dockerfile_content$COPY, dockerfile_content$RUN,
                  dockerfile_content$CMD)
     writeLines(content, path)

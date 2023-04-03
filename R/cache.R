@@ -1,4 +1,5 @@
 #' @importFrom utils download.file
+#' @importFrom here here
 NULL
 
 .query_mirror_validity <- function(mirror) {

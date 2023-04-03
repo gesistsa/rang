@@ -27,4 +27,4 @@ make install
 
 cd /
 
-Rscript rang.R
+Rscript $RANG_PATH
