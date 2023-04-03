@@ -28,6 +28,7 @@
         dockerfile_content$COPY <- append(dockerfile_content$COPY,
                                           c("COPY cache/rpkgs ./cache/rpkgs", "COPY cache/rsrc ./cache/rsrc"))
         dockerfile_content$FROM <- c("FROM scratch", "ADD cache/debian/rootfs.tar.xz /")
+        dockerfile_content$ENV <- append(dockerfile_content$ENV, "ENV CACHE_PATH cache")
     }
     dockerfile_content$RUN <- append(dockerfile_content$RUN, post_installation_steps)
     return(dockerfile_content)
@@ -48,6 +49,7 @@
     }
     if (isTRUE(cache)) {
         dockerfile_content$COPY <- append(dockerfile_content$COPY, "COPY cache ./cache")
+        dockerfile_content$ENV <- append(dockerfile_content$ENV, "ENV CACHE_PATH cache")
     }
     if (image == "rstudio") {
         dockerfile_content$CMD <- c("EXPOSE 8787", "CMD [\"/init\"]")

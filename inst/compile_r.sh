@@ -12,10 +12,10 @@ else
     TARFILE="R-$1.tar.gz"
 fi
 
-if [ ! -f "/cache/rsrc/$TARFILE" ]; then
+if [ ! -f "/$CACHE_PATH/rsrc/$TARFILE" ]; then
     wget "http://cran.r-project.org/src/base/$DOWNLOAD_DIR/$TARFILE"
 else
-    cp /cache/rsrc/$TARFILE /
+    cp /$CACHE_PATH/rsrc/$TARFILE /
 fi
 
 tar -zxf $TARFILE
