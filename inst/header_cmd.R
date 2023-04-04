@@ -3,7 +3,7 @@
 
 current.r.version <- NA
 bioc.mirror <- NA
-path <- "cache/rpkgs" ## cache must have been enforced
+path <- file.path(Sys.getenv("CACHE_PATH"), "rpkgs") ## cache must have been enforced
 
 .build.raw.tarball <- function(raw.tarball.path, x, version, tarball.path, current.r.version) {
     vignetteflag <- "--no-vignettes"
