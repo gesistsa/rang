@@ -387,8 +387,7 @@ dockerize <- function(rang, output_dir, materials_dir = NULL, post_installation_
                                                                   sysreqs_cmd = sysreqs_cmd, lib = lib,
                                                                   cache = cache, image = image,
                                                                   post_installation_steps = post_installation_steps,
-                                                                  rang_path = file.path(rel_dir, "rang.R"),
-                                                                  cache_path = file.path(rel_dir, "cache"),
+                                                                  rel_dir = rel_dir,
                                                                   copy_all = copy_all)
     }
     if (!(is.null(materials_dir))) {

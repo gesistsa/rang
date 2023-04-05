@@ -36,9 +36,10 @@
 
 .generate_rocker_dockerfile_content <- function(r_version, lib, sysreqs_cmd, cache, image,
                                                 post_installation_steps = NULL,
-                                                rang_path= "rang.R",
-                                                cache_path = "cache",
+                                                rel_dir = "",
                                                 copy_all = FALSE) {
+    rang_path = file.path(rel_dir, "rang.R")
+    cache_path = file.path(rel_dir, "cache")
     dockerfile_content <- list(
         FROM = c(paste0("FROM rocker/", image, ":", r_version)),
         ENV = c(paste0("ENV RANG_PATH ", rang_path)),
