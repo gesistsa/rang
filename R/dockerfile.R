@@ -37,7 +37,8 @@
 .generate_rocker_dockerfile_content <- function(r_version, lib, sysreqs_cmd, cache, image,
                                                 post_installation_steps = NULL,
                                                 rang_path= "rang.R",
-                                                cache_path = "cache") {
+                                                cache_path = "cache",
+                                                copy_all = FALSE) {
     dockerfile_content <- list(
         FROM = c(paste0("FROM rocker/", image, ":", r_version)),
         ENV = c(paste0("ENV RANG_PATH ", rang_path)),
@@ -51,12 +52,15 @@
     }
     if (isTRUE(cache)) {
         dockerfile_content$COPY <- append(dockerfile_content$COPY, paste0("COPY cache ", cache_path))
-        dockerfile_content$ENV <- append(dockerfile_content$ENV, "ENV CACHE_PATH cache")
+        dockerfile_content$ENV <- append(dockerfile_content$ENV, paste0("ENV CACHE_PATH ", cache_path))
     }
     if (image == "rstudio") {
         dockerfile_content$CMD <- c("EXPOSE 8787", "CMD [\"/init\"]")
     }
     dockerfile_content$RUN <- append(dockerfile_content$RUN, post_installation_steps)
+    if (isTRUE(copy_all)) {
+        dockerfile_content$COPY <- c("COPY . /")
+    }
     return(dockerfile_content)
 }
 

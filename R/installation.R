@@ -281,11 +281,13 @@ export_renv <- function(rang, path = ".") {
 #' @param no_rocker logical, whether to skip using Rocker images even when an appropriate version is available. Please keep this as `TRUE` unless you know what you are doing
 #' @param debian_version when Rocker images are not used, which EOL version of Debian to use. Can only be "lenny", "etch", "squeeze", "wheezy", "jessie", "stretch". Please keep this as default "lenny" unless you know what you are doing
 #' @param skip_r17 logical, whether to skip R 1.7.x. Currently, it is not possible to compile R 1.7.x (R 1.7.0 and R 1.7.1) with the method provided by  `rang`. It affects `snapshot_date` from 2003-04-16 to 2003-10-07. When `skip_r17` is TRUE and `snapshot_date` is within the aforementioned range, R 1.8.0 is used instead
+#' @param insert_readme logical, whether to insert a README file
+#' @param copy_all logical, whether to copy everything in the current directory into the container
 #' @param ... arguments to be passed to `dockerize`
 #' @return `output_dir`, invisibly
 #' @inheritParams export_rang
 #' @inherit export_rang details
-#' @seealso [resolve()], [export_rang()]
+#' @seealso [resolve()], [export_rang()], [use_rang()]
 #' @references
 #' [The Rocker Project](https://rocker-project.org)
 #' Ripley, B. (2005) [Packages and their Management in R 2.1.0.](https://cran.r-project.org/doc/Rnews/Rnews_2005-1.pdf) R News, 5(1):8--11.
@@ -311,7 +313,9 @@ dockerize <- function(rang, output_dir, materials_dir = NULL, post_installation_
                       bioc_mirror = "https://bioconductor.org/packages/",
                       no_rocker = FALSE,
                       debian_version = c("lenny", "squeeze", "wheezy", "jessie", "stretch"),
-                      skip_r17 = TRUE) {
+                      skip_r17 = TRUE,
+                      insert_readme = TRUE,
+                      copy_all = FALSE) {
     if (length(rang$ranglets) == 0) {
         warning("Nothing to dockerize.")
         return(invisible(NULL))
@@ -343,20 +347,29 @@ dockerize <- function(rang, output_dir, materials_dir = NULL, post_installation_
     if (!dir.exists(output_dir)) {
         dir.create(output_dir)
     }
-    rang_path <- file.path(output_dir, "rang.R")
-    export_rang(rang = rang, path = rang_path, rang_as_comment = rang_as_comment,
-                    verbose = verbose, lib = lib, cran_mirror = cran_mirror,
-                    check_cran_mirror = check_cran_mirror, bioc_mirror = bioc_mirror)
+    if (dir.exists(file.path(output_dir, "inst/rang"))) {
+        base_dir <- file.path(output_dir, "inst/rang")
+        rel_dir <- "inst/rang"
+    } else {
+        base_dir <- output_dir
+        rel_dir <- ""
+    }
+    rang_path <- file.path(base_dir, "rang.R")
+    export_rang(rang = rang, path = rang_path,
+                rang_as_comment = rang_as_comment,
+                verbose = verbose, lib = lib, cran_mirror = cran_mirror,
+                check_cran_mirror = check_cran_mirror, bioc_mirror = bioc_mirror)
     if (isTRUE(skip_r17) && rang$r_version %in% c("1.7.0", "1.7.1")) {
         r_version <- "1.8.0"
     } else {
         r_version <- rang$r_version
     }
     if (isTRUE(cache)) {
-        .cache_pkgs(rang, output_dir, cran_mirror, bioc_mirror, verbose)
+        .cache_pkgs(rang = rang, base_dir = base_dir, cran_mirror = cran_mirror,
+                    bioc_mirror = bioc_mirror, verbose = verbose)
     }
     if (.is_r_version_older_than(rang, "3.1") || isTRUE(no_rocker)) {
-        file.copy(system.file("compile_r.sh", package = "rang"), file.path(output_dir, "compile_r.sh"),
+        file.copy(system.file("compile_r.sh", package = "rang"), file.path(base_dir, "compile_r.sh"),
                   overwrite = TRUE)
         dockerfile_content <- .generate_debian_eol_dockerfile_content(r_version = r_version,
                                                                       sysreqs_cmd = sysreqs_cmd, lib = lib,
@@ -364,19 +377,22 @@ dockerize <- function(rang, output_dir, materials_dir = NULL, post_installation_
                                                                       debian_version = debian_version,
                                                                       post_installation_steps = post_installation_steps)
         if (isTRUE(cache)) {
-            .cache_rsrc(r_version = r_version, output_dir = output_dir,
+            .cache_rsrc(r_version = r_version, base_dir = base_dir,
                         verbose = verbose)
-            .cache_debian(debian_version = debian_version, output_dir = output_dir,
+            .cache_debian(debian_version = debian_version, base_dir = base_dir,
                           verbose = verbose)
         }
     } else {
         dockerfile_content <- .generate_rocker_dockerfile_content(r_version = r_version,
                                                                   sysreqs_cmd = sysreqs_cmd, lib = lib,
                                                                   cache = cache, image = image,
-                                                                  post_installation_steps = post_installation_steps)
+                                                                  post_installation_steps = post_installation_steps,
+                                                                  rang_path = file.path(rel_dir, "rang.R"),
+                                                                  cache_path = file.path(rel_dir, "cache"),
+                                                                  copy_all = copy_all)
     }
     if (!(is.null(materials_dir))) {
-        materials_subdir_in_output_dir <- file.path(output_dir, "materials")
+        materials_subdir_in_output_dir <- file.path(base_dir, "materials")
         if (isFALSE(dir.exists(materials_subdir_in_output_dir))) {
             dir.create(materials_subdir_in_output_dir)
         }
@@ -385,8 +401,11 @@ dockerize <- function(rang, output_dir, materials_dir = NULL, post_installation_
                   recursive = TRUE)
         dockerfile_content <- .insert_materials_dir(dockerfile_content)
     }
+    ## This should be written in the root level, not base_dir
     .write_dockerfile(dockerfile_content, file.path(output_dir, "Dockerfile"))
-    .generate_docker_readme(output_dir = output_dir,image = image)
+    if (isTRUE(insert_readme)) {
+        .generate_docker_readme(output_dir = output_dir, image = image)
+    }
     invisible(output_dir)
 }
 
