@@ -56,7 +56,7 @@ NULL
 
 .vcat <- function(verbose = TRUE, ...) {
     if (isTRUE(verbose)) {
-        cat(..., "\n")
+        message(..., "\n")
     }
     invisible()
 }

@@ -4,7 +4,13 @@
 \alias{use_rang}
 \title{Setup rang for a directory}
 \usage{
-use_rang(path = ".", add_makefile = TRUE, add_here = TRUE, verbose = TRUE)
+use_rang(
+  path = ".",
+  add_makefile = TRUE,
+  add_here = TRUE,
+  verbose = TRUE,
+  force = FALSE
+)
 }
 \arguments{
 \item{path}{character, path to the project root}
@@ -14,6 +20,9 @@ use_rang(path = ".", add_makefile = TRUE, add_here = TRUE, verbose = TRUE)
 \item{add_here}{logical, whether to insert a hidden \code{.here} file in the project root}
 
 \item{verbose}{logical, whether to print out messages}
+
+\item{force}{logical, whether to overwrite files (\code{inst/rang/update.R}, \code{Makefile}, \code{.here}) if they
+exist.}
 }
 \value{
 path, invisibly
@@ -24,15 +33,17 @@ and data) for (re)constructing the computational environment.
 Specifically, this function inserts \code{inst/rang} into the directory, which contains
 all components for the reconstruction. Optionally, \code{Makefile} and \code{.here} are also inserted
 to ease the development of analytic code.
+By default, (re)running this function does not overwrite any file. One can change this by setting
+\code{force} to TRUE.
 }
 \details{
 The infrastructure being added to your path consists of:
 \itemize{
 \item \code{inst/rang} directory in the project root
-\item \code{update_rang.R} file inside the directory
+\item \code{update.R} file inside the directory
 \item \code{.here} in the project root (if \code{add_here} is TRUE)
 \item \code{Makefile} in the project root (if \code{add_makefile} is TRUE)
-You might need to edit \code{update_rang.R} manually. The default is to scan the whole project for
+You might need to edit \code{update.R} manually. The default is to scan the whole project for
 used R packages and assume they are either on CRAN or Bioconductor. If you have used other R packages,
 you might need to edit this manually.
 }
