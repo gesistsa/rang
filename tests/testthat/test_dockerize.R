@@ -96,6 +96,19 @@ test_that("integration of #20 to dockerize()", {
     expect_true(any(grepl("^cran.mirror <- \"http://cran\\.r\\-project\\.org/\"", x)))
 })
 
+test_that("copy_all", {
+    rang_ok <- readRDS("../testdata/rang_ok.RDS")
+    expect_equal(rang_ok$r_version, "4.2.2")
+    temp_dir <- .generate_temp_dir()
+    dockerize(rang_ok, output_dir = temp_dir) ## copy_all = FALSE
+    Dockerfile <- readLines(file.path(temp_dir, "Dockerfile"))
+    expect_false(any(Dockerfile == "COPY . /"))
+    temp_dir <- .generate_temp_dir()
+    dockerize(rang_ok, output_dir = temp_dir, copy_all = TRUE)
+    Dockerfile <- readLines(file.path(temp_dir, "Dockerfile"))
+    expect_true(any(Dockerfile == "COPY . /"))
+})
+
 test_that("Dockerize R < 3.1 and >= 2.1", {
     rang_rio <- readRDS("../testdata/rang_rio_old.RDS")
     expect_equal(rang_rio$r_version, "3.0.1")
