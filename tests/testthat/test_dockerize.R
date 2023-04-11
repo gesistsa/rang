@@ -302,3 +302,17 @@ test_that(".check_tarball_path", {
     expect_error(.check_tarball_path("../testdata/gesis", "gesis", dir = TRUE))
     expect_error(.check_tarball_path("../testdata/askpass", "askpass", dir = TRUE), NA)
 })
+
+test_that("dockerize with inst/rang", {
+    rang_ok <- readRDS("../testdata/rang_ok.RDS")
+    temp_dir <- .generate_temp_dir()
+    dir.create(temp_dir)
+    use_rang(temp_dir, verbose = FALSE)
+    dockerize(rang_ok, output_dir = temp_dir, verbose = FALSE)
+    expect_true("inst/rang/rang.R" %in% list.files(temp_dir, recursive = TRUE))
+    expect_false("rang.R" %in% list.files(temp_dir, recursive = TRUE))
+    expect_true("Dockerfile" %in% list.files(temp_dir, recursive = TRUE))
+    dockerfile <- readLines(file.path(temp_dir, "Dockerfile"))
+    expect_true("COPY . /" %in% dockerfile) ## coerced
+    expect_true("ENV RANG_PATH inst/rang/rang.R" %in% dockerfile)
+})

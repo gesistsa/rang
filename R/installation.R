@@ -282,7 +282,7 @@ export_renv <- function(rang, path = ".") {
 #' @param debian_version when Rocker images are not used, which EOL version of Debian to use. Can only be "lenny", "etch", "squeeze", "wheezy", "jessie", "stretch". Please keep this as default "lenny" unless you know what you are doing
 #' @param skip_r17 logical, whether to skip R 1.7.x. Currently, it is not possible to compile R 1.7.x (R 1.7.0 and R 1.7.1) with the method provided by  `rang`. It affects `snapshot_date` from 2003-04-16 to 2003-10-07. When `skip_r17` is TRUE and `snapshot_date` is within the aforementioned range, R 1.8.0 is used instead
 #' @param insert_readme logical, whether to insert a README file
-#' @param copy_all logical, whether to copy everything in the current directory into the container
+#' @param copy_all logical, whether to copy everything in the current directory into the container. If `inst/rang` is detected in `output_dir`, this is coerced to TRUE.
 #' @param ... arguments to be passed to `dockerize`
 #' @return `output_dir`, invisibly
 #' @inheritParams export_rang
@@ -353,6 +353,10 @@ dockerize <- function(rang, output_dir, materials_dir = NULL, post_installation_
     } else {
         base_dir <- output_dir
         rel_dir <- ""
+    }
+    if (rel_dir == "inst/rang" && isFALSE(copy_all)) {
+        .vcat(verbose, "`inst/rang` detected. `copy_all` is coerced to TRUE")
+        copy_all <- TRUE
     }
     rang_path <- file.path(base_dir, "rang.R")
     export_rang(rang = rang, path = rang_path,

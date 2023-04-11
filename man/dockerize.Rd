@@ -69,7 +69,7 @@ and \code{\link[=download.file]{download.file()}}.}
 
 \item{insert_readme}{logical, whether to insert a README file}
 
-\item{copy_all}{logical, whether to copy everything in the current directory into the container}
+\item{copy_all}{logical, whether to copy everything in the current directory into the container. If \code{inst/rang} is detected in \code{output_dir}, this is coerced to TRUE.}
 
 \item{...}{arguments to be passed to \code{dockerize}}
 }
