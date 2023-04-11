@@ -345,6 +345,26 @@ test_that("skip_r17", {
     expect_true(file.exists(file.path(temp_dir, "cache/debian", "rootfs.tar.xz")))
 })
 
+test_that("dockerize with inst/rang", {
+    skip_if_offline()
+    skip_on_cran()
+    warns2 <- capture_warnings(rang_ok <- resolve(c("sna"), snapshot_date = "2001-10-01"))
+    temp_dir <- .generate_temp_dir()
+    dir.create(temp_dir)
+    use_rang(temp_dir, verbose = FALSE)
+    dockerize(rang_ok, output_dir = temp_dir, verbose = FALSE, cache = TRUE)
+    expect_true("inst/rang/rang.R" %in% list.files(temp_dir, recursive = TRUE))
+    expect_false("rang.R" %in% list.files(temp_dir, recursive = TRUE))
+    expect_true(dir.exists(file.path(temp_dir, "inst/rang/cache")))
+    expect_true(dir.exists(file.path(temp_dir, "inst/rang/cache/rpkgs")))
+    expect_true(dir.exists(file.path(temp_dir, "inst/rang/cache/debian")))
+    expect_true(dir.exists(file.path(temp_dir, "inst/rang/cache/rsrc")))
+    expect_true("Dockerfile" %in% list.files(temp_dir, recursive = TRUE))
+    dockerfile <- readLines(file.path(temp_dir, "Dockerfile"))
+    expect_true("COPY . /" %in% dockerfile) ## coerced
+})
+
+
 ## always keep this at the very last
 
 test_that("issue 102 confusion between github and local pkgref", {
