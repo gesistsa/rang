@@ -134,7 +134,7 @@ test_that("Dockerize R < 3.1 and >= 2.1", {
     dockerize(rang_rio, output_dir = temp_dir)
     expect_true(file.exists(file.path(temp_dir, "compile_r.sh")))
     Dockerfile <- readLines(file.path(temp_dir, "Dockerfile"))
-    expect_true(any(grepl("^RUN bash compile_r.sh 3.0.1", Dockerfile)))
+    expect_true(any(grepl("^RUN bash \\$COMPILE_PATH 3.0.1", Dockerfile)))
     expect_equal(tail(Dockerfile, 1), "CMD [\"R\"]")
     ## lib
     dockerize(rang_rio, output_dir = temp_dir, lib = "abc")

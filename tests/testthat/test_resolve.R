@@ -333,17 +333,16 @@ test_that("skip_r17", {
     temp_dir <- .generate_temp_dir()
     expect_error(dockerize(graph, output_dir = temp_dir, cache = TRUE, verbose = FALSE), NA) ## skip_r17 = TRUE
     x <- readLines(file.path(temp_dir, "Dockerfile"))
-    expect_true(any(grepl("^RUN bash compile_r\\.sh 1\\.8\\.0", x)))
+    expect_true(any(grepl("^RUN bash \\$COMPILE_PATH 1\\.8\\.0", x)))
     expect_error(dockerize(graph, output_dir = temp_dir, cache = TRUE, verbose = FALSE, skip_r17 = FALSE), NA)
     x <- readLines(file.path(temp_dir, "Dockerfile"))
-    expect_false(any(grepl("^RUN bash compile_r\\.sh 1\\.8\\.0", x)))
-    expect_true(any(grepl("^RUN bash compile_r\\.sh 1\\.7\\.0", x)))
+    expect_false(any(grepl("^RUN bash \\$COMPILE_PATH 1\\.8\\.0", x)))
+    expect_true(any(grepl("^RUN bash \\$COMPILE_PATH 1\\.7\\.0", x)))
     ## debian & rsrc
     expect_true(dir.exists(file.path(temp_dir, "cache/rsrc")))
     expect_true(file.exists(file.path(temp_dir, "cache/rsrc", "R-1.7.0.tgz")))
     expect_true(dir.exists(file.path(temp_dir, "cache/debian")))
     expect_true(file.exists(file.path(temp_dir, "cache/debian", "rootfs.tar.xz")))
-
 })
 
 ## always keep this at the very last
