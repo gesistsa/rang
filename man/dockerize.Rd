@@ -22,7 +22,9 @@ dockerize(
   bioc_mirror = "https://bioconductor.org/packages/",
   no_rocker = FALSE,
   debian_version = c("lenny", "squeeze", "wheezy", "jessie", "stretch"),
-  skip_r17 = TRUE
+  skip_r17 = TRUE,
+  insert_readme = TRUE,
+  copy_all = FALSE
 )
 
 dockerize_rang(...)
@@ -65,6 +67,10 @@ and \code{\link[=download.file]{download.file()}}.}
 
 \item{skip_r17}{logical, whether to skip R 1.7.x. Currently, it is not possible to compile R 1.7.x (R 1.7.0 and R 1.7.1) with the method provided by  \code{rang}. It affects \code{snapshot_date} from 2003-04-16 to 2003-10-07. When \code{skip_r17} is TRUE and \code{snapshot_date} is within the aforementioned range, R 1.8.0 is used instead}
 
+\item{insert_readme}{logical, whether to insert a README file}
+
+\item{copy_all}{logical, whether to copy everything in the current directory into the container. If \code{inst/rang} is detected in \code{output_dir}, this is coerced to TRUE.}
+
 \item{...}{arguments to be passed to \code{dockerize}}
 }
 \value{
@@ -99,5 +105,5 @@ if (interactive()) {
 Ripley, B. (2005) \href{https://cran.r-project.org/doc/Rnews/Rnews_2005-1.pdf}{Packages and their Management in R 2.1.0.} R News, 5(1):8--11.
 }
 \seealso{
-\code{\link[=resolve]{resolve()}}, \code{\link[=export_rang]{export_rang()}}
+\code{\link[=resolve]{resolve()}}, \code{\link[=export_rang]{export_rang()}}, \code{\link[=use_rang]{use_rang()}}
 }

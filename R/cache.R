@@ -84,9 +84,9 @@ NULL
     }
 }
 
-.cache_pkgs <- function(rang, output_dir, cran_mirror, bioc_mirror, verbose) {
+.cache_pkgs <- function(rang, base_dir, cran_mirror, bioc_mirror, verbose) {
     installation_order <- .generate_installation_order(rang)
-    cache_dir <- file.path(output_dir, "cache", "rpkgs")
+    cache_dir <- file.path(base_dir, "cache", "rpkgs")
     if (!dir.exists(cache_dir)) {
         dir.create(cache_dir, recursive = TRUE)
     }
@@ -116,11 +116,11 @@ NULL
             .cache_pkg_local(x = x, version = version, cache_dir = cache_dir, uid = uid)
         }
     }
-    invisible(output_dir)
+    invisible(base_dir)
 }
 
-.cache_rsrc <- function(r_version, output_dir, verbose) {
-    cache_dir <- file.path(output_dir, "cache", "rsrc")
+.cache_rsrc <- function(r_version, base_dir, verbose) {
+    cache_dir <- file.path(base_dir, "cache", "rsrc")
     if (!dir.exists(cache_dir)) {
         dir.create(cache_dir, recursive = TRUE)
     }
@@ -142,8 +142,8 @@ NULL
 }
 
 
-.cache_debian <- function(debian_version, output_dir, verbose) {
-    cache_dir <- file.path(output_dir, "cache", "debian")
+.cache_debian <- function(debian_version, base_dir, verbose) {
+    cache_dir <- file.path(base_dir, "cache", "debian")
     if (!dir.exists(cache_dir)) {
         dir.create(cache_dir, recursive = TRUE)
     }

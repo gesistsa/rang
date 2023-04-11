@@ -54,6 +54,13 @@ NULL
 
 .memo_search_bioc <- memoise::memoise(.bioc_package_history, cache = cachem::cache_mem(max_age = 60 * 60))
 
+.vcat <- function(verbose = TRUE, ...) {
+    if (isTRUE(verbose)) {
+        message(..., "\n")
+    }
+    invisible()
+}
+
 ## internal data generation
 ## ---
 ## ### Supported OS Versions

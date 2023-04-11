@@ -5,6 +5,7 @@
 test_that("defensive programming", {
     graph <- readRDS("../testdata/sle_graph.RDS")
     expect_error(dockerize(graph, output_dir = tempdir()))
+    expect_error(dockerize(graph))
 })
 
 test_that("empty rang dockerize #75", {
@@ -96,6 +97,36 @@ test_that("integration of #20 to dockerize()", {
     expect_true(any(grepl("^cran.mirror <- \"http://cran\\.r\\-project\\.org/\"", x)))
 })
 
+test_that("sugars", {
+    rang_ok <- readRDS("../testdata/rang_ok.RDS")
+    expect_equal(rang_ok$r_version, "4.2.2")
+    temp_dir1 <- .generate_temp_dir()
+    expect_error(dockerize(rang_ok, output_dir = temp_dir1), NA)
+    temp_dir2 <- .generate_temp_dir()
+    expect_error(dockerise(rang_ok, output_dir = temp_dir2), NA)
+    temp_dir3 <- .generate_temp_dir()
+    expect_error(dockerise(rang_ok, output_dir = temp_dir3), NA)
+    temp_dir4 <- .generate_temp_dir()
+    expect_error(dockerise(rang_ok, output_dir = temp_dir4), NA)
+    for (tdir in c(temp_dir1, temp_dir2, temp_dir3, temp_dir4)) {
+        expect_true(file.exists(file.path(tdir, "rang.R")))
+        expect_true(file.exists(file.path(tdir, "Dockerfile")))
+    }
+})
+
+test_that("copy_all", {
+    rang_ok <- readRDS("../testdata/rang_ok.RDS")
+    expect_equal(rang_ok$r_version, "4.2.2")
+    temp_dir <- .generate_temp_dir()
+    dockerize(rang_ok, output_dir = temp_dir) ## copy_all = FALSE
+    Dockerfile <- readLines(file.path(temp_dir, "Dockerfile"))
+    expect_false(any(Dockerfile == "COPY . /"))
+    temp_dir <- .generate_temp_dir()
+    dockerize(rang_ok, output_dir = temp_dir, copy_all = TRUE)
+    Dockerfile <- readLines(file.path(temp_dir, "Dockerfile"))
+    expect_true(any(Dockerfile == "COPY . /"))
+})
+
 test_that("Dockerize R < 3.1 and >= 2.1", {
     rang_rio <- readRDS("../testdata/rang_rio_old.RDS")
     expect_equal(rang_rio$r_version, "3.0.1")
@@ -103,7 +134,7 @@ test_that("Dockerize R < 3.1 and >= 2.1", {
     dockerize(rang_rio, output_dir = temp_dir)
     expect_true(file.exists(file.path(temp_dir, "compile_r.sh")))
     Dockerfile <- readLines(file.path(temp_dir, "Dockerfile"))
-    expect_true(any(grepl("^RUN bash compile_r.sh 3.0.1", Dockerfile)))
+    expect_true(any(grepl("^RUN bash \\$COMPILE_PATH 3.0.1", Dockerfile)))
     expect_equal(tail(Dockerfile, 1), "CMD [\"R\"]")
     ## lib
     dockerize(rang_rio, output_dir = temp_dir, lib = "abc")
@@ -270,4 +301,18 @@ test_that(".check_tarball_path", {
     expect_error(.check_tarball_path("../testdata/askpass_1.1.tar.gz", "askpass"), NA)
     expect_error(.check_tarball_path("../testdata/gesis", "gesis", dir = TRUE))
     expect_error(.check_tarball_path("../testdata/askpass", "askpass", dir = TRUE), NA)
+})
+
+test_that("dockerize with inst/rang", {
+    rang_ok <- readRDS("../testdata/rang_ok.RDS")
+    temp_dir <- .generate_temp_dir()
+    dir.create(temp_dir)
+    use_rang(temp_dir, verbose = FALSE)
+    dockerize(rang_ok, output_dir = temp_dir, verbose = FALSE)
+    expect_true("inst/rang/rang.R" %in% list.files(temp_dir, recursive = TRUE))
+    expect_false("rang.R" %in% list.files(temp_dir, recursive = TRUE))
+    expect_true("Dockerfile" %in% list.files(temp_dir, recursive = TRUE))
+    dockerfile <- readLines(file.path(temp_dir, "Dockerfile"))
+    expect_true("COPY . /" %in% dockerfile) ## coerced
+    expect_true("ENV RANG_PATH inst/rang/rang.R" %in% dockerfile)
 })
