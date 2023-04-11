@@ -8,7 +8,7 @@ library(here)
 ## the project is finalized.
 
 rang <- resolve(here::here(),
-                snapshot_date = Sys.Date(),
+                snapshot_date = NA,
                 verbose = TRUE)
 
 ## You might want to edit `post_installation_steps` or `cache`

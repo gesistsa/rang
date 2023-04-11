@@ -318,7 +318,7 @@ resolve <- function(pkgs = ".", snapshot_date, no_enhances = TRUE, no_suggests =
     if (!os %in% supported_os) {
         stop("Don't know how to resolve ", os, ". Supported OSes are: ", paste(supported_os, collapse = ", "))
     }
-    snapshot_date <- .extract_date(pkgs = pkgs, date = snapshot_date, verbose = verbose)
+    snapshot_date <- .extract_date(pkgs = pkgs, snapshot_date = snapshot_date, verbose = verbose)
     bioc_version <- .generate_bioc_version(snapshot_date = snapshot_date, pkgs = pkgs)
     pkgrefs <- as_pkgrefs(pkgs, bioc_version = bioc_version, no_enhances = no_enhances,
                           no_suggests = no_suggests)
@@ -423,29 +423,26 @@ print.rang <- function(x, all_pkgs = FALSE, ...) {
     }
 }
 
-.extract_date <- function(pkgs,date,verbose = FALSE){
-  if(missing(date)){
-    snapshot_date <- NA
-    if(.is_directory(pkgs)){
-      snapshot_date <- max(file.mtime(dir(pkgs,recursive = TRUE)))
+## determine the snapshot_date for `resolve` based on `date` and `pkgs`
+.extract_date <- function(pkgs, snapshot_date, verbose = FALSE) {
+    if (missing(snapshot_date) || is.na(snapshot_date)) {
+        snapshot_date <- NA
+        if (.is_directory(pkgs)) {
+            snapshot_date <- max(file.mtime(dir(pkgs,recursive = TRUE)))
+        }
+        if (.is_renv_lockfile(pkgs)) {
+            snapshot_date <- file.mtime(pkgs)
+        }
     }
-    if(.is_renv_lockfile(pkgs)){
-      snapshot_date <- file.mtime(pkgs)
+    if (is.na(snapshot_date)) {
+        .vcat(verbose, "No `snapshot_date`: Assuming `snapshot_date` to be a month ago.\n")
+        snapshot_date <- Sys.Date() - 30
     }
-    if(is.na(snapshot_date)){
-      if (isTRUE(verbose)) {
-        cat("No `snapshot_date`: Assuming `snapshot_date` to be a month ago.\n")
-      }
-      snapshot_date <- Sys.Date() - 30
+    parsed_snapshot_date <- parsedate::parse_date(snapshot_date)
+    if (parsed_snapshot_date > parsedate::parse_date(Sys.time())) {
+        stop("We don't know the future.", call. = FALSE)
     }
-  } else{
-    snapshot_date  <- date
-  }
-  snapshot_date <- parsedate::parse_date(snapshot_date)
-  if (snapshot_date > parsedate::parse_date(Sys.time())) {
-    stop("We don't know the future.", call. = FALSE)
-  }
-  snapshot_date
+    parsed_snapshot_date
 }
 
 

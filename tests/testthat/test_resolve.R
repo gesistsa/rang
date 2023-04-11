@@ -2,6 +2,8 @@
     file.path(tempdir(), paste(sample(c(LETTERS, letters), 20, replace = TRUE), collapse = ""))
 }
 
+skip_if(isTRUE(getOption("SKIP_RESOLVE")))
+
 test_that("defensive programming", {
     expect_error(resolve("LDAvis", os = "windows"))
     expect_error(resolve("LDAvis", os = "opensuse-42.3"))
