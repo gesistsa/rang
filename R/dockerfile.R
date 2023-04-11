@@ -33,7 +33,7 @@
         dockerfile_content$COPY <- append(dockerfile_content$COPY,
                                           c(paste0("COPY cache/rpkgs ", file.path(cache_path, "rpkgs")),
                                             paste0("COPY cache/rsrc ", file.path(cache_path, "rsrc"))))
-        dockerfile_content$FROM <- c("FROM scratch", "ADD cache/debian/rootfs.tar.xz /")
+        dockerfile_content$FROM <- c("FROM scratch", paste0("ADD ", file.path(rel_dir, "cache/debian/rootfs.tar.xz"), " /"))
         dockerfile_content$ENV <- append(dockerfile_content$ENV, paste0("ENV CACHE_PATH ", cache_path))
     }
     dockerfile_content$RUN <- append(dockerfile_content$RUN, post_installation_steps)

@@ -379,7 +379,9 @@ dockerize <- function(rang, output_dir, materials_dir = NULL, post_installation_
                                                                       sysreqs_cmd = sysreqs_cmd, lib = lib,
                                                                       cache = cache,
                                                                       debian_version = debian_version,
-                                                                      post_installation_steps = post_installation_steps)
+                                                                      post_installation_steps = post_installation_steps,
+                                                                      rel_dir = rel_dir,
+                                                                      copy_all = copy_all)
         if (isTRUE(cache)) {
             .cache_rsrc(r_version = r_version, base_dir = base_dir,
                         verbose = verbose)
