@@ -5,6 +5,7 @@
 test_that("defensive programming", {
     graph <- readRDS("../testdata/sle_graph.RDS")
     expect_error(dockerize(graph, output_dir = tempdir()))
+    expect_error(dockerize(graph))
 })
 
 test_that("empty rang dockerize #75", {
@@ -94,6 +95,23 @@ test_that("integration of #20 to dockerize()", {
     x <- readLines(file.path(temp_dir, "rang.R"))
     expect_false(any(grepl("^cran.mirror <- \"https://cran\\.r\\-project\\.org/\"", x)))
     expect_true(any(grepl("^cran.mirror <- \"http://cran\\.r\\-project\\.org/\"", x)))
+})
+
+test_that("sugars", {
+    rang_ok <- readRDS("../testdata/rang_ok.RDS")
+    expect_equal(rang_ok$r_version, "4.2.2")
+    temp_dir1 <- .generate_temp_dir()
+    expect_error(dockerize(rang_ok, output_dir = temp_dir1), NA)
+    temp_dir2 <- .generate_temp_dir()
+    expect_error(dockerise(rang_ok, output_dir = temp_dir2), NA)
+    temp_dir3 <- .generate_temp_dir()
+    expect_error(dockerise(rang_ok, output_dir = temp_dir3), NA)
+    temp_dir4 <- .generate_temp_dir()
+    expect_error(dockerise(rang_ok, output_dir = temp_dir4), NA)
+    for (tdir in c(temp_dir1, temp_dir2, temp_dir3, temp_dir4)) {
+        expect_true(file.exists(file.path(tdir, "rang.R")))
+        expect_true(file.exists(file.path(tdir, "Dockerfile")))
+    }
 })
 
 test_that("copy_all", {
