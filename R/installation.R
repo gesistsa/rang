@@ -126,6 +126,11 @@
     invisible(readme)
 }
 
+.run_line_wrap <- function(command) {
+  command <- (gsub("&&", "\\\\\n\t&&", command))
+  return(command)
+}
+
 #' Export The Resolved Result As Installation Script
 #'
 #' This function exports the results from [resolve()] to an installation script that can be run in a fresh R environment.
