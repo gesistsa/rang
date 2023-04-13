@@ -126,6 +126,11 @@
     invisible(readme)
 }
 
+## Wrap long line by breaking line at &&
+.generate_wrapped_line <- function(line) {
+  gsub("&&", "\\\\\n\t&&", line)
+}
+
 #' Export The Resolved Result As Installation Script
 #'
 #' This function exports the results from [resolve()] to an installation script that can be run in a fresh R environment.
