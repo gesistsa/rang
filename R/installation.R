@@ -126,9 +126,9 @@
     invisible(readme)
 }
 
-.run_line_wrap <- function(command) {
-  command <- (gsub("&&", "\\\\\n\t&&", command))
-  return(command)
+## Wrap long line by breaking line at &&
+.generate_wrapped_line <- function(line) {
+  gsub("&&", "\\\\\n\t&&", line)
 }
 
 #' Export The Resolved Result As Installation Script

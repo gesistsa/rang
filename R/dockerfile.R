@@ -75,8 +75,6 @@
 }
 
 .write_dockerfile <- function(dockerfile_content, path) {
-    content <- c(dockerfile_content$FROM, dockerfile_content$ENV,
-                 dockerfile_content$COPY, .run_line_wrap(dockerfile_content$RUN),
-                 dockerfile_content$CMD)
+    content <- unlist(lapply(dockerfile_content, .generate_wrapped_line))
     writeLines(content, path)
 }
