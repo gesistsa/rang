@@ -337,3 +337,13 @@ test_that(".generate_wrapped_line", {
   expect_equal(max(lengths(regmatches(Dockerfile, gregexpr("&&", Dockerfile)))), 1)
   expect_true(all(grepl("^\t&&", Dockerfile[grepl("&&", Dockerfile)])))
 })
+
+test_that(".generate_wrapped_line with actual outcome", {
+    skip_on_os("windows")
+    input <- c("RUN apt-get update -qq && apt-get install -y libpcre3-dev zlib1g-dev pkg-config libcurl4-openssl-dev && apt-get install -y libcurl4-openssl-dev libicu-dev libssl-dev make zlib1g-dev",
+               "RUN apt-get install -y curl git && curl -LO https://quarto.org/download/latest/quarto-linux-amd64.deb && dpkg -i quarto-linux-amd64.deb && quarto install tool tinytex")
+    temp_file <- tempfile()
+    writeLines(.generate_wrapped_line(input), temp_file)
+    expected_output <- readLines("../testdata/wrapped_line.txt")
+    expect_equal(readLines(temp_file), expected_output)
+})
