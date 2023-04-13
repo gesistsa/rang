@@ -1,0 +1,45 @@
+---
+title: "Executable Compendium (The Turing Way)"
+author: Garry Gilmore, Elena Emerson, Sebastian Stewart, Isabel Ingram, Sophie Sasaki
+output: pdf_document
+bibliography: "bibliography.bib"
+---
+
+```{r setup, include = FALSE}
+library(here)
+library(knitr)
+```
+
+# Ipsum
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus tempus quis justo vel elementum. Ut arcu tortor, pharetra ac mattis vel, scelerisque in metus. Morbi iaculis ante eros, sit amet iaculis dolor suscipit non. Duis lectus urna, laoreet ut nisi quis, ultricies condimentum ipsum. Nullam aliquam id ipsum eget maximus. Pellentesque vulputate felis augue, eget interdum mauris iaculis et. Mauris maximus eros dolor, ut fermentum augue suscipit faucibus.
+
+Vivamus nulla turpis, condimentum eget urna in, fringilla auctor sapien. Pellentesque sodales lacus ac consequat sodales. In hac habitasse platea dictumst. Praesent ut elit est. Nullam quis quam dignissim, vehicula massa et, dignissim nisl. Ut commodo interdum dapibus. Integer ac sem aliquam, sollicitudin erat mollis, blandit arcu. Vestibulum finibus nisi id tincidunt consequat. Vestibulum varius massa ac dui aliquet condimentum. Duis vel mollis ipsum. Curabitur aliquet diam sit amet dignissim luctus. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Phasellus massa risus, molestie quis rhoncus quis, varius sit amet elit.
+
+Sed ultrices neque eget magna sagittis, et consectetur nibh finibus. Aliquam sit amet convallis massa. Sed accumsan nunc et diam lacinia feugiat. Vivamus dapibus augue vestibulum felis vestibulum ornare. Curabitur sodales leo at orci gravida, a varius ex consectetur. Maecenas in tellus sed odio varius volutpat. In vestibulum tellus vitae sapien convallis, at facilisis nibh posuere. Sed dictum leo scelerisque nisl dignissim, a tristique risus rutrum.
+
+Suspendisse scelerisque facilisis augue, a aliquet augue tempor vel. Quisque ac vulputate sem. Nulla facilisi. Donec sagittis ante vitae enim sollicitudin dictum. Aenean in luctus nisi, ac mollis erat. Curabitur pellentesque risus consequat ante volutpat, non auctor nisi molestie. Fusce sit amet lacinia arcu, non euismod metus. Suspendisse fermentum sit amet felis sed ultrices. Suspendisse potenti. Quisque gravida purus mi, nec laoreet massa sodales in. Quisque tincidunt eu nibh vitae convallis. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos.
+
+Mauris tristique mauris et imperdiet imperdiet. Proin aliquet metus nec ligula egestas sagittis. Nulla metus lorem, cursus ut ex a, aliquam condimentum erat. Cras eget augue in est euismod varius. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Vivamus eget justo metus. Integer volutpat interdum felis blandit laoreet. Quisque et sagittis est, quis semper risus.
+
+# Analysis
+
+This is a visualization of the `palmerpenguins` dataset [@horst2020; @gorman2014].
+
+```{r flipper, echo = FALSE, fig.cap = 'Flipper and bill length'}
+knitr::include_graphics(here("figures", "flipper_bil.png"))
+```
+
+# Ipsum
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus tempus quis justo vel elementum. Ut arcu tortor, pharetra ac mattis vel, scelerisque in metus. Morbi iaculis ante eros, sit amet iaculis dolor suscipit non. Duis lectus urna, laoreet ut nisi quis, ultricies condimentum ipsum. Nullam aliquam id ipsum eget maximus. Pellentesque vulputate felis augue, eget interdum mauris iaculis et. Mauris maximus eros dolor, ut fermentum augue suscipit faucibus.
+
+Vivamus nulla turpis, condimentum eget urna in, fringilla auctor sapien. Pellentesque sodales lacus ac consequat sodales. In hac habitasse platea dictumst. Praesent ut elit est. Nullam quis quam dignissim, vehicula massa et, dignissim nisl. Ut commodo interdum dapibus. Integer ac sem aliquam, sollicitudin erat mollis, blandit arcu. Vestibulum finibus nisi id tincidunt consequat. Vestibulum varius massa ac dui aliquet condimentum. Duis vel mollis ipsum. Curabitur aliquet diam sit amet dignissim luctus. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Phasellus massa risus, molestie quis rhoncus quis, varius sit amet elit.
+
+Sed ultrices neque eget magna sagittis, et consectetur nibh finibus. Aliquam sit amet convallis massa. Sed accumsan nunc et diam lacinia feugiat. Vivamus dapibus augue vestibulum felis vestibulum ornare. Curabitur sodales leo at orci gravida, a varius ex consectetur. Maecenas in tellus sed odio varius volutpat. In vestibulum tellus vitae sapien convallis, at facilisis nibh posuere. Sed dictum leo scelerisque nisl dignissim, a tristique risus rutrum.
+
+Suspendisse scelerisque facilisis augue, a aliquet augue tempor vel. Quisque ac vulputate sem. Nulla facilisi. Donec sagittis ante vitae enim sollicitudin dictum. Aenean in luctus nisi, ac mollis erat. Curabitur pellentesque risus consequat ante volutpat, non auctor nisi molestie. Fusce sit amet lacinia arcu, non euismod metus. Suspendisse fermentum sit amet felis sed ultrices. Suspendisse potenti. Quisque gravida purus mi, nec laoreet massa sodales in. Quisque tincidunt eu nibh vitae convallis. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos.
+
+Mauris tristique mauris et imperdiet imperdiet. Proin aliquet metus nec ligula egestas sagittis. Nulla metus lorem, cursus ut ex a, aliquam condimentum erat. Cras eget augue in est euismod varius. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Vivamus eget justo metus. Integer volutpat interdum felis blandit laoreet. Quisque et sagittis est, quis semper risus.
+
+# References
