@@ -52,3 +52,16 @@ use_rang <- function(path = ".", add_makefile = TRUE, add_here = TRUE,
     .vcat(verbose && add_makefile, "Or run in your shell: make update")
     return(invisible(path))
 }
+
+use_turing <- function(path, add_rang = TRUE, ...) {
+    if (isTRUE(dir.exists(path))) {
+        stop("`path` exists.")
+    }
+    dir.create(path)
+    file.copy(from = list.files(system.file("turing", package = "rang"), full.names = TRUE),
+              to = path, recursive = TRUE)
+    if (isTRUE(add_rang)) {
+        use_rang(path, ...)
+    }
+    invisible(path)
+}
