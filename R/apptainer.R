@@ -9,11 +9,15 @@
   apptainer_content <- list(
     BOOTSTRAP = "Bootstrap: docker",
     FROM = c(paste0("From: debian/eol:", debian_version)),
+    ENV_section = "%environment",
     ENV = environment_vars,
+    FILES_section = "%files",
     FILES = c(paste0("rang.R ", rang_path), paste0("compile_r.sh ", compile_path)),
+    POST_section = "%post",
     POST = c(environment_vars,
              "ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && apt-get update -qq && apt-get install wget locales build-essential r-base-dev -y",
              sysreqs_cmd),
+    STARTSCRIPT_section = "%startscript",
     STARTSCRIPT = c("exec R \"${@}\""))
   if (!is.na(lib)) {
     apptainer_content$POST <- append(apptainer_content$POST, paste0("mkdir ", lib, " && bash $COMPILE_PATH ", r_version))
@@ -43,10 +47,14 @@
   apptainer_content <- list(
     BOOTSTRAP = "Bootstrap: docker",
     FROM = c(paste0("From: rocker/", image, ":", r_version)),
+    ENV_section = "%environment",
     ENV = c(paste0("export RANG_PATH=", rang_path)),
+    FILES_section = "%files",
     FILES = c(paste0("rang.R ", rang_path)),
+    POST_section = "%post",
     POST = sysreqs_cmd,
-    STARTSCRIPT = c("[\"R\"]"))
+    STARTSCRIPT_section = "%startscript",
+    STARTSCRIPT = c("exec R \"${@}\""))
   if (!is.na(lib)) {
     apptainer_content$POST <- append(apptainer_content$POST, paste0("mkdir ", lib, " && Rscript $RANG_PATH"))
   } else {
