@@ -69,7 +69,3 @@
     return(dockerfile_content)
 }
 
-.write_dockerfile <- function(dockerfile_content, path) {
-    content <- unlist(lapply(dockerfile_content, .generate_wrapped_line))
-    writeLines(content, path)
-}

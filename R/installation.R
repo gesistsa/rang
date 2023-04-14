@@ -412,7 +412,7 @@ dockerize <- function(rang, output_dir, materials_dir = NULL, post_installation_
         dockerfile_content <- .insert_materials_dir(dockerfile_content, container_type = "docker")
     }
     ## This should be written in the root level, not base_dir
-    .write_dockerfile(dockerfile_content, file.path(output_dir, "Dockerfile"))
+    .write_container_file(dockerfile_content, file.path(output_dir, "Dockerfile"))
     if (isTRUE(insert_readme)) {
         .generate_docker_readme(output_dir = output_dir, image = image)
     }
@@ -448,3 +448,9 @@ dockerise_rang <- function(...) {
     return(container_content)
   }
 }
+
+.write_container_file <- function(container_file_content, path) {
+  content <- unlist(lapply(container_file_content, .generate_wrapped_line))
+  writeLines(content, path)
+}
+
