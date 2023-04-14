@@ -509,17 +509,17 @@ apptainerize <- function(rang, output_dir, materials_dir = NULL, post_installati
                          insert_readme = TRUE,
                          copy_all = FALSE) {
   if (length(rang$ranglets) == 0) {
-    warning("Nothing to appteinerize/singularize.")
+    warning("Nothing to apptainerize/singularize.")
     return(invisible(NULL))
   }
   if (missing(output_dir)) {
     stop("You must provide `output_dir`.", call. = FALSE)
   }
   if (!grepl("^ubuntu", rang$os)) {
-    stop("System dependencies of ", rang$os, " can't be appteinerized/singularized.", call. = FALSE)
+    stop("System dependencies of ", rang$os, " can't be apptainerized/singularized.", call. = FALSE)
   }
   if (.is_r_version_older_than(rang, "1.3.1")) {
-    stop("`appteinerize/singularize` doesn't support this R version (yet):", rang$r_version, call. = FALSE)
+    stop("`apptainerize/singularize` doesn't support this R version (yet):", rang$r_version, call. = FALSE)
   }
   if (!is.null(materials_dir) && !(dir.exists(materials_dir))) {
     stop(paste0("The folder ", materials_dir, " does not exist"), call. = FALSE)
