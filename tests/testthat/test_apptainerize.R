@@ -56,7 +56,8 @@ test_that("integration of #16 in apptainerize()", {
     ## post
     apptainerize(rang = rang_ok, output_dir = temp_dir, post_installation_steps = "date")
     container_file <- readLines(file.path(temp_dir, "container.def"))
-    expect_equal(container_file[length(container_file) -2], "date")
+    last_post_line_before_start_script <- which(grepl("\\%startscript", container_file)) -2
+    expect_equal(container_file[last_post_line_before_start_script], "date")
 })
 
 test_that("integration of #18 in apptainerize()", {
@@ -143,7 +144,8 @@ test_that("apptainerize R < 3.1 and >= 2.1", {
     expect_equal(tail(container_file, 1), "exec R \"${@}\"")
     apptainerize(rang_rio, output_dir = temp_dir, lib = "abc", post_installation_step = "date")
     container_file <- readLines(file.path(temp_dir, "container.def"))
-    expect_equal(container_file[length(container_file) -2], "date")
+    last_post_line_before_start_script <- which(grepl("\\%startscript", container_file)) -2
+    expect_equal(container_file[last_post_line_before_start_script], "date")
 })
 
 test_that("Docker R < 1.3.1", {
