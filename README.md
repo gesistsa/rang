@@ -191,7 +191,7 @@ docker run -p 8787:8787 -e PASSWORD=abc123 --rm --name "rangtest" -ti rang
 With any browser, go to: `local:8787`. The default username is
 `rstudio`, password is as specified.
 
-### Using Apptainer/Singularity containers for HPC
+### Using Apptainer/Singularity containers
 
 A `rang` object can be used to recreate the computational environment
 via [Rocker](https://github.com/rocker-org/rocker). Instead of Docker
@@ -222,7 +222,7 @@ singularity exec container.sif R
 ```
 
 Using the above example, `sessionInfo()` outputs the following. You have
-successfully gone back to the pre-pandemic time on your HPC.
+successfully gone back to the pre-pandemic.
 
     R version 3.6.2 (2019-12-12) -- "Dark and Stormy Night"
     Copyright (C) 2019 The R Foundation for Statistical Computing
