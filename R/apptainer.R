@@ -24,8 +24,8 @@
     apptainer_content$FILES <- append(apptainer_content$FILES,
                                         c(paste0("cache/rpkgs ", file.path(cache_path, "rpkgs")),
                                           paste0("cache/rsrc ", file.path(cache_path, "rsrc"))))
-    apptainer_content$FROM <- c("FROM scratch", paste0("ADD ", file.path(rel_dir, "cache/debian/rootfs.tar.xz"), " /"))
-    apptainer_content$ENV <- append(apptainer_content$ENV, paste0("ENV CACHE_PATH ", cache_path))
+    apptainer_content$FROM <- c("From: scratch", paste0("ADD ", file.path(rel_dir, "cache/debian/rootfs.tar.xz"), " /"))
+    apptainer_content$ENV <- append(apptainer_content$ENV, paste0("CACHE_PATH=", cache_path))
   }
   apptainer_content$POST <- append(apptainer_content$POST, post_installation_steps)
   if (isTRUE(copy_all)) {
