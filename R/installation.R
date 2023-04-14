@@ -467,7 +467,7 @@ dockerise_rang <- function(...) {
 #' @param output_dir character, where to put the Apptainer/Singularity definition file and associated content
 #' @param materials_dir character, path to the directory containing additional resources (e.g. analysis scripts) to be copied into `output_dir` and in turn into the Apptainer/Singularity container
 #' @param post_installation_steps character, additional steps to be added before the in the end of `%post` section the Apptainer/Singularity definition file, see an example below
-#' @inheritParams source
+#' @inheritParams dockerize
 #' @param ... arguments to be passed to `apptainerize`
 #' @return `output_dir`, invisibly
 #' @inheritParams export_rang

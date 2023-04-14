@@ -54,7 +54,7 @@ singularise_rang(...)
 
 \item{post_installation_steps}{character, additional steps to be added before the in the end of \verb{\%post} section the Apptainer/Singularity definition file, see an example below}
 
-\item{image}{character, which versioned Rocker Docker image to use. Can only be "r-ver", "rstudio", "tidyverse", "verse", "geospatial"
+\item{image}{character, which versioned Rocker image to use. Can only be "r-ver", "rstudio", "tidyverse", "verse", "geospatial"
 This applies only to R version >= 3.1}
 
 \item{rang_as_comment}{logical, whether to write resolved result and the steps to reproduce
@@ -73,9 +73,9 @@ and \code{\link[=download.file]{download.file()}}.}
 
 \item{bioc_mirror}{character, which Bioconductor mirror to use}
 
-\item{no_rocker}{logical, whether to skip using Rocker Docker images even when an appropriate version is available. Please keep this as \code{TRUE} unless you know what you are doing}
+\item{no_rocker}{logical, whether to skip using Rocker images even when an appropriate version is available. Please keep this as \code{TRUE} unless you know what you are doing}
 
-\item{debian_version}{when Rocker Docker images are not used, which EOL version of Debian to use. Can only be "lenny", "etch", "squeeze", "wheezy", "jessie", "stretch". Please keep this as default "lenny" unless you know what you are doing}
+\item{debian_version}{when Rocker images are not used, which EOL version of Debian to use. Can only be "lenny", "etch", "squeeze", "wheezy", "jessie", "stretch". Please keep this as default "lenny" unless you know what you are doing}
 
 \item{skip_r17}{logical, whether to skip R 1.7.x. Currently, it is not possible to compile R 1.7.x (R 1.7.0 and R 1.7.1) with the method provided by  \code{rang}. It affects \code{snapshot_date} from 2003-04-16 to 2003-10-07. When \code{skip_r17} is TRUE and \code{snapshot_date} is within the aforementioned range, R 1.8.0 is used instead}
 
@@ -100,8 +100,10 @@ is provided. The current approach does not work in R < 2.1.0.
 \examples{
 \donttest{
 if (interactive()) {
-    graph <- resolve(pkgs = c("openNLP", "LDAvis", "topicmodels", "quanteda"),
-                    snapshot_date = "2020-01-16")
+    graph <- resolve(
+        pkgs = c("openNLP", "LDAvis", "topicmodels", "quanteda"),
+        snapshot_date = "2020-01-16"
+    )
     apptainerize(graph, ".")
     ## An example of using post_installation_steps to install quarto
     install_quarto <- c("apt-get install -y curl git && \\\\
