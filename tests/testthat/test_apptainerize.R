@@ -317,3 +317,14 @@ test_that("apptainerize with inst/rang", {
     expect_true(". /" %in% container_file) ## coerced
     expect_true("export RANG_PATH=inst/rang/rang.R" %in% container_file)
 })
+
+test_that(".insert_materials_dir with actual outcome", {
+  container_content <- list()
+  container_content$COPY <- "COPY rang.R /rang.R"
+  expect_identical(names(.insert_materials_dir(container_content, container_type = "docker")), "COPY")
+  expect_false(names(.insert_materials_dir(container_content, container_type = "docker")) %in% "FILES")
+  container_content <- list()
+  container_content$FILES <- "rang.R /rang.R"
+  expect_identical(names(.insert_materials_dir(container_content, container_type = "apptainer")), "FILES")
+  expect_false(names(.insert_materials_dir(container_content, container_type = "apptainer")) %in% "COPY")
+})
