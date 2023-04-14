@@ -94,7 +94,7 @@ For R version < 3.1.0, the Apptainer/Singularity definition is based on Debian a
 }
 \details{
 The idea behind this is to determine the installation order of R packages locally. Then, the installation script can be deployed to another
-fresh R session to install R packages. \code{\link[=dockerize]{dockerize()}} is a more reasonable way because a fresh R session with all system requirements
+fresh R session to install R packages. \code{\link[=dockerize]{dockerize()}} and \code{\link[=apptainerize]{apptainerize()}} are more reasonable ways because a fresh R session with all system requirements
 is provided. The current approach does not work in R < 2.1.0.
 }
 \examples{

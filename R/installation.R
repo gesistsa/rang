@@ -146,7 +146,7 @@
 #' @param bioc_mirror character, which Bioconductor mirror to use
 #' @return `path`, invisibly
 #' @details The idea behind this is to determine the installation order of R packages locally. Then, the installation script can be deployed to another
-#' fresh R session to install R packages. [dockerize()] is a more reasonable way because a fresh R session with all system requirements
+#' fresh R session to install R packages. [dockerize()] and [apptainerize()] are more reasonable ways because a fresh R session with all system requirements
 #' is provided. The current approach does not work in R < 2.1.0.
 #' @export
 #' @references
