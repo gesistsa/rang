@@ -599,7 +599,7 @@ apptainerize <- function(rang, output_dir, materials_dir = NULL, post_installati
     apptainer_content <- .insert_materials_dir(apptainer_content, container_type = "apptainer")
   }
   ## This should be written in the root level, not base_dir
-  .write_container_file(apptainer_content, file.path(output_dir, "singularity.def"))
+  .write_container_file(apptainer_content, file.path(output_dir, "container.def"))
   if (isTRUE(insert_readme)) {
     .generate_docker_readme(output_dir = output_dir, image = image)
   }
