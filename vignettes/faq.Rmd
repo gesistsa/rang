@@ -206,3 +206,45 @@ And launch a container the same way
 ```sh
 docker run --rm --name "rangcontainer" -ti rangimg
 ```
+
+# Apptainer/Singularity questions
+
+**AQ1: I am on HPC and I don't have Docker there. Can I use Apptainer/Singularity instead of Docker?**
+
+**AA1:** Docker may require root privileges and is not usually available on HPC. You might have Singularity or Apptainer instead. Apptainer/Singularity do not require root to run images (only to build them). You can build images on your own Linux PC (or in VirtualBox on Windows or macOS), or on a virtual private server, or also for [free in the cloud](https://cloud.sylabs.io/builder).
+
+You have two options:
+
+1. You can prepare (using `dockerize()`) and build a Docker image and convert it to an Apptainer/Singularity image. See [Apptainer/Singularity documentation](https://apptainer.org/docs/user/latest/docker_and_oci.html) for that.
+
+2. You can use `apptainerize()` function just like you would use `dockerize()`.
+
+```r
+apptainerize(graph, output_dir = "rangtest")
+```
+
+Afterwards you build an image:
+
+```sh
+cd rangtest
+sudo apptainer build container.sif container.def
+# sudo singularity build container.sif container.def # same as above
+```
+
+And run the container:
+
+```sh
+apptainer instance start container.sif rangtest
+# singularity instance start container.sif rangtest # same as above
+```
+
+Then stop the container when you are done with it:
+
+```sh
+apptainer instance stop rangtest
+# singularity instance stop rangtest # same as above
+```
+
+`apptainer` and `singularity` shell commands are interchangeable, at least for now. See [Apptainer Singularity compatibility](https://apptainer.org/docs/user/latest/singularity_compatibility.html) for details.
+
+`apptainerize()`/`singularize()` functions work exactly the same as `dockerize()`, expect you cannot cache Linux distribution rootfs.
