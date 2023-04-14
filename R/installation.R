@@ -409,7 +409,7 @@ dockerize <- function(rang, output_dir, materials_dir = NULL, post_installation_
         file.copy(list.files(materials_dir, full.names = TRUE),
                   materials_subdir_in_output_dir,
                   recursive = TRUE)
-        dockerfile_content <- .insert_materials_dir(dockerfile_content)
+        dockerfile_content <- .insert_materials_dir(dockerfile_content, container_type = "docker")
     }
     ## This should be written in the root level, not base_dir
     .write_dockerfile(dockerfile_content, file.path(output_dir, "Dockerfile"))
@@ -435,4 +435,16 @@ dockerise <- function(...) {
 #' @export
 dockerise_rang <- function(...) {
     dockerize(...)
+}
+
+.insert_materials_dir <- function(container_content, container_type = c("docker", "apptainer")) {
+  container_type <- match.arg(container_type)
+  if (container_type == "docker") {
+    container_content$COPY <- append(container_content$COPY, "COPY materials/ ./materials/")
+    return(container_content)
+  }
+  if (container_type == "apptainer") {
+    container_content$FILES <- append(container_content$FILES, "materials/ ./materials/")
+    return(container_content)
+  }
 }
