@@ -60,6 +60,8 @@ use_turing <- function(path, add_rang = TRUE, ...) {
     dir.create(path)
     file.copy(from = list.files(system.file("turing", package = "rang"), full.names = TRUE),
               to = path, recursive = TRUE)
+    dir.create(file.path(path, "figures"))
+    dir.create(file.path(path, "data_clean"))
     if (isTRUE(add_rang)) {
         use_rang(path, ...)
     }
