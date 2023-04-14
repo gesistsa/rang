@@ -577,8 +577,6 @@ apptainerize <- function(rang, output_dir, materials_dir = NULL, post_installati
     if (isTRUE(cache)) {
       .cache_rsrc(r_version = r_version, base_dir = base_dir,
                   verbose = verbose)
-      # .cache_debian(debian_version = debian_version, base_dir = base_dir,
-      # verbose = verbose)
     }
   } else {
     apptainer_content <- .generate_rocker_apptainer_content(r_version = r_version,
