@@ -8,6 +8,8 @@ build: Dockerfile
 	docker build -t ${handle}img .
 dockerlaunch:
 	docker run --rm --name "${handle}container" -ti ${handle}img
+dockerbash:
+	docker run --rm --name "${handle}container" --entrypoint bash -ti ${handle}img
 export:
 	docker save ${handle}img | gzip > ${handle}img.tar.gz
 rebuild: ${handle}img.tar.gz
