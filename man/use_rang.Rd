@@ -28,7 +28,7 @@ exist.}
 path, invisibly
 }
 \description{
-This function adds the infrastructure in a directory (presumably with R scripts
+This \code{usethis}-style function adds the infrastructure in a directory (presumably with R scripts
 and data) for (re)constructing the computational environment.
 Specifically, this function inserts \code{inst/rang} into the directory, which contains
 all components for the reconstruction. Optionally, \code{Makefile} and \code{.here} are also inserted
