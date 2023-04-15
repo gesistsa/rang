@@ -1,6 +1,8 @@
 library(rang)
 library(here)
 
+cran_mirror <- "https://cloud.r-project.org/"
+
 ## Please note that the project scanning result should be checked manually.
 ## 1. Github packages must be added manually
 ## as_pkgrefs(here::here())
@@ -15,4 +17,5 @@ rang <- resolve(here::here(),
 dockerize(rang, output_dir = here::here(), verbose = TRUE, cache = TRUE,
           post_installation_steps = c(recipes[['make']], recipes[['texlive']], recipes[['clean']]),
           insert_readme = FALSE,
-          copy_all = TRUE)
+          copy_all = TRUE,
+          cran_mirror = cran_mirror)
