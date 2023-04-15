@@ -61,6 +61,35 @@ NULL
     invisible()
 }
 
+## data generation
+## ---
+## recipes <- list()
+## recipes["texlive"] <- "## install texlive\nRUN apt-get install -y pandoc pandoc-citeproc texlive"
+## recipes["texlivefull"] <- "## install texlive-full\nRUN apt-get install -y pandoc pandoc-citeproc texlive-full"
+## recipes["quarto"] <- "## install quarto (latest)\nRUN apt-get install -y curl git && curl -LO https://quarto.org/download/latest/quarto-linux-amd64.deb && dpkg -i quarto-linux-amd64.deb && quarto install tool tinytex && rm quarto-linux-amd64.deb"
+## recipes["clean"] <- "## Clean up caches\nRUN rm -rf /var/lib/apt/lists/* && if [ -d \"$CACHE_PATH\" ]; then rm -rf $CACHE_PATH; fi"
+## recipes["make"] <- "## install GNU make\nRUN apt-get -y install make"
+## usethis::use_data(recipes, overwrite = TRUE)
+
+#' Recipes for Building Container Images
+#'
+#' A list containing several useful recipes for container building. Useful for the `post_installation_steps` argument of [dockerize()]. Available recipes are:
+#' * `texlive`: install pandoc and LaTeX, useful for rendering RMarkdown
+#' * `texlivefull`: Similar to the above, but install the full distribution of TeX Live (~ 3GB)
+#' * `quarto`: install quarto and tinytex
+#' * `clean`: clean up the container image by removing cache
+#' * `make`: install GNU make
+#' @examples
+#' \donttest{
+#' if (interactive()) {
+#'     graph <- resolve(pkgs = c("openNLP", "LDAvis", "topicmodels", "quanteda"),
+#'                     snapshot_date = "2020-01-16")
+#'     ## install texlive
+#'     dockerize(graph, ".", post_installation_steps = recipes[['texlive']])
+#' }
+#' }
+"recipes"
+
 ## internal data generation
 ## ---
 ## ### Supported OS Versions
