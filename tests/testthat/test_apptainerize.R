@@ -159,19 +159,6 @@ test_that("Docker R < 1.3.1", {
     expect_error(apptainerize(rang_rio, output_dir = temp_dir))
 })
 
-test_that(".group_sysreqs and issue #21", {
-    graph <- readRDS("../testdata/graph.RDS")
-    expect_equal(.group_sysreqs(graph), "apt-get update -qq && apt-get install -y libpcre3-dev zlib1g-dev pkg-config libcurl4-openssl-dev && apt-get install -y default-jdk libgsl0-dev libicu-dev libpng-dev libxml2-dev make python3 zlib1g-dev liblzma-dev libpcre3-dev libbz2-dev && R CMD javareconf")
-    graph <- readRDS("../testdata/rang_ok.RDS")
-    expect_equal(.group_sysreqs(graph), "apt-get update -qq && apt-get install -y libpcre3-dev zlib1g-dev pkg-config libcurl4-openssl-dev")
-    graph <- readRDS("../testdata/issue21.RDS")
-    expected_output <- "apt-get update -qq && apt-get install -y libpcre3-dev zlib1g-dev pkg-config && apt-get install -y software-properties-common && add-apt-repository -y ppa:cran/libgit2 && apt-get update && apt-get install -y cmake git libcurl4-openssl-dev libfontconfig1-dev libfreetype6-dev libfribidi-dev libgit2-dev libgsl0-dev libharfbuzz-dev libicu-dev libjpeg-dev libpng-dev libssh2-1-dev libssl-dev libtiff-dev libxml2-dev make pandoc pari-gp zlib1g-dev"
-    expect_warning(output <- .group_sysreqs(graph))
-    expect_equal(output, expected_output)
-    graph <- readRDS("../testdata/issue21_ubuntu2004.RDS")
-    expect_warning(output <- .group_sysreqs(graph), NA)
-    expect_true(grepl("gnutls", output))
-})
 
 test_that("apptainerize warning, issue #21", {
     graph <- readRDS("../testdata/issue21.RDS")
@@ -296,13 +283,6 @@ test_that("no_rocker #67", {
     temp_dir <- .generate_temp_dir()
     expect_error(apptainerize(rang = rang_ok, output_dir = temp_dir, no_rocker = TRUE,
               debian_version = "3.11"))
-})
-
-test_that(".check_tarball_path", {
-    expect_error(.check_tarball_path("../testdata/gesis_2.0.tar.gz", "gesis")) ##dir = FALSE
-    expect_error(.check_tarball_path("../testdata/askpass_1.1.tar.gz", "askpass"), NA)
-    expect_error(.check_tarball_path("../testdata/gesis", "gesis", dir = TRUE))
-    expect_error(.check_tarball_path("../testdata/askpass", "askpass", dir = TRUE), NA)
 })
 
 test_that("apptainerize with inst/rang", {
