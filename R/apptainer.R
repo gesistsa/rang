@@ -57,7 +57,8 @@
         BOOTSTRAP = "Bootstrap: docker",
         FROM = c(paste0("From: rocker/", image, ":", r_version)),
         ENV_section = "\n%environment\n",
-        ENV = environment_vars,
+        ENV = c(environment_vars, "export RPORT=${RPORT:-8787}",
+                "export USER=$(whoami)", "export PASSWORD=${PASSWORD:-set_your_password}"),
         FILES_section = "\n%files\n",
         FILES = c(paste0("rang.R ", rang_path)),
         POST_section = "\n%post\n",
@@ -75,9 +76,9 @@
         apptainer_content$ENV <- append(apptainer_content$ENV, paste0("export CACHE_PATH ", cache_path))
     }
     if (image == "rstudio") {
-        apptainer_content$STARTSCRIPT <- c("exec /usr/lib/rstudio-server/bin/rserver \
-    --auth-none=0 --auth-pam-helper-path=pam-helper \
-    --server-user=$(whoami)")
+        apptainer_content$STARTSCRIPT <- c("exec /usr/lib/rstudio-server/bin/rserver \\\
+    --auth-none=0 --auth-pam-helper-path=pam-helper \\\
+    --server-user=${USER} --www-port=${RPORT}")
     }
     apptainer_content$POST <- append(apptainer_content$POST, post_installation_steps)
     if (isTRUE(copy_all)) {
