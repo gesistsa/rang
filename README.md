@@ -263,7 +263,7 @@ successfully gone back to the pre-pandemic.
     [1] compiler_3.6.2
 
 `apptainerize()`/`singularize()` functions work exactly the same as
-`dockerize()`, expect you cannot cache Linux distribution rootfs.
+`dockerize()`, except you cannot cache Linux distribution rootfs.
 
 ### Apptainer/Singularity with RStudio IDE
 

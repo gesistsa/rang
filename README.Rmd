@@ -234,7 +234,7 @@ loaded via a namespace (and not attached):
 [1] compiler_3.6.2
 ```
 
-`apptainerize()`/`singularize()` functions work exactly the same as `dockerize()`, expect you cannot cache Linux distribution rootfs.
+`apptainerize()`/`singularize()` functions work exactly the same as `dockerize()`, except you cannot cache Linux distribution rootfs.
 
 ### Apptainer/Singularity with RStudio IDE
 

@@ -243,7 +243,7 @@ Then stop the container when you are done with it just quit R.
 
 `apptainer` and `singularity` shell commands are interchangeable, at least for now. See [Apptainer Singularity compatibility](https://apptainer.org/docs/user/latest/singularity_compatibility.html) for details.
 
-`apptainerize()`/`singularize()` functions work exactly the same as `dockerize()`, expect you cannot cache Linux distribution rootfs.
+`apptainerize()`/`singularize()` functions work exactly the same as `dockerize()`, except you cannot cache Linux distribution rootfs.
 
 
 
