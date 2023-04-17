@@ -209,8 +209,8 @@ For Apptainer installation:
 
 ``` bash
 cd ~/rocker_test
-sudo apptainer build container.sif container.def
-apptainer instance start container.sif rangtest
+apptainer build container.sif container.def
+apptainer run container.sif R
 ```
 
 For Singularity installation:
@@ -218,7 +218,7 @@ For Singularity installation:
 ``` bash
 cd ~/rocker_test
 sudo singularity build container.sif container.def
-singularity exec container.sif R
+singularity run container.sif R
 ```
 
 Using the above example, `sessionInfo()` outputs the following. You have
@@ -264,6 +264,47 @@ successfully gone back to the pre-pandemic.
 
 `apptainerize()`/`singularize()` functions work exactly the same as
 `dockerize()`, expect you cannot cache Linux distribution rootfs.
+
+### Apptainer/Singularity with RStudio IDE
+
+For running RStudio IDE in Apptainer/Singulairty container, some
+writable folders and a config file have to be created locally:
+
+``` bash
+mkdir -p run var-lib-rstudio-server
+printf 'provider=sqlite\ndirectory=/var/lib/rstudio-server\n' > database.conf
+```
+
+After that, you can run the container:
+
+``` bash
+apptainer exec \
+    --env PASSWORD='set_your_password' \
+    --bind run:/run,var-lib-rstudio-server:/var/lib/rstudio-server,database.conf:/etc/rstudio/database.conf \
+    container.sif \
+    /usr/lib/rstudio-server/bin/rserver \
+    --auth-none=0 --auth-pam-helper-path=pam-helper \
+    --server-user=$(whoami)
+```
+
+or
+
+``` bash
+singularity exec \
+    --env PASSWORD='set_your_password' \
+    --bind run:/run,var-lib-rstudio-server:/var/lib/rstudio-server,database.conf:/etc/rstudio/database.conf \
+    container.sif \
+    /usr/lib/rstudio-server/bin/rserver \
+    --auth-none=0 --auth-pam-helper-path=pam-helper \
+    --server-user=$(whoami)
+```
+
+The default port is 8787, you can also change by adding
+`--www-port=8080` in the end of the line above.
+
+Now open a browser and go to localhost:8787. The default username is
+your local username, password as specified above (in this case
+`set_your_password`).
 
 ## Recreate the computational environment for R \< 3.1.0
 
