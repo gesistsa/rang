@@ -37,7 +37,7 @@
                 paste0("cache/rsrc ", file.path(cache_path, "rsrc"))
             )
         )
-        apptainer_content$POST <- prepend(apptainer_content$POST, paste0("export CACHE_PATH=", cache_path))
+        apptainer_content$POST <- append(paste0("export CACHE_PATH=", cache_path), apptainer_content$POST)
     }
     apptainer_content$POST <- append(apptainer_content$POST, post_installation_steps)
     if (isTRUE(copy_all)) {
