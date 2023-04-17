@@ -114,10 +114,16 @@
     utils::compareVersion(rang$r_version, r_version) == -1
 }
 
-.generate_docker_readme <- function(output_dir,image) {
+.generate_container_readme <- function(output_dir, image, container_type = c("docker", 'apptainer')) {
     file.create(file.path(output_dir,"README"))
     con <- file(file.path(output_dir,"README"), open="w")
-    readme <- readLines(system.file("readme_template.txt", package = "rang"))
+    container_type <- match.arg(container_type)
+    if (container_type == "docker") {
+        readme <- readLines(system.file("docker_readme_template.txt", package = "rang"))
+    }
+    if (container_type == "apptainer") {
+        readme <- readLines(system.file("apptainer_readme_template.txt", package = "rang"))
+    }
     readme <- gsub("__DATE__",Sys.Date(),readme)
     readme <- gsub("__OUTPUT__",output_dir,readme)
     readme <- gsub("__IMAGE__",image,readme)
@@ -146,7 +152,7 @@
 #' @param bioc_mirror character, which Bioconductor mirror to use
 #' @return `path`, invisibly
 #' @details The idea behind this is to determine the installation order of R packages locally. Then, the installation script can be deployed to another
-#' fresh R session to install R packages. [dockerize()] is a more reasonable way because a fresh R session with all system requirements
+#' fresh R session to install R packages. [dockerize()] and [apptainerize()] are more reasonable ways because a fresh R session with all system requirements
 #' is provided. The current approach does not work in R < 2.1.0.
 #' @export
 #' @references
@@ -409,12 +415,12 @@ dockerize <- function(rang, output_dir, materials_dir = NULL, post_installation_
         file.copy(list.files(materials_dir, full.names = TRUE),
                   materials_subdir_in_output_dir,
                   recursive = TRUE)
-        dockerfile_content <- .insert_materials_dir(dockerfile_content)
+        dockerfile_content <- .insert_materials_dir(dockerfile_content, container_type = "docker")
     }
     ## This should be written in the root level, not base_dir
-    .write_dockerfile(dockerfile_content, file.path(output_dir, "Dockerfile"))
+    .write_container_file(dockerfile_content, file.path(output_dir, "Dockerfile"))
     if (isTRUE(insert_readme)) {
-        .generate_docker_readme(output_dir = output_dir, image = image)
+        .generate_container_readme(output_dir = output_dir, image = image, container_type = "docker")
     }
     invisible(output_dir)
 }
@@ -435,4 +441,220 @@ dockerise <- function(...) {
 #' @export
 dockerise_rang <- function(...) {
     dockerize(...)
+}
+
+.insert_materials_dir <- function(container_content, container_type = c("docker", "apptainer")) {
+    container_type <- match.arg(container_type)
+    if (container_type == "docker") {
+        container_content$COPY <- append(container_content$COPY, "COPY materials/ ./materials/")
+        return(container_content)
+    }
+    if (container_type == "apptainer") {
+        container_content$FILES <- append(container_content$FILES, "materials/ ./materials/")
+        return(container_content)
+    }
+}
+
+.write_container_file <- function(container_file_content, path) {
+    content <- unlist(lapply(container_file_content, .generate_wrapped_line))
+    writeLines(content, path)
+}
+
+#' Create an Apptainer/Singularity definition file of The Resolved Result
+#'
+#' This function exports the result from [resolve()] to an Apptainer/Singularity definition file. For R version >= 3.1.0, the file is based on the versioned Rocker Docker image.
+#' For R version < 3.1.0, the Apptainer/Singularity definition is based on Debian and it compiles R from source.
+#' @param output_dir character, where to put the Apptainer/Singularity definition file and associated content
+#' @param materials_dir character, path to the directory containing additional resources (e.g. analysis scripts) to be copied into `output_dir` and in turn into the Apptainer/Singularity container
+#' @param post_installation_steps character, additional steps to be added before the in the end of `%post` section the Apptainer/Singularity definition file, see an example below
+#' @inheritParams dockerize
+#' @param ... arguments to be passed to `apptainerize`
+#' @return `output_dir`, invisibly
+#' @inheritParams export_rang
+#' @inherit export_rang details
+#' @seealso [resolve()], [export_rang()], [use_rang()]
+#' @references
+#' [Apptainer / Singularity](https://apptainer.org/)
+#'
+#' Kurtzer, G. M., Sochat, V., & Bauer, M. W. (2017) [Singularity: Scientific containers for mobility of compute](https://doi.org/10.1371/journal.pone.0177459) PLOS ONE, 12(5):e0177459.
+#'
+#' [The Rocker Project](https://rocker-project.org)
+#'
+#' Ripley, B. (2005) [Packages and their Management in R 2.1.0.](https://cran.r-project.org/doc/Rnews/Rnews_2005-1.pdf) R News, 5(1):8--11.
+#' @examples
+#' \donttest{
+#' if (interactive()) {
+#'     graph <- resolve(
+#'         pkgs = c("openNLP", "LDAvis", "topicmodels", "quanteda"),
+#'         snapshot_date = "2020-01-16"
+#'     )
+#'     apptainerize(graph, ".")
+#'     ## An example of using post_installation_steps to install quarto
+#'     install_quarto <- c("apt-get install -y curl git && \\
+#'     curl -LO https://quarto.org/download/latest/quarto-linux-amd64.deb && \\
+#'     dpkg -i quarto-linux-amd64.deb && \\
+#'     quarto install tool tinytex")
+#'     apptainerize(graph, ".", post_installation_steps = install_quarto)
+#' }
+#' }
+#' @export
+apptainerize <- function(rang, output_dir, materials_dir = NULL, post_installation_steps = NULL,
+                         image = c("r-ver", "rstudio", "tidyverse", "verse", "geospatial"),
+                         rang_as_comment = TRUE, cache = FALSE, verbose = TRUE, lib = NA,
+                         cran_mirror = "https://cran.r-project.org/", check_cran_mirror = TRUE,
+                         bioc_mirror = "https://bioconductor.org/packages/",
+                         no_rocker = FALSE,
+                         debian_version = c("lenny", "squeeze", "wheezy", "jessie", "stretch"),
+                         skip_r17 = TRUE,
+                         insert_readme = TRUE,
+                         copy_all = FALSE) {
+    if (length(rang$ranglets) == 0) {
+        warning("Nothing to apptainerize/singularize.")
+        return(invisible(NULL))
+    }
+    if (missing(output_dir)) {
+        stop("You must provide `output_dir`.", call. = FALSE)
+    }
+    if (!grepl("^ubuntu", rang$os)) {
+        stop("System dependencies of ", rang$os, " can't be apptainerized/singularized.", call. = FALSE)
+    }
+    if (.is_r_version_older_than(rang, "1.3.1")) {
+        stop("`apptainerize/singularize` doesn't support this R version (yet):", rang$r_version, call. = FALSE)
+    }
+    if (!is.null(materials_dir) && !(dir.exists(materials_dir))) {
+        stop(paste0("The folder ", materials_dir, " does not exist"), call. = FALSE)
+    }
+    need_cache <- (isTRUE(any(grepl("^github::", .extract_pkgrefs(rang)))) &&
+        .is_r_version_older_than(rang, "3.1")) ||
+        (isTRUE(any(grepl("^bioc::", .extract_pkgrefs(rang)))) &&
+            .is_r_version_older_than(rang, "3.3")) ||
+        (isTRUE(any(grepl("^local::", .extract_pkgrefs(rang))))) ||
+        .is_r_version_older_than(rang, "2.1")
+    if (isTRUE(need_cache) && isFALSE(cache)) {
+        stop("Packages must be cached. Please set `cache` = TRUE.", call. = FALSE)
+    }
+    image <- match.arg(image)
+    debian_version <- match.arg(debian_version)
+    sysreqs_cmd <- .group_sysreqs(rang)
+    if (!dir.exists(output_dir)) {
+        dir.create(output_dir)
+    }
+    if (dir.exists(file.path(output_dir, "inst/rang"))) {
+        base_dir <- file.path(output_dir, "inst/rang")
+        rel_dir <- "inst/rang"
+    } else {
+        base_dir <- output_dir
+        rel_dir <- ""
+    }
+    if (rel_dir == "inst/rang" && isFALSE(copy_all)) {
+        .vcat(verbose, "`inst/rang` detected. `copy_all` is coerced to TRUE")
+        copy_all <- TRUE
+    }
+    rang_path <- file.path(base_dir, "rang.R")
+    export_rang(
+        rang = rang, path = rang_path,
+        rang_as_comment = rang_as_comment,
+        verbose = verbose, lib = lib, cran_mirror = cran_mirror,
+        check_cran_mirror = check_cran_mirror, bioc_mirror = bioc_mirror
+    )
+    if (isTRUE(skip_r17) && rang$r_version %in% c("1.7.0", "1.7.1")) {
+        r_version <- "1.8.0"
+    } else {
+        r_version <- rang$r_version
+    }
+    if (isTRUE(cache)) {
+        .cache_pkgs(
+            rang = rang, base_dir = base_dir, cran_mirror = cran_mirror,
+            bioc_mirror = bioc_mirror, verbose = verbose
+        )
+    }
+    if (.is_r_version_older_than(rang, "3.1") || isTRUE(no_rocker)) {
+        file.copy(system.file("compile_r.sh", package = "rang"), file.path(base_dir, "compile_r.sh"),
+            overwrite = TRUE
+        )
+        apptainer_content <- .generate_debian_eol_apptainer_content(
+            r_version = r_version,
+            sysreqs_cmd = sysreqs_cmd, lib = lib,
+            cache = cache,
+            debian_version = debian_version,
+            post_installation_steps = post_installation_steps,
+            rel_dir = rel_dir,
+            copy_all = copy_all
+        )
+        if (isTRUE(cache)) {
+            .cache_rsrc(
+                r_version = r_version, base_dir = base_dir,
+                verbose = verbose
+            )
+        }
+    } else {
+        apptainer_content <- .generate_rocker_apptainer_content(
+            r_version = r_version,
+            sysreqs_cmd = sysreqs_cmd, lib = lib,
+            cache = cache, image = image,
+            post_installation_steps = post_installation_steps,
+            rel_dir = rel_dir,
+            copy_all = copy_all
+        )
+    }
+    if (!(is.null(materials_dir))) {
+        materials_subdir_in_output_dir <- file.path(base_dir, "materials")
+        if (isFALSE(dir.exists(materials_subdir_in_output_dir))) {
+            dir.create(materials_subdir_in_output_dir)
+        }
+        file.copy(list.files(materials_dir, full.names = TRUE),
+            materials_subdir_in_output_dir,
+            recursive = TRUE
+        )
+        apptainer_content <- .insert_materials_dir(apptainer_content, container_type = "apptainer")
+    }
+    ## This should be written in the root level, not base_dir
+    .write_container_file(apptainer_content, file.path(output_dir, "container.def"))
+    if (isTRUE(insert_readme)) {
+        .generate_container_readme(output_dir = output_dir, image = image, container_type = "apptainer")
+    }
+    invisible(output_dir)
+}
+
+#' @rdname apptainerize
+#' @export
+apptainerize_rang <- function(...) {
+    apptainerize(...)
+}
+
+#' @rdname apptainerize
+#' @export
+apptainerise <- function(...) {
+    apptainerize(...)
+}
+
+#' @rdname apptainerize
+#' @export
+apptainerise_rang <- function(...) {
+    apptainerize(...)
+}
+
+#' @rdname apptainerize
+#' @export
+singularize <- function(...) {
+    apptainerize(...)
+}
+
+
+#' @rdname apptainerize
+#' @export
+singularize_rang <- function(...) {
+    apptainerize(...)
+}
+
+#' @rdname apptainerize
+#' @export
+singularise <- function(...) {
+    apptainerize(...)
+}
+
+#' @rdname apptainerize
+#' @export
+singularise_rang <- function(...) {
+    apptainerize(...)
 }

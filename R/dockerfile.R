@@ -5,11 +5,6 @@
 ##       dockerfile_content[rang_line:length(dockerfile_content)])
 ## }
 
-.insert_materials_dir <- function(dockerfile_content) {
-    dockerfile_content$COPY <- append(dockerfile_content$COPY, "COPY materials/ ./materials/")
-    dockerfile_content
-}
-
 .generate_debian_eol_dockerfile_content <- function(r_version, lib, sysreqs_cmd, cache, debian_version = "lenny",
                                                     post_installation_steps = NULL,
                                                     rel_dir = "",
@@ -74,7 +69,3 @@
     return(dockerfile_content)
 }
 
-.write_dockerfile <- function(dockerfile_content, path) {
-    content <- unlist(lapply(dockerfile_content, .generate_wrapped_line))
-    writeLines(content, path)
-}
