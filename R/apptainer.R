@@ -73,7 +73,7 @@
     }
     if (isTRUE(cache)) {
         apptainer_content$FILES <- append(apptainer_content$FILES, paste0("cache ", cache_path))
-        apptainer_content$ENV <- append(apptainer_content$ENV, paste0("export CACHE_PATH ", cache_path))
+        apptainer_content$POST <- append(paste0("export CACHE_PATH=", cache_path), apptainer_content$POST)
     }
     if (image == "rstudio") {
         apptainer_content$STARTSCRIPT <- c("exec /usr/lib/rstudio-server/bin/rserver \\\
