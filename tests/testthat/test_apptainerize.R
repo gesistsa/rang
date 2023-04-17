@@ -266,7 +266,8 @@ test_that("#123 rstudio", {
     temp_dir <- .generate_temp_dir()
     apptainerize(graph, output_dir = temp_dir, image = "rstudio")
     container_file <- readLines(file.path(temp_dir, "container.def"))
-    expect_equal(tail(container_file, 1), "exec /init \"$@\"")
+    first_startscript_line <- which(grepl("\\%startscript", container_file)) + 2
+    expect_true(all(grepl("exec /usr/lib/rstudio-server/bin/rserver", container_file[first_startscript_line])))
 })
 
 test_that("apptainerize with bioc #58", {
