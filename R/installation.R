@@ -288,6 +288,7 @@ export_renv <- function(rang, path = ".") {
 #' @param skip_r17 logical, whether to skip R 1.7.x. Currently, it is not possible to compile R 1.7.x (R 1.7.0 and R 1.7.1) with the method provided by  `rang`. It affects `snapshot_date` from 2003-04-16 to 2003-10-07. When `skip_r17` is TRUE and `snapshot_date` is within the aforementioned range, R 1.8.0 is used instead
 #' @param insert_readme logical, whether to insert a README file
 #' @param copy_all logical, whether to copy everything in the current directory into the container. If `inst/rang` is detected in `output_dir`, this is coerced to TRUE.
+#' @param refresh_cache logical, if `cache` is TRUE whether to delete existing cache directory before caching
 #' @param ... arguments to be passed to `dockerize`
 #' @return `output_dir`, invisibly
 #' @inheritParams export_rang
@@ -320,7 +321,8 @@ dockerize <- function(rang, output_dir, materials_dir = NULL, post_installation_
                       debian_version = c("lenny", "squeeze", "wheezy", "jessie", "stretch"),
                       skip_r17 = TRUE,
                       insert_readme = TRUE,
-                      copy_all = FALSE) {
+                      copy_all = FALSE,
+                      refresh_cache = TRUE) {
     if (length(rang$ranglets) == 0) {
         warning("Nothing to dockerize.")
         return(invisible(NULL))
@@ -372,6 +374,9 @@ dockerize <- function(rang, output_dir, materials_dir = NULL, post_installation_
         r_version <- "1.8.0"
     } else {
         r_version <- rang$r_version
+    }
+    if (isTRUE(cache) && isTRUE(refresh_cache) && dir.exists(file.path(base_dir, "cache"))) {
+        unlink(file.path(base_dir, "cache"), recursive = TRUE)
     }
     if (isTRUE(cache)) {
         .cache_pkgs(rang = rang, base_dir = base_dir, cran_mirror = cran_mirror,

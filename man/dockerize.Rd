@@ -24,7 +24,8 @@ dockerize(
   debian_version = c("lenny", "squeeze", "wheezy", "jessie", "stretch"),
   skip_r17 = TRUE,
   insert_readme = TRUE,
-  copy_all = FALSE
+  copy_all = FALSE,
+  refresh_cache = TRUE
 )
 
 dockerize_rang(...)
@@ -70,6 +71,8 @@ and \code{\link[=download.file]{download.file()}}.}
 \item{insert_readme}{logical, whether to insert a README file}
 
 \item{copy_all}{logical, whether to copy everything in the current directory into the container. If \code{inst/rang} is detected in \code{output_dir}, this is coerced to TRUE.}
+
+\item{refresh_cache}{logical, if \code{cache} is TRUE whether to delete existing cache directory before caching}
 
 \item{...}{arguments to be passed to \code{dockerize}}
 }
