@@ -69,30 +69,29 @@ sudo singularity build container.sif container.def
 
 For running RStudio IDE in Apptainer/Singulairty container, some writable folders and a config file have to be created locally:
 
-mkdir -p run var-lib-rstudio-server
+mkdir -p run var-lib-rstudio-server .rstudio
 printf 'provider=sqlite\ndirectory=/var/lib/rstudio-server\n' > database.conf
 
 After that, you can run the container (do not run as `root` user, otherwise you will not be able to login to RStudio IDE):
 
 apptainer exec \
     --env PASSWORD='set_your_password' \
-    --bind run:/run,var-lib-rstudio-server:/var/lib/rstudio-server,database.conf:/etc/rstudio/database.conf \
+    --bind run:/run,var-lib-rstudio-server:/var/lib/rstudio-server,database.conf:/etc/rstudio/database.conf,.rstudio:/home/rstudio/.rstudio/ \
     container.sif \
     /usr/lib/rstudio-server/bin/rserver \
     --auth-none=0 --auth-pam-helper-path=pam-helper \
-    --server-user=$(whoami)
+    --server-user=$(whoami) --www-port=8787
 
 or
 
 singularity exec \
     --env PASSWORD='set_your_password' \
-    --bind run:/run,var-lib-rstudio-server:/var/lib/rstudio-server,database.conf:/etc/rstudio/database.conf \
+    --bind run:/run,var-lib-rstudio-server:/var/lib/rstudio-server,database.conf:/etc/rstudio/database.conf,.rstudio:/home/rstudio/.rstudio/ \
     container.sif \
     /usr/lib/rstudio-server/bin/rserver \
     --auth-none=0 --auth-pam-helper-path=pam-helper \
-    --server-user=$(whoami) --www-port=8080
+    --server-user=$(whoami) --www-port=8787
 
-The default port is 8787, you can also change the port by adding `--www-port=` in the end of the line above (e.g. `--www-port=8080`).
 
 Now open a browser and go to localhost:8787.
 The default username is your local username, password as specified above (in this case 'set_your_password').
