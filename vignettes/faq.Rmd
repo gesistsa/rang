@@ -256,7 +256,7 @@ mkdir -p run var-lib-rstudio-server
 printf 'provider=sqlite\ndirectory=/var/lib/rstudio-server\n' > database.conf
 ```
 
-After that, you can run the container:
+After that, you can run the container (do not run as `root` user, otherwise you will not be able to login to RStudio IDE):
 
 ```bash
 apptainer exec \

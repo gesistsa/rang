@@ -72,7 +72,7 @@ For running RStudio IDE in Apptainer/Singulairty container, some writable folder
 mkdir -p run var-lib-rstudio-server
 printf 'provider=sqlite\ndirectory=/var/lib/rstudio-server\n' > database.conf
 
-After that, you can run the container:
+After that, you can run the container (do not run as `root` user, otherwise you will not be able to login to RStudio IDE):
 
 apptainer exec \
     --env PASSWORD='set_your_password' \
@@ -90,7 +90,7 @@ singularity exec \
     container.sif \
     /usr/lib/rstudio-server/bin/rserver \
     --auth-none=0 --auth-pam-helper-path=pam-helper \
-    --server-user=$(whoami)
+    --server-user=$(whoami) --www-port=8080
 
 The default port is 8787, you can also change the port by adding `--www-port=` in the end of the line above (e.g. `--www-port=8080`).
 

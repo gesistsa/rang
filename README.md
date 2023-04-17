@@ -275,7 +275,8 @@ mkdir -p run var-lib-rstudio-server
 printf 'provider=sqlite\ndirectory=/var/lib/rstudio-server\n' > database.conf
 ```
 
-After that, you can run the container:
+After that, you can run the container (do not run as `root` user,
+otherwise you will not be able to login to RStudio IDE):
 
 ``` bash
 apptainer exec \
@@ -299,8 +300,8 @@ singularity exec \
     --server-user=$(whoami)
 ```
 
-The default port is 8787, you can also change by adding
-`--www-port=8080` in the end of the line above.
+The default port is 8787, you can also change the port by adding
+`--www-port=` in the end of the line above (e.g. `--www-port=8080`).
 
 Now open a browser and go to localhost:8787. The default username is
 your local username, password as specified above (in this case
