@@ -75,7 +75,9 @@
         apptainer_content$ENV <- append(apptainer_content$ENV, paste0("export CACHE_PATH ", cache_path))
     }
     if (image == "rstudio") {
-        apptainer_content$STARTSCRIPT <- c("exec /init \"$@\"")
+        apptainer_content$STARTSCRIPT <- c("exec /usr/lib/rstudio-server/bin/rserver \
+    --auth-none=0 --auth-pam-helper-path=pam-helper \
+    --server-user=$(whoami)")
     }
     apptainer_content$POST <- append(apptainer_content$POST, post_installation_steps)
     if (isTRUE(copy_all)) {
