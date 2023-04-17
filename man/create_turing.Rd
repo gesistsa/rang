@@ -20,24 +20,22 @@ path, invisibly
 This \code{usethis}-style function creates an executable research compendium according to the Turing Way.
 }
 \details{
-A research compendium according to the Turing Way contains:
-\itemize{
-\item \code{data_raw}: a directory to hold the raw data
-\item \code{data_clean}: a directory to hold the processed data
-\item \code{code}: a directory to hold computer code
-\item \code{CITATION}: a file holding citation information
-\item \code{paper.Rmd}: a manuscript
-The structure is just a suggestion. For example, the manuscript can be in other format.
-}
-
-According to the Turing Way, an executable research compendium should
+According to the Turing Way, an executable research compendium should have the following properties
 \enumerate{
 \item Files should be organized in a conventional folder structure;
 \item Data, methods, and output should be clearly separated;
 \item The computational environment should be specified.
 }
 
-With \code{add_rang}, the computational environment can be recorded and reconstructed later.
+We use the structure suggested by the Turing Way:
+\itemize{
+\item \code{data_raw}: a directory to hold the raw data
+\item \code{data_clean}: a directory to hold the processed data
+\item \code{code}: a directory to hold computer code
+\item \code{CITATION}: a file holding citation information
+\item \code{paper.Rmd}: a manuscript
+This function provides the a clearly separated organizational structure. Components can be changed. For example, the manuscript can be in another format (e.g. quarto, sweave) or even optional. With \code{add_rang}, the computational environment can be recorded and reconstructed later.
+}
 }
 \references{
 \href{https://the-turing-way.netlify.app/reproducible-research/compendia.html}{The Turing Way: Research Compendia}

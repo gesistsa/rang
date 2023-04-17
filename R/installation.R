@@ -68,7 +68,7 @@
         }
         loop_counter <- loop_counter + 1
         if (loop_counter > (length(needed_pkgrefs) * 5)) {
-            stop("Can't determine installation order. Please report the to the developers:\n", paste0(unfulfilled_pkgrefs, collapse = ","), call. = FALSE)
+            stop("Can't determine installation order. Please report this to the developers:\n", paste0(unfulfilled_pkgrefs, collapse = ","), call. = FALSE)
         }
     }
     ordered_pkgrefs <- c(installed_pkgrefs, noncranlike_pkgrefs)

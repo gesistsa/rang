@@ -62,20 +62,20 @@ use_rang <- function(path = ".", add_makefile = TRUE, add_here = TRUE,
 #' @return path, invisibly
 #' @seealso [use_rang()]
 #' @details
-#' A research compendium according to the Turing Way contains:
+#' According to the Turing Way, an executable research compendium should have the following properties
+#' 1. Files should be organized in a conventional folder structure;
+#' 2. Data, methods, and output should be clearly separated;
+#' 3. The computational environment should be specified.
+#'
+#' We use the structure suggested by the Turing Way:
 #' * `data_raw`: a directory to hold the raw data
 #' * `data_clean`: a directory to hold the processed data
 #' * `code`: a directory to hold computer code
 #' * `CITATION`: a file holding citation information
 #' * `paper.Rmd`: a manuscript
-#' The structure is just a suggestion. For example, the manuscript can be in other format.
+
+#' This function provides the a clearly separated organizational structure. Components can be changed. For example, the manuscript can be in another format (e.g. quarto, sweave) or even optional. With `add_rang`, the computational environment can be recorded and reconstructed later.
 #'
-#' According to the Turing Way, an executable research compendium should
-#' 1. Files should be organized in a conventional folder structure;
-#' 2. Data, methods, and output should be clearly separated;
-#' 3. The computational environment should be specified.
-#'
-#' With `add_rang`, the computational environment can be recorded and reconstructed later.
 #' @references
 #' [The Turing Way: Research Compendia](https://the-turing-way.netlify.app/reproducible-research/compendia.html)
 #' Gorman, KB, Williams TD. and Fraser WR (2014). [Ecological Sexual Dimorphism and Environmental Variability within a Community of Antarctic Penguins (Genus Pygoscelis)](http://dx.doi.org/10.1371/journal.pone.0090081). PLoS ONE 9(3):e90081.
