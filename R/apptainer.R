@@ -6,7 +6,7 @@
     cache_path <- file.path(rel_dir, "cache")
     compile_path <- file.path(rel_dir, "compile_r.sh")
     environment_vars <- c("export TZ=UTC", paste0("export COMPILE_PATH=", compile_path), paste0("export RANG_PATH=", rang_path))
-    apptainer_content <- list(
+    containerfile_content <- list(
         BOOTSTRAP = "Bootstrap: docker",
         FROM = c(paste0("From: debian/eol:", debian_version)),
         ENV_section = "\n%environment\n",
@@ -23,27 +23,27 @@
         STARTSCRIPT = c("exec R \"${@}\"")
     )
     if (!is.na(lib)) {
-        apptainer_content$POST <- append(apptainer_content$POST, paste0("mkdir ", lib, " && bash $COMPILE_PATH ", r_version))
+        containerfile_content$POST <- append(containerfile_content$POST, paste0("mkdir ", lib, " && bash $COMPILE_PATH ", r_version))
     } else {
-        apptainer_content$POST <- append(apptainer_content$POST, paste0("bash $COMPILE_PATH ", r_version))
+        containerfile_content$POST <- append(containerfile_content$POST, paste0("bash $COMPILE_PATH ", r_version))
     }
     if (isTRUE(cache)) {
-        apptainer_content$BOOTSTRAP <- "Bootstrap: docker"
-        apptainer_content$FROM <- c(paste0("From: debian/eol:", debian_version))
-        apptainer_content$FILES <- append(
-            apptainer_content$FILES,
+        containerfile_content$BOOTSTRAP <- "Bootstrap: docker"
+        containerfile_content$FROM <- c(paste0("From: debian/eol:", debian_version))
+        containerfile_content$FILES <- append(
+            containerfile_content$FILES,
             c(
                 paste0("cache/rpkgs ", file.path(cache_path, "rpkgs")),
                 paste0("cache/rsrc ", file.path(cache_path, "rsrc"))
             )
         )
-        apptainer_content$POST <- append(paste0("export CACHE_PATH=", cache_path), apptainer_content$POST)
+        containerfile_content$POST <- append(paste0("export CACHE_PATH=", cache_path), containerfile_content$POST)
     }
-    apptainer_content$POST <- append(apptainer_content$POST, post_installation_steps)
+    containerfile_content$POST <- append(containerfile_content$POST, post_installation_steps)
     if (isTRUE(copy_all)) {
-        apptainer_content$FILES <- c(". /")
+        containerfile_content$FILES <- c(". /")
     }
-    return(apptainer_content)
+    return(containerfile_content)
 }
 
 .generate_rocker_apptainer_content <- function(r_version, lib, sysreqs_cmd, cache, image,
@@ -53,7 +53,7 @@
     rang_path <- file.path(rel_dir, "rang.R")
     cache_path <- file.path(rel_dir, "cache")
     environment_vars <- c(paste0("export RANG_PATH=", rang_path))
-    apptainer_content <- list(
+    containerfile_content <- list(
         BOOTSTRAP = "Bootstrap: docker",
         FROM = c(paste0("From: rocker/", image, ":", r_version)),
         ENV_section = "\n%environment\n",
@@ -67,22 +67,22 @@
         STARTSCRIPT = c("exec R \"${@}\"")
     )
     if (!is.na(lib)) {
-        apptainer_content$POST <- append(apptainer_content$POST, paste0("mkdir ", lib, " && Rscript $RANG_PATH"))
+        containerfile_content$POST <- append(containerfile_content$POST, paste0("mkdir ", lib, " && Rscript $RANG_PATH"))
     } else {
-        apptainer_content$POST <- append(apptainer_content$POST, "Rscript $RANG_PATH")
+        containerfile_content$POST <- append(containerfile_content$POST, "Rscript $RANG_PATH")
     }
     if (isTRUE(cache)) {
-        apptainer_content$FILES <- append(apptainer_content$FILES, paste0("cache ", cache_path))
-        apptainer_content$POST <- append(paste0("export CACHE_PATH=", cache_path), apptainer_content$POST)
+        containerfile_content$FILES <- append(containerfile_content$FILES, paste0("cache ", cache_path))
+        containerfile_content$POST <- append(paste0("export CACHE_PATH=", cache_path), containerfile_content$POST)
     }
     if (image == "rstudio") {
-        apptainer_content$STARTSCRIPT <- c("exec /usr/lib/rstudio-server/bin/rserver \\\
+        containerfile_content$STARTSCRIPT <- c("exec /usr/lib/rstudio-server/bin/rserver \\\
     --auth-none=0 --auth-pam-helper-path=pam-helper \\\
     --server-user=${USER} --www-port=${RPORT}")
     }
-    apptainer_content$POST <- append(apptainer_content$POST, post_installation_steps)
+    containerfile_content$POST <- append(containerfile_content$POST, post_installation_steps)
     if (isTRUE(copy_all)) {
-        apptainer_content$FILES <- c(". /")
+        containerfile_content$FILES <- c(". /")
     }
-    return(apptainer_content)
+    return(containerfile_content)
 }

@@ -258,11 +258,11 @@ test_that("#123 rstudio", {
 })
 
 test_that("apptainerize with bioc #58", {
-  rang_bioc <- readRDS("../testdata/rang_bioc.RDS")
-  temp_dir <- .generate_temp_dir()
-  apptainerize(rang = rang_bioc, output_dir = temp_dir) ## verbose = TRUE
-  x <- readLines(file.path(temp_dir, "rang.R"))
-  expect_true(any(grepl("bioc.mirror",x)))
+    rang_bioc <- readRDS("../testdata/rang_bioc.RDS")
+    temp_dir <- .generate_temp_dir()
+    apptainerize(rang = rang_bioc, output_dir = temp_dir) ## verbose = TRUE
+    x <- readLines(file.path(temp_dir, "rang.R"))
+    expect_true(any(grepl("bioc.mirror",x)))
 })
 
 test_that("no_rocker #67", {
@@ -300,12 +300,12 @@ test_that("apptainerize with inst/rang", {
 })
 
 test_that(".insert_materials_dir with actual outcome", {
-  container_content <- list()
-  container_content$COPY <- "COPY rang.R /rang.R"
-  expect_identical(names(.insert_materials_dir(container_content, container_type = "docker")), "COPY")
-  expect_false(names(.insert_materials_dir(container_content, container_type = "docker")) %in% "FILES")
-  container_content <- list()
-  container_content$FILES <- "rang.R /rang.R"
-  expect_identical(names(.insert_materials_dir(container_content, container_type = "apptainer")), "FILES")
-  expect_false(names(.insert_materials_dir(container_content, container_type = "apptainer")) %in% "COPY")
+    container_content <- list()
+    container_content$COPY <- "COPY rang.R /rang.R"
+    expect_identical(names(.insert_materials_dir(container_content, verb = "dockerize")), "COPY")
+    expect_false(names(.insert_materials_dir(container_content, verb = "dockerize")) %in% "FILES")
+    container_content <- list()
+    container_content$FILES <- "rang.R /rang.R"
+    expect_identical(names(.insert_materials_dir(container_content, verb = "apptainerize/singularize")), "FILES")
+    expect_false(names(.insert_materials_dir(container_content, verb = "apptainerize/singularize")) %in% "COPY")
 })
