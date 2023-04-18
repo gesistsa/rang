@@ -64,11 +64,11 @@ NULL
 ## data generation
 ## ---
 ## recipes <- list()
-## recipes["texlive"] <- "## install texlive\nRUN apt-get install -y pandoc pandoc-citeproc texlive"
-## recipes["texlivefull"] <- "## install texlive-full\nRUN apt-get install -y pandoc pandoc-citeproc texlive-full"
-## recipes["quarto"] <- "## install quarto (latest)\nRUN apt-get install -y curl git && curl -LO https://quarto.org/download/latest/quarto-linux-amd64.deb && dpkg -i quarto-linux-amd64.deb && quarto install tool tinytex && rm quarto-linux-amd64.deb"
-## recipes["clean"] <- "## Clean up caches\nRUN rm -rf /var/lib/apt/lists/* && if [ -d \"$CACHE_PATH\" ]; then rm -rf $CACHE_PATH; fi"
-## recipes["make"] <- "## install GNU make\nRUN apt-get -y install make"
+## recipes["texlive"] <- "## install texlive\napt-get install -y pandoc pandoc-citeproc texlive"
+## recipes["texlivefull"] <- "## install texlive-full\napt-get install -y pandoc pandoc-citeproc texlive-full"
+## recipes["quarto"] <- "## install quarto (latest)\napt-get install -y curl git && curl -LO https://quarto.org/download/latest/quarto-linux-amd64.deb && dpkg -i quarto-linux-amd64.deb && quarto install tool tinytex && rm quarto-linux-amd64.deb"
+## recipes["clean"] <- "## Clean up caches\nrm -rf /var/lib/apt/lists/* && if [ -d \"$CACHE_PATH\" ]; then rm -rf $CACHE_PATH; fi"
+## recipes["make"] <- "## install GNU make\napt-get -y install make"
 ## usethis::use_data(recipes, overwrite = TRUE)
 
 #' Recipes for Building Container Images

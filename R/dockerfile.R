@@ -1,3 +1,15 @@
+## for normalizing post_installation_steps
+.normalize_docker_steps <- function(steps) {
+    fx <- function(step) {
+        docker_regex <- "^#|^ADD |^COPY |^ENV |^EXPOSE |^FROM |^LABEL |^STOPSIGNAL |^USER |^VOLUME |^WORKDIR |^ONBUILD |^RUN |^CMD |^ENTRYPOINT |^ARG |^HEALTHCHECK |^SHELL "
+        splitted_step <- strsplit(step, "\n")[[1]]
+        docker_line_lgl <- grepl(docker_regex, splitted_step)
+        splitted_step[!docker_line_lgl] <- paste0("RUN ", splitted_step[!docker_line_lgl])
+        paste0(splitted_step, collapse = "\n")
+    }
+    vapply(steps, fx, character(1), USE.NAMES = FALSE)
+}
+
 .generate_debian_eol_dockerfile_content <- function(r_version, lib, sysreqs_cmd, cache, debian_version = "lenny",
                                                     post_installation_steps = NULL,
                                                     rel_dir = "",
@@ -24,7 +36,7 @@
         containerfile_content$FROM <- c("FROM scratch", paste0("ADD ", file.path(rel_dir, "cache/debian/rootfs.tar.xz"), " /"))
         containerfile_content$ENV <- append(containerfile_content$ENV, paste0("ENV CACHE_PATH ", cache_path))
     }
-    containerfile_content$RUN <- append(containerfile_content$RUN, post_installation_steps)
+    containerfile_content$RUN <- append(containerfile_content$RUN, .normalize_docker_steps(post_installation_steps))
     if (isTRUE(copy_all)) {
         containerfile_content$COPY <- c("COPY . /")
     }
@@ -55,7 +67,7 @@
     if (image == "rstudio") {
         containerfile_content$CMD <- c("EXPOSE 8787", "CMD [\"/init\"]")
     }
-    containerfile_content$RUN <- append(containerfile_content$RUN, post_installation_steps)
+    containerfile_content$RUN <- append(containerfile_content$RUN, .normalize_docker_steps(post_installation_steps))
     if (isTRUE(copy_all)) {
         containerfile_content$COPY <- c("COPY . /")
     }
