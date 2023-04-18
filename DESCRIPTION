@@ -1,6 +1,6 @@
 Package: rang
 Title: Reconstructing Reproducible R Computational Environments
-Version: 0.2.3
+Version: 0.2.4
 Authors@R: 
     c(person("Chung-hong", "Chan", , "chainsawtiney@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-6232-7530")),
