@@ -309,3 +309,12 @@ test_that(".insert_materials_dir with actual outcome", {
     expect_identical(names(.insert_materials_dir(container_content, verb = "apptainerize/singularize")), "FILES")
     expect_false(names(.insert_materials_dir(container_content, verb = "apptainerize/singularize")) %in% "COPY")
 })
+
+test_that("No .normalize_docker_steps integration in apptainerize", {
+    graph <- readRDS("../testdata/graph.RDS")
+    temp_dir <- .generate_temp_dir()
+    apptainerize(graph, output_dir = temp_dir, post_installation_steps = c(recipes[["texlive"]], "RUN apt-get install -y make"))
+    def_file <- readLines(file.path(temp_dir, "container.def"))
+    expect_true("RUN apt-get install -y make" %in% def_file) ## you ask for it
+    expect_false("RUN apt-get install -y pandoc pandoc-citeproc texlive" %in% def_file)
+})
