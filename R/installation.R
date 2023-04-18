@@ -114,27 +114,9 @@
     utils::compareVersion(rang$r_version, r_version) == -1
 }
 
-.generate_container_readme <- function(output_dir, image, container_type = c("docker", 'apptainer')) {
-    file.create(file.path(output_dir,"README"))
-    con <- file(file.path(output_dir,"README"), open="w")
-    container_type <- match.arg(container_type)
-    if (container_type == "docker") {
-        readme <- readLines(system.file("docker_readme_template.txt", package = "rang"))
-    }
-    if (container_type == "apptainer") {
-        readme <- readLines(system.file("apptainer_readme_template.txt", package = "rang"))
-    }
-    readme <- gsub("__DATE__",Sys.Date(),readme)
-    readme <- gsub("__OUTPUT__",output_dir,readme)
-    readme <- gsub("__IMAGE__",image,readme)
-    writeLines(readme,file.path(output_dir,"README"))
-    close(con)
-    invisible(readme)
-}
-
 ## Wrap long line by breaking line at &&
 .generate_wrapped_line <- function(line) {
-  gsub("&&", "\\\\\n\t&&", line)
+    gsub("&&", "\\\\\n\t&&", line)
 }
 
 #' Export The Resolved Result As Installation Script
@@ -278,6 +260,152 @@ export_renv <- function(rang, path = ".") {
     invisible(pkg_list)
 }
 
+.generate_container_readme <- function(output_dir, image, verb = c("dockerize", "apptainerize/singularize")) {
+    file.create(file.path(output_dir,"README"))
+    con <- file(file.path(output_dir,"README"), open="w")
+    verb <- match.arg(verb)
+    template_path <- switch(verb,
+                            "dockerize" = "docker_readme_template.txt",
+                            "apptainerize/singularize" = "apptainer_readme_template.txt")
+    readme <- readLines(system.file(template_path, package = "rang"))
+    readme <- gsub("__DATE__",Sys.Date(),readme)
+    readme <- gsub("__OUTPUT__",output_dir,readme)
+    readme <- gsub("__IMAGE__",image,readme)
+    writeLines(readme,file.path(output_dir,"README"))
+    close(con)
+    invisible(readme)
+}
+
+.insert_materials_dir <- function(containerfile_content, verb = c("dockerize", "apptainerize/singularize")) {
+    verb <- match.arg(verb)
+    if (verb == "dockerize") {
+        containerfile_content$COPY <- append(containerfile_content$COPY, "COPY materials/ ./materials/")
+        return(containerfile_content)
+    }
+    if (verb == "apptainerize/singularize") {
+        containerfile_content$FILES <- append(containerfile_content$FILES, "materials/ ./materials/")
+        return(containerfile_content)
+    }
+}
+
+.write_containerfile <- function(containerfile_content, path) {
+    content <- unlist(lapply(containerfile_content, .generate_wrapped_line))
+    writeLines(content, path)
+}
+
+## generate *ize() / *ise() content as a directory to output_dir
+## `containerfile_content` is a list from .generate_rocker_*_content() or .generate_debian_eol_*_content()
+.containerize <- function(rang, output_dir, materials_dir = NULL, post_installation_steps = NULL,
+                          image = c("r-ver", "rstudio", "tidyverse", "verse", "geospatial"),
+                          rang_as_comment = TRUE, cache = FALSE, verbose = TRUE, lib = NA,
+                          cran_mirror = "https://cran.r-project.org/", check_cran_mirror = TRUE,
+                          bioc_mirror = "https://bioconductor.org/packages/",
+                          no_rocker = FALSE,
+                          debian_version = c("lenny", "squeeze", "wheezy", "jessie", "stretch"),
+                          skip_r17 = TRUE,
+                          insert_readme = TRUE,
+                          copy_all = FALSE,
+                          verb = "dockerize", passive_verb = "dockerized",
+                          generate_rocker = .generate_rocker_dockerfile_content,
+                          generate_eol = .generate_debian_eol_dockerfile_content,
+                          output_file = "Dockerfile") {
+    if (length(rang$ranglets) == 0) {
+        warning(paste0("Nothing to ", verb), call. = FALSE)
+        return(invisible(NULL))
+    }
+    if (missing(output_dir)) {
+        stop("You must provide `output_dir`.", call. = FALSE)
+    }
+    if (!grepl("^ubuntu", rang$os)) {
+        stop(paste0("System dependencies of ", rang$os, " can't be ", passive_verb), call. = FALSE)
+    }
+    if (.is_r_version_older_than(rang, "1.3.1")) {
+        stop(paste0("`", verb, "` doesn't support this R version (yet):", rang$r_version), call. = FALSE)
+    }
+    if (!is.null(materials_dir) && !(dir.exists(materials_dir))) {
+        stop(paste0("The folder ", materials_dir, " does not exist"), call. = FALSE)
+    }
+    need_cache <- (isTRUE(any(grepl("^github::", .extract_pkgrefs(rang)))) &&
+                   .is_r_version_older_than(rang, "3.1")) ||
+        (isTRUE(any(grepl("^bioc::", .extract_pkgrefs(rang)))) &&
+         .is_r_version_older_than(rang, "3.3")) ||
+        (isTRUE(any(grepl("^local::", .extract_pkgrefs(rang))))) ||
+        .is_r_version_older_than(rang, "2.1")
+    if (isTRUE(need_cache) && isFALSE(cache)) {
+        stop("Packages must be cached. Please set `cache` = TRUE.", call. = FALSE)
+    }
+    image <- match.arg(image)
+    debian_version <- match.arg(debian_version)
+    sysreqs_cmd <- .group_sysreqs(rang)
+    if (!dir.exists(output_dir)) {
+        dir.create(output_dir)
+    }
+    if (dir.exists(file.path(output_dir, "inst/rang"))) {
+        base_dir <- file.path(output_dir, "inst/rang")
+        rel_dir <- "inst/rang"
+    } else {
+        base_dir <- output_dir
+        rel_dir <- ""
+    }
+    if (rel_dir == "inst/rang" && isFALSE(copy_all)) {
+        .vcat(verbose, "`inst/rang` detected. `copy_all` is coerced to TRUE")
+        copy_all <- TRUE
+    }
+    rang_path <- file.path(base_dir, "rang.R")
+    export_rang(rang = rang, path = rang_path,
+                rang_as_comment = rang_as_comment,
+                verbose = verbose, lib = lib, cran_mirror = cran_mirror,
+                check_cran_mirror = check_cran_mirror, bioc_mirror = bioc_mirror)
+    if (isTRUE(skip_r17) && rang$r_version %in% c("1.7.0", "1.7.1")) {
+        r_version <- "1.8.0"
+    } else {
+        r_version <- rang$r_version
+    }
+    if (isTRUE(cache)) {
+        .cache_pkgs(rang = rang, base_dir = base_dir, cran_mirror = cran_mirror,
+                    bioc_mirror = bioc_mirror, verbose = verbose)
+    }
+    if (.is_r_version_older_than(rang, "3.1") || isTRUE(no_rocker)) {
+        file.copy(system.file("compile_r.sh", package = "rang"), file.path(base_dir, "compile_r.sh"),
+                  overwrite = TRUE)
+        containerfile_content <- generate_eol(r_version = r_version,
+                                              sysreqs_cmd = sysreqs_cmd, lib = lib,
+                                              cache = cache,
+                                              debian_version = debian_version,
+                                              post_installation_steps = post_installation_steps,
+                                              rel_dir = rel_dir,
+                                              copy_all = copy_all)
+        if (isTRUE(cache)) {
+            .cache_rsrc(r_version = r_version, base_dir = base_dir,
+                        verbose = verbose)
+            .cache_debian(debian_version = debian_version, base_dir = base_dir,
+                          verbose = verbose)
+        }
+    } else {
+        containerfile_content <- generate_rocker(r_version = r_version,
+                                                 sysreqs_cmd = sysreqs_cmd, lib = lib,
+                                                 cache = cache, image = image,
+                                                 post_installation_steps = post_installation_steps,
+                                                 rel_dir = rel_dir,
+                                                 copy_all = copy_all)
+    }
+    if (!(is.null(materials_dir))) {
+        materials_subdir_in_output_dir <- file.path(base_dir, "materials")
+        if (isFALSE(dir.exists(materials_subdir_in_output_dir))) {
+            dir.create(materials_subdir_in_output_dir)
+        }
+        file.copy(list.files(materials_dir, full.names = TRUE),
+                  materials_subdir_in_output_dir,
+                  recursive = TRUE)
+        containerfile_content <- .insert_materials_dir(containerfile_content, verb = verb)
+    }
+    ## This should be written in the root level, not base_dir
+    .write_containerfile(containerfile_content, file.path(output_dir, output_file))
+    if (isTRUE(insert_readme)) {
+        .generate_container_readme(output_dir = output_dir, image = image, verb = verb)
+    }
+    invisible(output_dir)
+}
 
 #' Dockerize The Resolved Result
 #'
@@ -327,137 +455,16 @@ dockerize <- function(rang, output_dir, materials_dir = NULL, post_installation_
                       skip_r17 = TRUE,
                       insert_readme = TRUE,
                       copy_all = FALSE) {
-    if (length(rang$ranglets) == 0) {
-        warning("Nothing to dockerize.")
-        return(invisible(NULL))
-    }
-    if (missing(output_dir)) {
-        stop("You must provide `output_dir`.", call. = FALSE)
-    }
-    if (!grepl("^ubuntu", rang$os)) {
-        stop("System dependencies of ", rang$os, " can't be dockerized.", call. = FALSE)
-    }
-    if (.is_r_version_older_than(rang, "1.3.1")) {
-        stop("`dockerize` doesn't support this R version (yet):", rang$r_version, call. = FALSE)
-    }
-    if (!is.null(materials_dir) && !(dir.exists(materials_dir))) {
-        stop(paste0("The folder ", materials_dir, " does not exist"), call. = FALSE)
-    }
-    need_cache <- (isTRUE(any(grepl("^github::", .extract_pkgrefs(rang)))) &&
-                   .is_r_version_older_than(rang, "3.1")) ||
-        (isTRUE(any(grepl("^bioc::", .extract_pkgrefs(rang)))) &&
-         .is_r_version_older_than(rang, "3.3")) ||
-        (isTRUE(any(grepl("^local::", .extract_pkgrefs(rang))))) ||
-        .is_r_version_older_than(rang, "2.1")
-    if (isTRUE(need_cache) && isFALSE(cache)) {
-        stop("Packages must be cached. Please set `cache` = TRUE.", call. = FALSE)
-    }
-    image <- match.arg(image)
-    debian_version <- match.arg(debian_version)
-    sysreqs_cmd <- .group_sysreqs(rang)
-    if (!dir.exists(output_dir)) {
-        dir.create(output_dir)
-    }
-    if (dir.exists(file.path(output_dir, "inst/rang"))) {
-        base_dir <- file.path(output_dir, "inst/rang")
-        rel_dir <- "inst/rang"
-    } else {
-        base_dir <- output_dir
-        rel_dir <- ""
-    }
-    if (rel_dir == "inst/rang" && isFALSE(copy_all)) {
-        .vcat(verbose, "`inst/rang` detected. `copy_all` is coerced to TRUE")
-        copy_all <- TRUE
-    }
-    rang_path <- file.path(base_dir, "rang.R")
-    export_rang(rang = rang, path = rang_path,
-                rang_as_comment = rang_as_comment,
-                verbose = verbose, lib = lib, cran_mirror = cran_mirror,
-                check_cran_mirror = check_cran_mirror, bioc_mirror = bioc_mirror)
-    if (isTRUE(skip_r17) && rang$r_version %in% c("1.7.0", "1.7.1")) {
-        r_version <- "1.8.0"
-    } else {
-        r_version <- rang$r_version
-    }
-    if (isTRUE(cache)) {
-        .cache_pkgs(rang = rang, base_dir = base_dir, cran_mirror = cran_mirror,
-                    bioc_mirror = bioc_mirror, verbose = verbose)
-    }
-    if (.is_r_version_older_than(rang, "3.1") || isTRUE(no_rocker)) {
-        file.copy(system.file("compile_r.sh", package = "rang"), file.path(base_dir, "compile_r.sh"),
-                  overwrite = TRUE)
-        dockerfile_content <- .generate_debian_eol_dockerfile_content(r_version = r_version,
-                                                                      sysreqs_cmd = sysreqs_cmd, lib = lib,
-                                                                      cache = cache,
-                                                                      debian_version = debian_version,
-                                                                      post_installation_steps = post_installation_steps,
-                                                                      rel_dir = rel_dir,
-                                                                      copy_all = copy_all)
-        if (isTRUE(cache)) {
-            .cache_rsrc(r_version = r_version, base_dir = base_dir,
-                        verbose = verbose)
-            .cache_debian(debian_version = debian_version, base_dir = base_dir,
-                          verbose = verbose)
-        }
-    } else {
-        dockerfile_content <- .generate_rocker_dockerfile_content(r_version = r_version,
-                                                                  sysreqs_cmd = sysreqs_cmd, lib = lib,
-                                                                  cache = cache, image = image,
-                                                                  post_installation_steps = post_installation_steps,
-                                                                  rel_dir = rel_dir,
-                                                                  copy_all = copy_all)
-    }
-    if (!(is.null(materials_dir))) {
-        materials_subdir_in_output_dir <- file.path(base_dir, "materials")
-        if (isFALSE(dir.exists(materials_subdir_in_output_dir))) {
-            dir.create(materials_subdir_in_output_dir)
-        }
-        file.copy(list.files(materials_dir, full.names = TRUE),
-                  materials_subdir_in_output_dir,
-                  recursive = TRUE)
-        dockerfile_content <- .insert_materials_dir(dockerfile_content, container_type = "docker")
-    }
-    ## This should be written in the root level, not base_dir
-    .write_container_file(dockerfile_content, file.path(output_dir, "Dockerfile"))
-    if (isTRUE(insert_readme)) {
-        .generate_container_readme(output_dir = output_dir, image = image, container_type = "docker")
-    }
-    invisible(output_dir)
-}
-
-#' @rdname dockerize
-#' @export
-dockerize_rang <- function(...) {
-    dockerize(...)
-}
-
-#' @rdname dockerize
-#' @export
-dockerise <- function(...) {
-    dockerize(...)
-}
-
-#' @rdname dockerize
-#' @export
-dockerise_rang <- function(...) {
-    dockerize(...)
-}
-
-.insert_materials_dir <- function(container_content, container_type = c("docker", "apptainer")) {
-    container_type <- match.arg(container_type)
-    if (container_type == "docker") {
-        container_content$COPY <- append(container_content$COPY, "COPY materials/ ./materials/")
-        return(container_content)
-    }
-    if (container_type == "apptainer") {
-        container_content$FILES <- append(container_content$FILES, "materials/ ./materials/")
-        return(container_content)
-    }
-}
-
-.write_container_file <- function(container_file_content, path) {
-    content <- unlist(lapply(container_file_content, .generate_wrapped_line))
-    writeLines(content, path)
+    .containerize(rang = rang, output_dir = output_dir, materials_dir = materials_dir,
+                  post_installation_steps = post_installation_steps, image = image,
+                  rang_as_comment = rang_as_comment, cache = cache, verbose = verbose, lib = lib,
+                  cran_mirror = cran_mirror, check_cran_mirror = check_cran_mirror,
+                  bioc_mirror = bioc_mirror, no_rocker = no_rocker,
+                  debian_version = debian_version, skip_r17 = skip_r17, insert_readme = insert_readme,
+                  copy_all = copy_all, verb = "dockerize", passive_verb = "dockerized",
+                  generate_rocker = .generate_rocker_dockerfile_content,
+                  generate_eol = .generate_debian_eol_dockerfile_content,
+                  output_file = "Dockerfile")
 }
 
 #' Create an Apptainer/Singularity definition file of The Resolved Result
@@ -508,112 +515,36 @@ apptainerize <- function(rang, output_dir, materials_dir = NULL, post_installati
                          skip_r17 = TRUE,
                          insert_readme = TRUE,
                          copy_all = FALSE) {
-    if (length(rang$ranglets) == 0) {
-        warning("Nothing to apptainerize/singularize.")
-        return(invisible(NULL))
-    }
-    if (missing(output_dir)) {
-        stop("You must provide `output_dir`.", call. = FALSE)
-    }
-    if (!grepl("^ubuntu", rang$os)) {
-        stop("System dependencies of ", rang$os, " can't be apptainerized/singularized.", call. = FALSE)
-    }
-    if (.is_r_version_older_than(rang, "1.3.1")) {
-        stop("`apptainerize/singularize` doesn't support this R version (yet):", rang$r_version, call. = FALSE)
-    }
-    if (!is.null(materials_dir) && !(dir.exists(materials_dir))) {
-        stop(paste0("The folder ", materials_dir, " does not exist"), call. = FALSE)
-    }
-    need_cache <- (isTRUE(any(grepl("^github::", .extract_pkgrefs(rang)))) &&
-        .is_r_version_older_than(rang, "3.1")) ||
-        (isTRUE(any(grepl("^bioc::", .extract_pkgrefs(rang)))) &&
-            .is_r_version_older_than(rang, "3.3")) ||
-        (isTRUE(any(grepl("^local::", .extract_pkgrefs(rang))))) ||
-        .is_r_version_older_than(rang, "2.1")
-    if (isTRUE(need_cache) && isFALSE(cache)) {
-        stop("Packages must be cached. Please set `cache` = TRUE.", call. = FALSE)
-    }
-    image <- match.arg(image)
-    debian_version <- match.arg(debian_version)
-    sysreqs_cmd <- .group_sysreqs(rang)
-    if (!dir.exists(output_dir)) {
-        dir.create(output_dir)
-    }
-    if (dir.exists(file.path(output_dir, "inst/rang"))) {
-        base_dir <- file.path(output_dir, "inst/rang")
-        rel_dir <- "inst/rang"
-    } else {
-        base_dir <- output_dir
-        rel_dir <- ""
-    }
-    if (rel_dir == "inst/rang" && isFALSE(copy_all)) {
-        .vcat(verbose, "`inst/rang` detected. `copy_all` is coerced to TRUE")
-        copy_all <- TRUE
-    }
-    rang_path <- file.path(base_dir, "rang.R")
-    export_rang(
-        rang = rang, path = rang_path,
-        rang_as_comment = rang_as_comment,
-        verbose = verbose, lib = lib, cran_mirror = cran_mirror,
-        check_cran_mirror = check_cran_mirror, bioc_mirror = bioc_mirror
-    )
-    if (isTRUE(skip_r17) && rang$r_version %in% c("1.7.0", "1.7.1")) {
-        r_version <- "1.8.0"
-    } else {
-        r_version <- rang$r_version
-    }
-    if (isTRUE(cache)) {
-        .cache_pkgs(
-            rang = rang, base_dir = base_dir, cran_mirror = cran_mirror,
-            bioc_mirror = bioc_mirror, verbose = verbose
-        )
-    }
-    if (.is_r_version_older_than(rang, "3.1") || isTRUE(no_rocker)) {
-        file.copy(system.file("compile_r.sh", package = "rang"), file.path(base_dir, "compile_r.sh"),
-            overwrite = TRUE
-        )
-        apptainer_content <- .generate_debian_eol_apptainer_content(
-            r_version = r_version,
-            sysreqs_cmd = sysreqs_cmd, lib = lib,
-            cache = cache,
-            debian_version = debian_version,
-            post_installation_steps = post_installation_steps,
-            rel_dir = rel_dir,
-            copy_all = copy_all
-        )
-        if (isTRUE(cache)) {
-            .cache_rsrc(
-                r_version = r_version, base_dir = base_dir,
-                verbose = verbose
-            )
-        }
-    } else {
-        apptainer_content <- .generate_rocker_apptainer_content(
-            r_version = r_version,
-            sysreqs_cmd = sysreqs_cmd, lib = lib,
-            cache = cache, image = image,
-            post_installation_steps = post_installation_steps,
-            rel_dir = rel_dir,
-            copy_all = copy_all
-        )
-    }
-    if (!(is.null(materials_dir))) {
-        materials_subdir_in_output_dir <- file.path(base_dir, "materials")
-        if (isFALSE(dir.exists(materials_subdir_in_output_dir))) {
-            dir.create(materials_subdir_in_output_dir)
-        }
-        file.copy(list.files(materials_dir, full.names = TRUE),
-            materials_subdir_in_output_dir,
-            recursive = TRUE
-        )
-        apptainer_content <- .insert_materials_dir(apptainer_content, container_type = "apptainer")
-    }
-    ## This should be written in the root level, not base_dir
-    .write_container_file(apptainer_content, file.path(output_dir, "container.def"))
-    if (isTRUE(insert_readme)) {
-        .generate_container_readme(output_dir = output_dir, image = image, container_type = "apptainer")
-    }
-    invisible(output_dir)
+    .containerize(rang = rang, output_dir = output_dir, materials_dir = materials_dir,
+                  post_installation_steps = post_installation_steps, image = image,
+                  rang_as_comment = rang_as_comment, cache = cache, verbose = verbose, lib = lib,
+                  cran_mirror = cran_mirror, check_cran_mirror = check_cran_mirror,
+                  bioc_mirror = bioc_mirror, no_rocker = no_rocker,
+                  debian_version = debian_version, skip_r17 = skip_r17, insert_readme = insert_readme,
+                  copy_all = copy_all, verb = "apptainerize/singularize", passive_verb = "apptainerized/singularized",
+                  generate_rocker = .generate_rocker_apptainer_content,
+                  generate_eol = .generate_debian_eol_apptainer_content,
+                  output_file = "container.def")
+}
+
+## aliases
+
+#' @rdname dockerize
+#' @export
+dockerize_rang <- function(...) {
+    dockerize(...)
+}
+
+#' @rdname dockerize
+#' @export
+dockerise <- function(...) {
+    dockerize(...)
+}
+
+#' @rdname dockerize
+#' @export
+dockerise_rang <- function(...) {
+    dockerize(...)
 }
 
 #' @rdname apptainerize
