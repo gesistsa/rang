@@ -8,8 +8,9 @@
 [![R-CMD-check](https://github.com/chainsawriot/rang/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/chainsawriot/rang/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
-The goal of rang (Reconstructing Ancient Number-crunching Gears) [^1] is
-to obtain the dependency graph of R packages at a specific time point.
+The goal of rang (Reconstructing Ancient Number-crunching Gears) \[1\]
+is to obtain the dependency graph of R packages at a specific time
+point.
 
 Although this package can also be used to ensure the current R
 computational environment can be reconstructed by future researchers,
@@ -123,41 +124,43 @@ docker run --rm --name "rangtest" -ti rang
 Using the above example, `sessionInfo()` outputs the following. You have
 successfully gone back to the pre-pandemic time.
 
-    R version 3.6.2 (2019-12-12)
-    Platform: x86_64-pc-linux-gnu (64-bit)
-    Running under: Debian GNU/Linux 10 (buster)
+``` 
+R version 3.6.2 (2019-12-12)
+Platform: x86_64-pc-linux-gnu (64-bit)
+Running under: Debian GNU/Linux 10 (buster)
 
-    Matrix products: default
-    BLAS/LAPACK: /usr/lib/x86_64-linux-gnu/libopenblasp-r0.3.5.so
+Matrix products: default
+BLAS/LAPACK: /usr/lib/x86_64-linux-gnu/libopenblasp-r0.3.5.so
 
-    locale:
-     [1] LC_CTYPE=en_US.UTF-8          LC_NUMERIC=C                 
-     [3] LC_TIME=en_US.UTF-8           LC_COLLATE=en_US.UTF-8       
-     [5] LC_MONETARY=en_US.UTF-8       LC_MESSAGES=C                
-     [7] LC_PAPER=en_US.UTF-8          LC_NAME=en_US.UTF-8          
-     [9] LC_ADDRESS=en_US.UTF-8        LC_TELEPHONE=en_US.UTF-8     
-    [11] LC_MEASUREMENT=en_US.UTF-8    LC_IDENTIFICATION=en_US.UTF-8
+locale:
+ [1] LC_CTYPE=en_US.UTF-8          LC_NUMERIC=C                 
+ [3] LC_TIME=en_US.UTF-8           LC_COLLATE=en_US.UTF-8       
+ [5] LC_MONETARY=en_US.UTF-8       LC_MESSAGES=C                
+ [7] LC_PAPER=en_US.UTF-8          LC_NAME=en_US.UTF-8          
+ [9] LC_ADDRESS=en_US.UTF-8        LC_TELEPHONE=en_US.UTF-8     
+[11] LC_MEASUREMENT=en_US.UTF-8    LC_IDENTIFICATION=en_US.UTF-8
 
-    attached base packages:
-    [1] stats     graphics  grDevices utils     datasets  methods   base     
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
 
-    other attached packages:
-    [1] topicmodels_0.2-9 LDAvis_0.3.2      openNLP_0.2-7     quanteda_1.5.2   
+other attached packages:
+[1] topicmodels_0.2-9 LDAvis_0.3.2      openNLP_0.2-7     quanteda_1.5.2   
 
-    loaded via a namespace (and not attached):
-     [1] NLP_0.2-0           Rcpp_1.0.3          pillar_1.4.3       
-     [4] compiler_3.6.2      tools_3.6.2         stopwords_1.0      
-     [7] lubridate_1.7.4     lifecycle_0.1.0     tibble_2.1.3       
-    [10] gtable_0.3.0        lattice_0.20-38     pkgconfig_2.0.3    
-    [13] rlang_0.4.2         Matrix_1.2-18       fastmatch_1.1-0    
-    [16] parallel_3.6.2      openNLPdata_1.5.3-4 rJava_0.9-11       
-    [19] xml2_1.2.2          stringr_1.4.0       stats4_3.6.2       
-    [22] grid_3.6.2          data.table_1.12.8   R6_2.4.1           
-    [25] ggplot2_3.2.1       spacyr_1.2          magrittr_1.5       
-    [28] scales_1.1.0        modeltools_0.2-22   colorspace_1.4-1   
-    [31] stringi_1.4.5       RcppParallel_4.4.4  lazyeval_0.2.2     
-    [34] munsell_0.5.0       tm_0.7-7            slam_0.1-47        
-    [37] crayon_1.3.4    
+loaded via a namespace (and not attached):
+ [1] NLP_0.2-0           Rcpp_1.0.3          pillar_1.4.3       
+ [4] compiler_3.6.2      tools_3.6.2         stopwords_1.0      
+ [7] lubridate_1.7.4     lifecycle_0.1.0     tibble_2.1.3       
+[10] gtable_0.3.0        lattice_0.20-38     pkgconfig_2.0.3    
+[13] rlang_0.4.2         Matrix_1.2-18       fastmatch_1.1-0    
+[16] parallel_3.6.2      openNLPdata_1.5.3-4 rJava_0.9-11       
+[19] xml2_1.2.2          stringr_1.4.0       stats4_3.6.2       
+[22] grid_3.6.2          data.table_1.12.8   R6_2.4.1           
+[25] ggplot2_3.2.1       spacyr_1.2          magrittr_1.5       
+[28] scales_1.1.0        modeltools_0.2-22   colorspace_1.4-1   
+[31] stringi_1.4.5       RcppParallel_4.4.4  lazyeval_0.2.2     
+[34] munsell_0.5.0       tm_0.7-7            slam_0.1-47        
+[37] crayon_1.3.4    
+```
 
 ### Caching R packages
 
@@ -227,27 +230,27 @@ successfully gone back to the pre-pandemic.
     R version 3.6.2 (2019-12-12) -- "Dark and Stormy Night"
     Copyright (C) 2019 The R Foundation for Statistical Computing
     Platform: x86_64-pc-linux-gnu (64-bit)
-
+    
     R is free software and comes with ABSOLUTELY NO WARRANTY.
     You are welcome to redistribute it under certain conditions.
     Type 'license()' or 'licence()' for distribution details.
-
+    
     R is a collaborative project with many contributors.
     Type 'contributors()' for more information and
     'citation()' on how to cite R or R packages in publications.
-
+    
     Type 'demo()' for some demos, 'help()' for on-line help, or
     'help.start()' for an HTML browser interface to help.
     Type 'q()' to quit R.
-
+    
     > sessionInfo()
     R version 3.6.2 (2019-12-12)
     Platform: x86_64-pc-linux-gnu (64-bit)
     Running under: Debian GNU/Linux 10 (buster)
-
+    
     Matrix products: default
     BLAS/LAPACK: /usr/lib/x86_64-linux-gnu/libopenblasp-r0.3.5.so
-
+    
     locale:
      [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C
      [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8
@@ -255,10 +258,10 @@ successfully gone back to the pre-pandemic.
      [7] LC_PAPER=en_US.UTF-8       LC_NAME=C
      [9] LC_ADDRESS=C               LC_TELEPHONE=C
     [11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C
-
+    
     attached base packages:
     [1] stats     graphics  grDevices utils     datasets  methods   base
-
+    
     loaded via a namespace (and not attached):
     [1] compiler_3.6.2
 
@@ -288,8 +291,8 @@ apptainer instance start \
 ```
 
 Now open a browser and go to localhost:8787. The default username is
-your local username, default password is ‘set_your_password’ (if you are
-using container generated by rang).
+your local username, default password is ‘set\_your\_password’ (if you
+are using container generated by rang).
 
 List running instances:
 
@@ -307,7 +310,7 @@ Start instance with custom port (e.g. 8080) and password:
 
 ``` bash
 apptainer instance start \
-    --enc RPORT=8080
+    --env RPORT=8080
     --env PASSWORD='set_your_password' \
     --bind run:/run,var-lib-rstudio-server:/var/lib/rstudio-server,database.conf:/etc/rstudio/database.conf,.rstudio:/home/rstudio/.rstudio/ \
     container.sif \
@@ -350,9 +353,9 @@ The logo of rang is a remix of
 public domain image. The two dogs should be *Presa Canario*, the native
 dog breed on the islands of Gran Canaria and Tenerife.
 
-------------------------------------------------------------------------
+-----
 
-[^1]: It stands for “R Archiving Nerds at GESIS”. The package was
+1.  It stands for “R Archiving Nerds at GESIS”. The package was
     previously named `gran`, but we decided to rename it to `rang`
     because there is another package named
     [gRAN](https://CRAN.R-project.org/package=GRANBase).
