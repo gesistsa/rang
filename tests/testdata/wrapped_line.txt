@@ -1,0 +1,7 @@
+RUN apt-get update -qq \
+	&& apt-get install -y libpcre3-dev zlib1g-dev pkg-config libcurl4-openssl-dev \
+	&& apt-get install -y libcurl4-openssl-dev libicu-dev libssl-dev make zlib1g-dev
+RUN apt-get install -y curl git \
+	&& curl -LO https://quarto.org/download/latest/quarto-linux-amd64.deb \
+	&& dpkg -i quarto-linux-amd64.deb \
+	&& quarto install tool tinytex

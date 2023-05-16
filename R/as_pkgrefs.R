@@ -6,6 +6,8 @@
 #' @param x, currently supported data structure(s) are: output from [sessionInfo()], a character vector of package names
 #' @param bioc_version character. When x is a character vector, version of Bioconductor to search for package names. NULL indicates not
 #' search for Bioconductor.
+#' @param no_enhances logical, when parsing DESCRIPTION, whether to ignore packages in the "Enhances" field
+#' @param no_suggests logical, when parsing DESCRIPTION, whether to ignore packages in the "Suggests" field
 #' @param ..., not used
 #' @return a vector of package references
 #' @export
@@ -34,12 +36,16 @@ as_pkgrefs.default <- function(x, ...) {
 
 #' @rdname as_pkgrefs
 #' @export
-as_pkgrefs.character <- function(x, bioc_version = NULL, ...) {
+as_pkgrefs.character <- function(x, bioc_version = NULL, no_enhances = TRUE, no_suggests = TRUE, ...) {
     if(.is_renv_lockfile(x)) {
       return(.extract_pkgrefs_renv_lockfile(path = x))
     }
     if(.is_directory(x)) {
       return(.extract_pkgrefs_dir(x,bioc_version))
+    }
+    if(.is_DESCRIPTION(x)) {
+        return(.extract_pkgrefs_DESCRIPTION(x, bioc_version, no_enhances = no_enhances,
+                                            no_suggests = no_suggests))
     }
     return(.normalize_pkgs(pkgs = x, bioc_version = bioc_version))
 }
@@ -88,6 +94,39 @@ as_pkgrefs.sessionInfo <- function(x, ...) {
     return(paste0("cran::", handle))
 }
 
+.extract_pkgrefs_DESCRIPTION <- function(path, bioc_version = NULL, no_enhances = TRUE, no_suggests = TRUE) {
+    descr_df <- as.data.frame(read.dcf(path))
+    pkg_dep_df <- .parse_desc(descr_df, remotes = TRUE)
+    pkg_dep_df$y_pkgref <- .normalize_pkgs(pkg_dep_df$y, bioc_version = bioc_version)
+    pkgrefs <- .extract_queryable_dependencies(pkg_dep_df, no_enhances = no_enhances,
+                                               no_suggests = no_suggests)
+    if (isTRUE(is.null(pkgrefs))) {
+        stop("No queryable dependencies listed in the DESCRIPTION file.", call. = FALSE)
+    }
+    .remove_overlapped_pkgrefs(pkgrefs)
+}
+
+.remove_overlapped_pkgrefs <- function(pkgrefs) {
+    ## Eliminate all github/cran duplicates, github has precedence
+    grouped_pkgrefs <- .group_pkgrefs_by_source(pkgrefs)
+    if (is.null(grouped_pkgrefs$github)) {
+        ## no possible overlap
+        return(pkgrefs)
+    }
+    for (handle in grouped_pkgrefs$github) {
+        pkgname <- strsplit(handle, "/")[[1]][2]
+        cran_version <- paste0("cran::", pkgname)
+        bioc_version <- paste0("bioc::", pkgname)
+        if (cran_version %in% pkgrefs) {
+            pkgrefs <- setdiff(pkgrefs, cran_version)
+        }
+        if (bioc_version %in% pkgrefs) {
+            pkgrefs <- setdiff(pkgrefs, bioc_version)
+        }
+    }
+    return(pkgrefs)
+}
+
 .is_renv_lockfile <- function(path) {
     # assuming all renv lockfiles are called renv.lock and path is only length 1
     if(length(path)!=1) {
@@ -122,4 +161,18 @@ as_pkgrefs.sessionInfo <- function(x, ...) {
     pkgs <- suppressMessages(unique(renv::dependencies(path,progress = FALSE)$Package))
     warning("scanning directories for R packages cannot detect github packages.",call. = FALSE)
     return(.normalize_pkgs(pkgs = pkgs, bioc_version = bioc_version))
+}
+
+.is_DESCRIPTION <- function(path) {
+    # assuming all DESCRIPTION files are called DESCRIPTION and path is only length 1
+    if(length(path)!=1) {
+        return(FALSE)
+    }
+    if(isFALSE(file.exists(path))) {
+        return(FALSE)
+    }
+    if (isFALSE(basename(path) == "DESCRIPTION")) {
+        return(FALSE)
+    }
+    TRUE
 }

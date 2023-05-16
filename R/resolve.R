@@ -150,7 +150,7 @@
 }
 
 # parse a description file from github repo
-.parse_desc <- function(descr_df, snapshot_date) {
+.parse_desc <- function(descr_df, snapshot_date = "2019-08-31", remotes = FALSE) {
     types <- c("Depends","LinkingTo","Imports","Suggests","Enhances")
     depends <- descr_df[["Depends"]]
     imports <- descr_df[["Imports"]]
@@ -162,9 +162,14 @@
     if(!is.null(suggests)) suggests <- trimws(strsplit(suggests, ",[\n]*")[[1]])
     if(!is.null(enhances)) enhances <- trimws(strsplit(enhances, ",[\n]*")[[1]])
     if(!is.null(depends))  depends <- trimws(strsplit(depends, ",[\n]*")[[1]])
-    raw_deps <- list(
-        depends, linking, imports, suggests, enhances
-    )
+    if (isFALSE(remotes)) {
+        raw_deps <- list(depends, linking, imports, suggests, enhances)
+    } else {
+        types <- c(types, "Remotes")
+        remotes <- descr_df[["Remotes"]]
+        if(!is.null(remotes))  remotes <- trimws(strsplit(remotes, ",[\n]*")[[1]])
+        raw_deps <- list(depends, linking, imports, suggests, enhances, remotes)
+    }
     type <- lapply(seq_along(raw_deps), function(x) rep(types[x], length(raw_deps[[x]])))
     version <- vapply(unlist(raw_deps), .extract_version, character(1), USE.NAMES = FALSE)
     deps <- gsub("\\s*\\(.*\\)","",unlist(raw_deps))
@@ -203,10 +208,7 @@
 
 ## We should consider Imports, Depends, LinkingTo, and Enhances in normal cases
 
-.extract_queryable_dependencies <- function(dep_df, no_enhances = TRUE, no_suggests = TRUE) {
-    if (!"y" %in% colnames(dep_df)) {
-        return(NULL)
-    }
+.generate_disabled_types <- function(no_enhances = TRUE, no_suggests = TRUE) {
     disabled_types <- c()
     if (isTRUE(no_suggests)) {
         disabled_types <- c(disabled_types, "Suggests")
@@ -214,6 +216,14 @@
     if (isTRUE(no_enhances)) {
         disabled_types <- c(disabled_types, "Enhances")
     }
+    return(disabled_types)
+}
+
+.extract_queryable_dependencies <- function(dep_df, no_enhances = TRUE, no_suggests = TRUE) {
+    if (!"y" %in% colnames(dep_df)) {
+        return(NULL)
+    }
+    disabled_types <- .generate_disabled_types(no_enhances = no_enhances, no_suggests = no_suggests)
     res <- dep_df[!dep_df$type %in% disabled_types &
                   dep_df$y != "R" & !(dep_df$y %in%
                                       c("datasets", "utils", "grDevices", "graphics", "stats", "methods", "tools",
@@ -308,9 +318,10 @@ resolve <- function(pkgs = ".", snapshot_date, no_enhances = TRUE, no_suggests =
     if (!os %in% supported_os) {
         stop("Don't know how to resolve ", os, ". Supported OSes are: ", paste(supported_os, collapse = ", "))
     }
-    snapshot_date <- .extract_date(pkgs = pkgs, date = snapshot_date, verbose = verbose)
+    snapshot_date <- .extract_date(pkgs = pkgs, snapshot_date = snapshot_date, verbose = verbose)
     bioc_version <- .generate_bioc_version(snapshot_date = snapshot_date, pkgs = pkgs)
-    pkgrefs <- as_pkgrefs(pkgs, bioc_version = bioc_version)
+    pkgrefs <- as_pkgrefs(pkgs, bioc_version = bioc_version, no_enhances = no_enhances,
+                          no_suggests = no_suggests)
     .check_local_in_pkgrefs(pkgrefs)
     output <- list()
     output$call <- match.call()
@@ -412,29 +423,41 @@ print.rang <- function(x, all_pkgs = FALSE, ...) {
     }
 }
 
-.extract_date <- function(pkgs,date,verbose = FALSE){
-  if(missing(date)){
-    snapshot_date <- NA
-    if(.is_directory(pkgs)){
-      snapshot_date <- max(file.mtime(dir(pkgs,recursive = TRUE)))
+.extract_latest_modification_date <- function(path, verbose, ignore_use_rang = TRUE) {
+    file_paths <- dir(path, recursive = TRUE)
+    if (isTRUE(ignore_use_rang)) {
+        file_paths <- grep("inst/rang/|Makefile", file_paths, value = TRUE, invert = TRUE)
     }
-    if(.is_renv_lockfile(pkgs)){
-      snapshot_date <- file.mtime(pkgs)
+    if (length(file_paths) == 0) {
+        return(NA)
     }
-    if(is.na(snapshot_date)){
-      if (isTRUE(verbose)) {
-        cat("No `snapshot_date`: Assuming `snapshot_date` to be a month ago.\n")
-      }
-      snapshot_date <- Sys.Date() - 30
+    snapshot_date <- max(file.mtime(file_paths))
+    .vcat(verbose, "Based on the latest modification date of files inside the directory: ", snapshot_date)
+    return(snapshot_date)
+}
+
+## determine the snapshot_date for `resolve` based on `date` and `pkgs`
+.extract_date <- function(pkgs, snapshot_date, verbose = FALSE) {
+    if (missing(snapshot_date) || is.na(snapshot_date)) {
+        .vcat(verbose, "No `snapshot_date`, determining...")
+        snapshot_date <- NA
+        if (.is_directory(pkgs)) {
+            snapshot_date <- .extract_latest_modification_date(path = pkgs, verbose = verbose)
+        }
+        if (.is_renv_lockfile(pkgs)) {
+            snapshot_date <- file.mtime(pkgs)
+            .vcat(verbose, "Based on the latest modification date of lockfile: ", snapshot_date)
+        }
     }
-  } else{
-    snapshot_date  <- date
-  }
-  snapshot_date <- parsedate::parse_date(snapshot_date)
-  if (snapshot_date > parsedate::parse_date(Sys.time())) {
-    stop("We don't know the future.", call. = FALSE)
-  }
-  snapshot_date
+    if (is.na(snapshot_date)) {
+        .vcat(verbose, "Assuming `snapshot_date` to be a month ago.\n")
+        snapshot_date <- Sys.Date() - 30
+    }
+    parsed_snapshot_date <- parsedate::parse_date(snapshot_date)
+    if (parsed_snapshot_date > parsedate::parse_date(Sys.time())) {
+        stop("We don't know the future.", call. = FALSE)
+    }
+    parsed_snapshot_date
 }
 
 

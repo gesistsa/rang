@@ -12,7 +12,12 @@ else
     TARFILE="R-$1.tar.gz"
 fi
 
-wget "http://cran.r-project.org/src/base/$DOWNLOAD_DIR/$TARFILE"
+if [ ! -f "/$CACHE_PATH/rsrc/$TARFILE" ]; then
+    wget "http://cran.r-project.org/src/base/$DOWNLOAD_DIR/$TARFILE"
+else
+    cp /$CACHE_PATH/rsrc/$TARFILE /
+fi
+
 tar -zxf $TARFILE
 
 cd "R-$1"
@@ -22,4 +27,4 @@ make install
 
 cd /
 
-Rscript rang.R
+Rscript $RANG_PATH
