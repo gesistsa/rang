@@ -260,7 +260,7 @@ The same file can thus also be "rescued" by `rang`.
 
 ## Recover a removed R package: maxent
 
-The R package `maxent` introduces a machine learning algorithm with a small memory footprint and was available on CRAN until 2019. A software paper was published by the original authors in 2012 [@jurka:2012]. The R package was also used in some subsequent automated content analytic papers [e.g. @loercher:2017:D]. Despite the editing of the package by a staffer of CRAN [^evidence], the package was removed from CRAN in 2019. (Here, we said the package `maxent` was "removed from CRAN" as per what the webpage ([https://cran.r-project.org/web/packages/maxent/index.html](https://cran.r-project.org/web/packages/maxent/index.html)) is written. However, the terminology as stated in the [CRAN Policies](https://cran.r-project.org/web/packages/policies.html#Source-packages) is "archived", quote: "Packages will not normally be removed from CRAN: however, they may be archived, including at the maintainer’s request." As all CRAN packages have all the submitted versions archived, we find this terminology confusing. Therefore, we use "removed" packages throughout this paper to indicate packages that cannot be installed by the usual method, i.e. `install.packages` but still have the old versions archived on CRAN.) We attempted to install the second last (the original submitted version) and last (with editing) versions of `maxent` on R 4.2.2. Neither worked.
+The R package `maxent` introduces a machine learning algorithm with a small memory footprint and was available on CRAN until 2019. A software paper was published by the original authors in 2012 [@jurka:2012]. The R package was also used in some subsequent automated content analytic papers [e.g. @loercher:2017:D]. Despite the editing of the package by a staffer of CRAN <!-- [^evidence] -->, the package was removed from CRAN in 2019. (Here, we said the package `maxent` was "removed from CRAN" as per what the webpage ([https://cran.r-project.org/web/packages/maxent/index.html](https://cran.r-project.org/web/packages/maxent/index.html)) is written. However, the terminology as stated in the [CRAN Policies](https://cran.r-project.org/web/packages/policies.html#Source-packages) is "archived", quote: "Packages will not normally be removed from CRAN: however, they may be archived, including at the maintainer’s request." As all CRAN packages have all the submitted versions archived, we find this terminology confusing. Therefore, we use "removed" packages throughout this paper to indicate packages that cannot be installed by the usual method, i.e. `install.packages` but still have the old versions archived on CRAN.) We attempted to install the second last (the original submitted version) and last (with editing) versions of `maxent` on R 4.2.2. Neither worked.
 
 Using `rang`, we are able to reconstruct a computational environment with R 2.15.0 (2012-03-30) to run all code snippets published in Jurka [@jurka:2012] <!-- [^speed] -->. For removed CRAN packages, we strongly recommend querying the Github read-only mirror of CRAN instead (https://github.com/cran). This way, the resolved system requirements have a higher chance of being correct.
 
@@ -271,7 +271,7 @@ dockerize(maxent, "maxentdir", cache = TRUE)
 
 <!-- [^checkerror]: [https://cran-archive.r-project.org/web/checks/2019/2019-03-05_check_results_maxent.html](https://cran-archive.r-project.org/web/checks/2019/2019-03-05_check_results_maxent.html)  -->
 
-[^evidence]: [https://github.com/cran/maxent/commit/9d46c6aad27a1f41a78907b170ddd9a586192be9](https://github.com/cran/maxent/commit/9d46c6aad27a1f41a78907b170ddd9a586192be9)
+<!-- [^evidence]: [https://github.com/cran/maxent/commit/9d46c6aad27a1f41a78907b170ddd9a586192be9](https://github.com/cran/maxent/commit/9d46c6aad27a1f41a78907b170ddd9a586192be9) -->
 
 <!-- [^speed]: On an interesting historical side note: The original paper reported ---based on a benchmark--- that "the algorithm is very fast; `maxent` uses only 135.4 megabytes of RAM and finishes in 53.3 seconds." On a modest computer in 2023 with a dockerized R 2.15.0, the benchmark finishes in 4 seconds. -->
 
@@ -338,7 +338,7 @@ The file `peng.Rout` contains the execution results of the script from inside th
 
 Similar to CRAN, packages can also be removed over time from Bioconductor. The Bioconductor package `Sushi` has been deprecated by the original authors and is removed from Bioconductor version 3.16 (2022-11-02). `Sushi` is a data visualization tool for genomic data and was used in many online tutorials and scientific papers, including the original paper announcing the package by the original authors [@phanstiel:2014:S].
 
-`rang` has native support for Bioconductor packages since version 0.2. We obtained the R script `"PaperFigure.R"` from the Github repository of `Sushi` [^sushi], which generates the figure in the original paper [@phanstiel:2014:S]. Similar to the above case of `ptproc`, we made a completely automated BASH script to run `"PaperFigure.R"` and get the generated figure out of the container (`Fig~\ref{fig2}`{=latex}). We made no modification to `"PaperFigure.R"`.
+`rang` has native support for Bioconductor packages since version 0.2. We obtained the R script `"PaperFigure.R"` from the Github repository of `Sushi` <!-- [^sushi] -->, which generates the figure in the original paper [@phanstiel:2014:S]. Similar to the above case of `ptproc`, we made a completely automated BASH script to run `"PaperFigure.R"` and get the generated figure out of the container (`Fig~\ref{fig2}`{=latex}). We made no modification to `"PaperFigure.R"`.
 
 ```sh
 Rscript -e "library(rang); dockerize(resolve('Sushi', '2014-06-05'),
@@ -368,7 +368,7 @@ docker stop sushicontainer
 \end{figure}
 ```
 
-[^sushi]: [https://github.com/PhanstielLab/Sushi/blob/master/vignettes/PaperFigure.R](https://github.com/PhanstielLab/Sushi/blob/master/vignettes/PaperFigure.R)
+<!-- [^sushi]: [https://github.com/PhanstielLab/Sushi/blob/master/vignettes/PaperFigure.R](https://github.com/PhanstielLab/Sushi/blob/master/vignettes/PaperFigure.R) -->
 
 # Preparing executable compendia with long-term computational reproducibility
 

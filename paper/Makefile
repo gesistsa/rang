@@ -10,13 +10,13 @@ diff: render
 	pdflatex temp1
 	pdflatex temp1
 	perl latexpand --expand-bbl temp1.bbl temp1.tex > flat1.tex
-	cp flat1.tex paper_flat.tex
 	cp paper.tex temp2.tex
 	-latex temp2
 	-bibtex temp2
 	pdflatex temp2
 	pdflatex temp2
 	perl latexpand --expand-bbl temp2.bbl temp2.tex > flat2.tex
+	cp flat2.tex paper_flat.tex
 	latexdiff flat1.tex flat2.tex > diff.tex
 	-pdflatex diff.tex
 	-pdflatex diff.tex
