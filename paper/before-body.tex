@@ -1,0 +1,39 @@
+$-- PLOS insert title and author within the main body
+$-- Use this template to insert the necessary pieces before any content provided in .qmd file
+\vspace*{0.2in}
+
+% Title must be 250 characters or less.
+\begin{flushleft}
+{\Large
+\textbf\newline{$title$} % Please use "sentence case" for title and headings (capitalize only the first word in a title (or heading), the first word in a subtitle (or subheading), and any proper nouns).
+}
+\newline
+\\
+% Insert author names, affiliations and corresponding author email (do not include titles, positions, or degrees).
+$by-author:_authors.tex()[, ]$
+\\
+\bigskip
+$by-affiliation:_affiliations.tex()[\\ ]$
+\bigskip
+
+
+% Use the asterisk to denote corresponding authorship and provide email address in note below.
+$for(by-author)$
+$if(by-author.attributes.corresponding)$
+* $by-author.email$
+$endif$
+$endfor$
+
+\end{flushleft}
+
+$if(abstract)$
+\section*{Abstract}
+$abstract$
+$endif$
+
+$if(author-summary)$
+\section*{Author summary}
+$author-summary$
+$endif$
+
+\linenumbers
