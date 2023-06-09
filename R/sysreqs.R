@@ -79,6 +79,7 @@ query_sysreqs <- function(rang, os = "ubuntu-20.04") {
 
 ## this is vectorized; and for consistency
 .query_sysreqs_cran <- function(handles, os) {
+    Sys.setenv(RSPM_ROOT = "https://packagemanager.posit.co")
     remotes::system_requirements(package = handles, os = os)
 }
 
