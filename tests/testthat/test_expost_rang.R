@@ -185,3 +185,8 @@ test_that("Super ancient special packages", {
     graph <- readRDS("../testdata/superancientsna.RDS")
     expect_error(.generate_installation_order(graph), NA)
 })
+
+test_that("base as a dependency, issue 144", {
+    graph <- readRDS("../testdata/dt.RDS")
+    expect_error(.generate_installation_order(graph), NA)
+})
