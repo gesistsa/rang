@@ -228,7 +228,7 @@
                   dep_df$y != "R" & !(dep_df$y %in%
                                       c("datasets", "utils", "grDevices", "graphics", "stats", "methods", "tools",
                                         "grid", "splines", "parallel", "stats4", "tcltk", "MASS", "nnet", "class", "spatial",
-                                        "eda", "lqs", "mle", "modreg", "mva", "stepfun", "ts")),]
+                                        "eda", "lqs", "mle", "modreg", "mva", "stepfun", "ts", "base")),]
     if (nrow(res) == 0) {
         return(NULL)
     }
