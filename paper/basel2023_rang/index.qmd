@@ -1,0 +1,428 @@
+---
+title: "rang"
+subtitle: "(Re)constructing reproducible R computational environment"
+author: Chung-hong Chan, David Schoch
+institute: GESIS
+date: "2023-07-21"
+date-format: "YYYY-MM-DD"
+footer: "https://chainsawriot.github.io/basel2023_rang"
+embed-resources: true
+format: fakegesis-revealjs
+---
+
+## Computational reproducibility
+
+|                        | **Same Data** | **Different Data** |
+|------------------------|---------------|--------------------|
+| **Same Analysis**      | Reproducible  | Replicable         |
+| **Different Analysis** | Robust        | Generalisable      |
+
+::: {style="font-size: 0.3em"}
+
+Source: [The Turing Way](https://the-turing-way.netlify.app/reproducible-research/overview/overview-definitions.html)
+
+:::
+
+## Computational Reproducibility
+
+A result is reproducible when the same analysis steps performed on the same dataset **consistently produce the same answer**. This reproducibility of the result can be checked by the original investigators and other researchers within a local environment.
+
+::: {style="font-size: 0.3em"}
+Schoch, Chan, Wagner, & Bleier. (2023) Computational Reproducibility in Computational Social Science. [arXiv](https://doi.org/10.48550/arXiv.2307.01918)
+:::
+
+## Case study I: dplyr
+
+```{r}
+#| echo: true
+data <- data.frame(id = c(1,1,2), outcome = c(TRUE, TRUE, FALSE))
+data
+```
+
+## Case study I: dplyr
+
+Are these analysis steps performed on the same dataset **consistently produce the same answer**?
+
+```r
+require(dplyr)
+data <- data.frame(id = c(1,1,2), outcome = c(TRUE, TRUE, FALSE))
+distinct(data, id) %>%
+    select(outcome)
+```
+
+## On my own machine: dplyr 1.1.2
+
+```{r}
+#| echo: true
+#| error: true
+require(dplyr)
+data <- data.frame(id = c(1,1,2), outcome = c(TRUE, TRUE, FALSE))
+distinct(data, id) %>%
+    select(outcome)
+```
+
+## Also on my own machine
+
+![](dplyr.png)
+
+## Time machine
+
+:::: {.columns}
+
+:::{.column width="50%"}
+
+![](bowie.jpg)
+
+(1947.01.08 - 2016.01.10)
+:::
+
+:::{.column width="50%"}
+
+![](dplyr1.png)
+
+:::
+
+::::
+
+
+::: {.notes}
+Before Tidyverse (2016-09-09). Trump and Brexit too.
+:::
+
+
+## Method 1
+
+Code rewrite
+
+```{.r code-line-numbers="|3"}
+require(dplyr)
+data <- data.frame(id = c(1,1,2), outcome = c(TRUE, TRUE, FALSE))
+distinct(data, id, .keep_all = TRUE) %>%
+    select(outcome)
+```
+
+::: {.notes}
+You'll need to edit your code when there are new breaking changes
+:::
+
+## Method 2
+
+Install the old version
+
+```{.r code-line-numbers="|1"}
+remotes::install_version("dplyr", "0.4.3")
+require(dplyr)
+data <- data.frame(id = c(1,1,2), outcome = c(TRUE, TRUE, FALSE))
+distinct(data, id) %>%
+    select(outcome)
+```
+
+::: {.notes}
+It installs the latest recursive dependencies
+:::
+
+## (Non-)method 3
+
+Using ~~MRAN~~ Posit Public Package Manager (P3M)
+
+```{.r code-line-numbers="|1|2"}
+p3m <- "https://packagemanager.posit.co/cran/2016-01-10"
+options(repos = c(REPO_NAME = p3m))
+install.packages("dplyr") # install 0.4.3?
+
+require(dplyr)
+data <- data.frame(id = c(1,1,2), outcome = c(TRUE, TRUE, FALSE))
+distinct(data, id) %>%
+    select(outcome)
+```
+
+::: {.notes}
+It won't work because P3M can only go as far back as 2017 Oct 10.
+It installs the "time-appropriate" recursive dependencies. But it mixes old packages with your current system library.
+Of course, you can use install.packages("dplyr", lib = "xyz")
+:::
+
+## (Non-)method 4
+
+Using `renv` 1.0.0
+
+```{.r code-line-numbers="|3"}
+require(renv)
+renv::init() ## restart
+renv::checkout(date = "2016-01-10") 
+install.packages("dplyr")
+renv::snapshot()
+require(dplyr)
+data <- data.frame(id = c(1,1,2), outcome = c(TRUE, TRUE, FALSE))
+distinct(data, id) %>%
+    select(outcome)
+```
+
+::: {.notes}
+It won't work also because P3M can only go as far back as 2017 Oct 10.
+:::
+
+## Pit shop 1: Summary
+
+1. Computational reproducibility is tacitly dependent on the computational environment
+2. Recursive dependencies can best be tackled with time-based pinning or lockfile-based system
+3. P3M has its limit (2017-10-10).
+
+::: {.notes}
+P3M also has an inconvenience limitation: What if it's no longer available (like MRAN before it)?
+:::
+
+
+## Case study II
+
+![](comps.png)
+
+::: {style="font-size: 0.3em"}
+Source: @whydoesr@botsin.space
+:::
+
+## Case study II
+
+Are these analysis steps performed on the same dataset **consistently produce the same answer**?
+
+```r
+unix.time(mean(rnorm(100)))
+n _ 10
+require(sna)
+x _ rgraph(n, mode = "graph")
+evcent(x)
+```
+
+## On my own machine: R 4.3.1
+
+```{r}
+#| echo: true
+#| error: true
+unix.time(mean(rnorm(100)))
+n _ 10
+suppressPackageStartupMessages(require(sna))
+x _ rgraph(n, mode = "graph")
+evcent(x)
+```
+
+Explanations:
+
+```r
+?`base-defunct`
+```
+
+## Non-method #1: P3M/renv
+
+. . .
+
+It's base.
+
+::: {.notes}
+in Norm Matloff's voice
+:::
+
+## Method #2?: Docker / Rocker
+
+ 
+```bash
+docker run --rm -it rocker/r-ver:3.2.0
+```
+
+. . .
+
+```text
+> unix.time(mean(rnorm(100)))
+   user  system elapsed 
+      0       0       0 
+> n _ 10
+Error: unexpected input in "n _"
+> 
+```
+
+::: {.notes}
+You probably will have problem installing sna
+:::
+
+## Pit shop 2: Summary
+
+1. Computational reproducibility is tacitly dependent on the computational environment
+2. It's not always about packages, the programming language changes too
+3. Rocker has its limit (R 3.0.0)
+
+::: {.notes}
+(think Python 2 -> 3)
+
+Rocker: Many old images are not usable anymore (either hardcoded MRAN or expiring Debian)
+:::
+
+## Our solution: rang
+
+![](rang_logo.png){width=300,fig-align="left"}
+
+```r
+install.packages("rang")
+## remotes::install_github("chainsawriot/rang")
+```
+
+::: {style="font-size: 0.3em"}
+Chan & Schoch (2023). rang: Reconstructing reproducible R computational environments. PLOS One [doi](https://doi.org/10.1371/journal.pone.0286761)
+:::
+
+## Features (CRAN version)
+
+* Date-based pinning (like P3M, `renv`)
+* Create container images (like Rocker)
+* Support CRAN, Bioconductor, GitHub, & local packages
+* Resolve system dependencies, e.g. `libxml2`
+* Depend on r-hub, CRAN, Bioconductor, GitHub API; doesn't use P3M
+* Interoperability with `renv` (lockfile, project scanning)
+* Can go as far back as **2001-08-31** (or R 1.3.1)
+
+::: {.notes}
+We are talking about Tony Blair and Bush 43 (and that's two weeks before 911)
+:::
+
+## Usage: Resolve
+
+Resolve the dependency graph
+
+```r
+library(rang)
+graph <- resolve(pkgs = c("dplyr"), snapshot_date = "2016-01-10")
+graph
+```
+
+```{r}
+#| echo: false
+library(rang)
+readRDS("dplyr.RDS")
+```
+
+## Usage: Dockerize
+
+```r
+dockerize(rang = graph,
+          output_dir = "~/dplyr_example",
+          no_rocker = TRUE,  # recommended
+          cache = TRUE) # recommended
+```
+
+## What's inside
+
+```text
+├── cache
+│   ├── debian
+│   │   └── rootfs.tar.xz
+│   ├── rpkgs
+│   │   ├── assertthat_0.1.tar.gz
+│   │   ├── BH_1.60.0-1.tar.gz
+│   │   ├── DBI_0.3.1.tar.gz
+│   │   ├── dplyr_0.4.3.tar.gz
+│   │   ├── lazyeval_0.1.10.tar.gz
+│   │   ├── magrittr_1.5.tar.gz
+│   │   ├── R6_2.1.1.tar.gz
+│   │   └── Rcpp_0.12.2.tar.gz
+│   └── rsrc
+│       └── R-3.2.3.tar.gz
+├── compile_r.sh
+├── Dockerfile
+├── rang.R
+└── README
+
+4 directories, 14 files
+```
+
+## README
+
+```text
+This README offers some guidance on how to work with the included docker container 
+which was created with the R package rang on 2023-07-17
+
+# Installing docker
+
+The installation depends on the OS you are running
+...
+```
+
+## Dockerfile
+
+```Dockerfile
+FROM scratch
+ADD /cache/debian/rootfs.tar.xz /
+ENV TZ UTC
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
+	&& echo $TZ > /etc/timezone \
+	&& apt-get update -qq \
+	&& apt-get install wget locales build-essential r-base-dev  -y
+ENV RANG_PATH /rang.R
+ENV COMPILE_PATH /compile_r.sh
+ENV CACHE_PATH /cache
+COPY rang.R /rang.R
+COPY compile_r.sh /compile_r.sh
+COPY cache/rpkgs /cache/rpkgs
+COPY cache/rsrc /cache/rsrc
+RUN apt-get update -qq \
+	&& apt-get install -y libpcre3-dev zlib1g-dev pkg-config libcurl4-openssl-dev
+RUN bash $COMPILE_PATH 3.2.3
+CMD ["R"]
+```
+
+## Build and launch
+
+```sh
+cd ~/dplyr_example
+docker build -t dplyr .
+docker run --rm --name "dplyr" -ti dplyr
+```
+
+. . .
+
+![](dplyr.png)
+
+## Full bash
+
+```bash
+Rscript -e "rang::resolve(\"sna\", snapshot_date = \"2002-02-01\") |> 
+rang::dockerize(\"~/scoms\", cache = TRUE)"
+cd ~/scoms
+docker build -t scoms .
+docker run --rm --name "scoms" -ti scoms
+```
+## For compatibility with S
+
+![](base2.png)
+
+## Many features not demo.
+
+* More examples in [our paper](https://doi.org/10.1371/journal.pone.0286761)
+
+Upcoming features
+
+* Apptainer (née Singularity) - Thanks to the contribution from Egor Kotov
+* Research Compendium
+* Post installation steps, e.g. installing Quarto
+
+## Summary
+
+## Summary
+
+:::: {.columns}
+
+:::{.column width="80%"}
+1. Computational reproducibility is tacitly dependent on the computational environment
+2. Use P3M for projects after 2017-10-10
+3. Use Rocker for projects newer than R 3.0.0
+4. Use `rang` for probably all projects
+:::
+
+:::{.column width="20%"}
+![](rang_logo.png){width=300}
+:::
+
+::::
+
+::: {style="font-size: 0.3em"}
+Schoch, Chan, Wagner, & Bleier. (2023) Computational Reproducibility in Computational Social Science. [arXiv](https://doi.org/10.48550/arXiv.2307.01918)
+
+Chan & Schoch (2023). rang: Reconstructing reproducible R computational environments. PLOS One [doi](https://doi.org/10.1371/journal.pone.0286761)
+:::
