@@ -410,8 +410,9 @@ Upcoming features
 
 :::{.column width="80%"}
 1. Computational reproducibility is tacitly dependent on the computational environment
-2. Use P3M for projects after 2017-10-10
-3. Use Rocker for projects newer than R 3.0.0
+2. Use P3M / renv for projects after 2017-10-10
+    * only at the level of R packages
+3. Plus Rocker for projects newer than R 3.0.0
 4. Use `rang` for probably all projects
 :::
 
