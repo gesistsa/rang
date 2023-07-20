@@ -10,18 +10,18 @@ embed-resources: true
 format: fakegesis-revealjs
 ---
 
-## Computational reproducibility
+<!-- ## Computational reproducibility -->
 
-|                        | **Same Data** | **Different Data** |
-|------------------------|---------------|--------------------|
-| **Same Analysis**      | Reproducible  | Replicable         |
-| **Different Analysis** | Robust        | Generalisable      |
+<!-- |                        | **Same Data** | **Different Data** | -->
+<!-- |------------------------|---------------|--------------------| -->
+<!-- | **Same Analysis**      | Reproducible  | Replicable         | -->
+<!-- | **Different Analysis** | Robust        | Generalisable      | -->
 
-::: {style="font-size: 0.3em"}
+<!-- ::: {style="font-size: 0.3em"} -->
 
-Source: [The Turing Way](https://the-turing-way.netlify.app/reproducible-research/overview/overview-definitions.html)
+<!-- Source: [The Turing Way](https://the-turing-way.netlify.app/reproducible-research/overview/overview-definitions.html) -->
 
-:::
+<!-- ::: -->
 
 ## Computational Reproducibility
 
@@ -67,22 +67,22 @@ distinct(data, id) %>%
 
 ## Time machine
 
-:::: {.columns}
+<!-- :::: {.columns} -->
 
-:::{.column width="50%"}
+<!-- :::{.column width="50%"} -->
 
-![](bowie.jpg)
+<!-- ![](bowie.jpg) -->
 
-(1947.01.08 - 2016.01.10)
-:::
+<!-- (1947.01.08 - 2016.01.10) -->
+<!-- ::: -->
 
-:::{.column width="50%"}
+<!-- :::{.column width="50%"} -->
 
 ![](dplyr1.png)
 
-:::
+<!-- ::: -->
 
-::::
+<!-- :::: -->
 
 
 ::: {.notes}
@@ -125,7 +125,7 @@ It installs the latest recursive dependencies
 
 Using ~~MRAN~~ Posit Public Package Manager (P3M)
 
-```{.r code-line-numbers="|1|2"}
+```{.r code-line-numbers="|1|2|"}
 p3m <- "https://packagemanager.posit.co/cran/2016-01-10"
 options(repos = c(REPO_NAME = p3m))
 install.packages("dplyr") # install 0.4.3?
@@ -146,7 +146,7 @@ Of course, you can use install.packages("dplyr", lib = "xyz")
 
 Using `renv` 1.0.0
 
-```{.r code-line-numbers="|3"}
+```{.r code-line-numbers="|3|"}
 require(renv)
 renv::init() ## restart
 renv::checkout(date = "2016-01-10") 
@@ -215,17 +215,17 @@ Explanations:
 
 . . .
 
-It's base.
+It's base. You can't pin `unix.time()` with P3M/`renv`.
 
 ::: {.notes}
 in Norm Matloff's voice
 :::
 
 ## Method #2?: Docker / Rocker
-
  
 ```bash
-docker run --rm -it rocker/r-ver:3.2.0
+# work
+docker run --rm -it rocker/r-ver:3.0.0
 ```
 
 . . .
@@ -237,6 +237,13 @@ docker run --rm -it rocker/r-ver:3.2.0
 > n _ 10
 Error: unexpected input in "n _"
 > 
+```
+
+. . .
+
+```bash
+# not work
+docker run --rm -it rocker/r-ver:2.15.3
 ```
 
 ::: {.notes}
