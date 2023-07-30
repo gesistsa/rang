@@ -146,6 +146,8 @@ test_that("Non-cran must enforce caching ref #22", {
 ## })
 
 test_that("Integration of as_pkgrefs() in resolve() for sessionInfo()", {
+    skip_if_offline()
+    skip_on_cran()
     x <- resolve(c("cran::sna"), snapshot_date = "2020-05-01", query_sysreqs = FALSE)
     si <- readRDS("../testdata/sessionInfo2.RDS")
     expect_error(graph <- resolve(si, snapshot_date = "2020-05-01", query_sysreqs = FALSE), NA)
