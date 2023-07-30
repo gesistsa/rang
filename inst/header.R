@@ -2,10 +2,8 @@
 
 current.r.version <- paste(R.Version()[c("major","minor")], collapse = ".", sep = "")
 
-## In Unix, all things are file.
-## Before you complain, R <= 3.2.0 doesn't have dir.exists.
-if (file.exists("cache")) {
-    path <- "cache"
+if (Sys.getenv("CACHE_PATH") != "") {
+    path <- file.path(Sys.getenv("CACHE_PATH"), "rpkgs")
 } else {
     path <- tempdir()
 }

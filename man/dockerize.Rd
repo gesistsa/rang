@@ -11,6 +11,7 @@ dockerize(
   rang,
   output_dir,
   materials_dir = NULL,
+  post_installation_steps = NULL,
   image = c("r-ver", "rstudio", "tidyverse", "verse", "geospatial"),
   rang_as_comment = TRUE,
   cache = FALSE,
@@ -21,7 +22,9 @@ dockerize(
   bioc_mirror = "https://bioconductor.org/packages/",
   no_rocker = FALSE,
   debian_version = c("lenny", "squeeze", "wheezy", "jessie", "stretch"),
-  skip_r17 = TRUE
+  skip_r17 = TRUE,
+  insert_readme = TRUE,
+  copy_all = FALSE
 )
 
 dockerize_rang(...)
@@ -36,6 +39,8 @@ dockerise_rang(...)
 \item{output_dir}{character, where to put the Docker file and associated content}
 
 \item{materials_dir}{character, path to the directory containing additional resources (e.g. analysis scripts) to be copied into \code{output_dir} and in turn into the Docker container}
+
+\item{post_installation_steps}{character, additional steps to be added before the \code{CMD} part of the Dockerfile, see an example below}
 
 \item{image}{character, which versioned Rocker image to use. Can only be "r-ver", "rstudio", "tidyverse", "verse", "geospatial"
 This applies only to R version >= 3.1}
@@ -60,7 +65,11 @@ and \code{\link[=download.file]{download.file()}}.}
 
 \item{debian_version}{when Rocker images are not used, which EOL version of Debian to use. Can only be "lenny", "etch", "squeeze", "wheezy", "jessie", "stretch". Please keep this as default "lenny" unless you know what you are doing}
 
-\item{skip_r17}{logical, whether to skip R 1.7.x. Currently, it is not possible to compile R 1.7.x (R 1.7.0 and R 1.7.1) with the method provided by  \code{rang}. It affects \code{snapshot_date} from 2003-04-16 to 2003-10-07. When \code{skip_r17} is TRUE and \code{snapshot_date} is within the aforementioned range, R 1.8.0 is used instead.}
+\item{skip_r17}{logical, whether to skip R 1.7.x. Currently, it is not possible to compile R 1.7.x (R 1.7.0 and R 1.7.1) with the method provided by  \code{rang}. It affects \code{snapshot_date} from 2003-04-16 to 2003-10-07. When \code{skip_r17} is TRUE and \code{snapshot_date} is within the aforementioned range, R 1.8.0 is used instead}
+
+\item{insert_readme}{logical, whether to insert a README file}
+
+\item{copy_all}{logical, whether to copy everything in the current directory into the container. If \code{inst/rang} is detected in \code{output_dir}, this is coerced to TRUE.}
 
 \item{...}{arguments to be passed to \code{dockerize}}
 }
@@ -73,7 +82,7 @@ For R version < 3.1.0, the Dockerfile is based on Debian and it compiles R from 
 }
 \details{
 The idea behind this is to determine the installation order of R packages locally. Then, the installation script can be deployed to another
-fresh R session to install R packages. \code{\link[=dockerize]{dockerize()}} is a more reasonable way because a fresh R session with all system requirements
+fresh R session to install R packages. \code{\link[=dockerize]{dockerize()}} and \code{\link[=apptainerize]{apptainerize()}} are more reasonable ways because a fresh R session with all system requirements
 is provided. The current approach does not work in R < 2.1.0.
 }
 \examples{
@@ -82,6 +91,12 @@ if (interactive()) {
     graph <- resolve(pkgs = c("openNLP", "LDAvis", "topicmodels", "quanteda"),
                     snapshot_date = "2020-01-16")
     dockerize(graph, ".")
+    ## An example of using post_installation_steps to install quarto
+    install_quarto <- c("RUN apt-get install -y curl git && \\\\
+    curl -LO https://quarto.org/download/latest/quarto-linux-amd64.deb && \\\\
+    dpkg -i quarto-linux-amd64.deb && \\\\
+    quarto install tool tinytex")
+    dockerize(graph, ".", post_installation_steps = install_quarto)
 }
 }
 }
@@ -90,5 +105,5 @@ if (interactive()) {
 Ripley, B. (2005) \href{https://cran.r-project.org/doc/Rnews/Rnews_2005-1.pdf}{Packages and their Management in R 2.1.0.} R News, 5(1):8--11.
 }
 \seealso{
-\code{\link[=resolve]{resolve()}}, \code{\link[=export_rang]{export_rang()}}
+\code{\link[=resolve]{resolve()}}, \code{\link[=export_rang]{export_rang()}}, \code{\link[=use_rang]{use_rang()}}
 }

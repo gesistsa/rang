@@ -5,6 +5,7 @@
 test_that("defensive programming", {
     graph <- readRDS("../testdata/sle_graph.RDS")
     expect_error(dockerize(graph, output_dir = tempdir()))
+    expect_error(dockerize(graph))
 })
 
 test_that("empty rang dockerize #75", {
@@ -36,6 +37,8 @@ test_that("integration of #16 in dockerize()", {
     dockerize(rang = rang_ok, output_dir = temp_dir, verbose = FALSE)
     x <- readLines(file.path(temp_dir, "rang.R"))
     expect_true(any(grepl("^verbose <- FALSE", x)))
+    Dockerfile <- readLines(file.path(temp_dir, "Dockerfile"))
+    expect_true(any(grepl("^RUN Rscript \\$RANG_PATH", Dockerfile)))
     ## lib
     dockerize(rang = rang_ok, output_dir = temp_dir) ## lib = NA
     x <- readLines(file.path(temp_dir, "rang.R"))
@@ -47,6 +50,13 @@ test_that("integration of #16 in dockerize()", {
     expect_true(any(grepl("^lib <- \"abc\"", x)))
     Dockerfile <- readLines(file.path(temp_dir, "Dockerfile"))
     expect_true(any(grepl("^RUN mkdir", Dockerfile)))
+    expect_false(any(grepl("^RUN Rscript \\$RANG_PATH", Dockerfile)))
+    ## #123
+    expect_equal(tail(Dockerfile, 1), "CMD [\"R\"]")
+    ## post
+    dockerize(rang = rang_ok, output_dir = temp_dir, post_installation_steps = "RUN date")
+    Dockerfile <- readLines(file.path(temp_dir, "Dockerfile"))
+    expect_equal(Dockerfile[length(Dockerfile) -1], "RUN date")
 })
 
 test_that("integration of #18 in dockerize()", {
@@ -87,6 +97,36 @@ test_that("integration of #20 to dockerize()", {
     expect_true(any(grepl("^cran.mirror <- \"http://cran\\.r\\-project\\.org/\"", x)))
 })
 
+test_that("sugars", {
+    rang_ok <- readRDS("../testdata/rang_ok.RDS")
+    expect_equal(rang_ok$r_version, "4.2.2")
+    temp_dir1 <- .generate_temp_dir()
+    expect_error(dockerize(rang_ok, output_dir = temp_dir1), NA)
+    temp_dir2 <- .generate_temp_dir()
+    expect_error(dockerise(rang_ok, output_dir = temp_dir2), NA)
+    temp_dir3 <- .generate_temp_dir()
+    expect_error(dockerise(rang_ok, output_dir = temp_dir3), NA)
+    temp_dir4 <- .generate_temp_dir()
+    expect_error(dockerise(rang_ok, output_dir = temp_dir4), NA)
+    for (tdir in c(temp_dir1, temp_dir2, temp_dir3, temp_dir4)) {
+        expect_true(file.exists(file.path(tdir, "rang.R")))
+        expect_true(file.exists(file.path(tdir, "Dockerfile")))
+    }
+})
+
+test_that("copy_all", {
+    rang_ok <- readRDS("../testdata/rang_ok.RDS")
+    expect_equal(rang_ok$r_version, "4.2.2")
+    temp_dir <- .generate_temp_dir()
+    dockerize(rang_ok, output_dir = temp_dir) ## copy_all = FALSE
+    Dockerfile <- readLines(file.path(temp_dir, "Dockerfile"))
+    expect_false(any(Dockerfile == "COPY . /"))
+    temp_dir <- .generate_temp_dir()
+    dockerize(rang_ok, output_dir = temp_dir, copy_all = TRUE)
+    Dockerfile <- readLines(file.path(temp_dir, "Dockerfile"))
+    expect_true(any(Dockerfile == "COPY . /"))
+})
+
 test_that("Dockerize R < 3.1 and >= 2.1", {
     rang_rio <- readRDS("../testdata/rang_rio_old.RDS")
     expect_equal(rang_rio$r_version, "3.0.1")
@@ -94,11 +134,16 @@ test_that("Dockerize R < 3.1 and >= 2.1", {
     dockerize(rang_rio, output_dir = temp_dir)
     expect_true(file.exists(file.path(temp_dir, "compile_r.sh")))
     Dockerfile <- readLines(file.path(temp_dir, "Dockerfile"))
-    expect_true(any(grepl("^RUN bash compile_r.sh 3.0.1", Dockerfile)))
+    expect_true(any(grepl("^RUN bash \\$COMPILE_PATH 3.0.1", Dockerfile)))
+    expect_equal(tail(Dockerfile, 1), "CMD [\"R\"]")
     ## lib
     dockerize(rang_rio, output_dir = temp_dir, lib = "abc")
     Dockerfile <- readLines(file.path(temp_dir, "Dockerfile"))
     expect_true(any(grepl("^RUN mkdir", Dockerfile)))
+    expect_equal(tail(Dockerfile, 1), "CMD [\"R\"]")
+    dockerize(rang_rio, output_dir = temp_dir, lib = "abc", post_installation_step = "RUN date")
+    Dockerfile <- readLines(file.path(temp_dir, "Dockerfile"))
+    expect_equal(Dockerfile[length(Dockerfile) -1], "RUN date")
 })
 
 test_that("Docker R < 1.3.1", {
@@ -162,7 +207,9 @@ test_that("material_dir, existing, no subdir, #23", {
     dockerize(graph, output_dir = temp_dir, materials_dir = fake_material_dir)
     expect_true(dir.exists(file.path(temp_dir, "materials")))
     expect_equal(list.files(file.path(temp_dir, "materials")), character(0))
-    expect_true(any(readLines(file.path(temp_dir, "Dockerfile")) == "COPY materials/ ./materials/"))
+    Dockerfile <- readLines(file.path(temp_dir, "Dockerfile"))
+    expect_true(any(Dockerfile == "COPY materials/ ./materials/"))
+    expect_equal(tail(Dockerfile, 1), "CMD [\"R\"]")
     ## Will only test post 3.1.0 from now on
     ## some files in fake_material_dir
     temp_dir <- .generate_temp_dir()
@@ -212,6 +259,15 @@ test_that("readme issue #50", {
     expect_true(any(grepl(temp_dir, content)))
 })
 
+test_that("#123 rstudio", {
+    graph <- readRDS("../testdata/graph.RDS")
+    temp_dir <- .generate_temp_dir()
+    dockerize(graph, output_dir = temp_dir, image = "rstudio")
+    dockerfile <- readLines(file.path(temp_dir, "Dockerfile"))
+    expect_true("EXPOSE 8787" %in% dockerfile)
+    expect_equal(tail(dockerfile, 1), "CMD [\"/init\"]")
+})
+
 test_that("dockerize with bioc #58", {
   rang_bioc <- readRDS("../testdata/rang_bioc.RDS")
   temp_dir <- .generate_temp_dir()
@@ -245,4 +301,66 @@ test_that(".check_tarball_path", {
     expect_error(.check_tarball_path("../testdata/askpass_1.1.tar.gz", "askpass"), NA)
     expect_error(.check_tarball_path("../testdata/gesis", "gesis", dir = TRUE))
     expect_error(.check_tarball_path("../testdata/askpass", "askpass", dir = TRUE), NA)
+})
+
+test_that("dockerize with inst/rang", {
+    rang_ok <- readRDS("../testdata/rang_ok.RDS")
+    temp_dir <- .generate_temp_dir()
+    dir.create(temp_dir)
+    use_rang(temp_dir, verbose = FALSE)
+    dockerize(rang_ok, output_dir = temp_dir, verbose = FALSE)
+    expect_true("inst/rang/rang.R" %in% list.files(temp_dir, recursive = TRUE))
+    expect_false("rang.R" %in% list.files(temp_dir, recursive = TRUE))
+    expect_true("Dockerfile" %in% list.files(temp_dir, recursive = TRUE))
+    dockerfile <- readLines(file.path(temp_dir, "Dockerfile"))
+    expect_true("COPY . /" %in% dockerfile) ## coerced
+    expect_true("ENV RANG_PATH inst/rang/rang.R" %in% dockerfile)
+})
+
+test_that(".normalize_docker_steps", {
+    expect_equal(.normalize_docker_steps("RUN apt-get install -y pandoc"), "RUN apt-get install -y pandoc")
+    expect_equal(.normalize_docker_steps("apt-get install -y pandoc"), "RUN apt-get install -y pandoc")
+    expect_equal(.normalize_docker_steps(c("apt-get install -y pandoc", "RUN apt-get install -y pandoc")),
+                 rep("RUN apt-get install -y pandoc", 2))
+    expect_equal(.normalize_docker_steps(recipes[["quarto"]]), "## install quarto (latest)\nRUN apt-get install -y curl git && curl -LO https://quarto.org/download/latest/quarto-linux-amd64.deb && dpkg -i quarto-linux-amd64.deb && quarto install tool tinytex && rm quarto-linux-amd64.deb")
+})
+
+test_that(".normalize_docker_steps integration", {
+    graph <- readRDS("../testdata/graph.RDS")
+    temp_dir <- .generate_temp_dir()
+    dockerize(graph, output_dir = temp_dir, post_installation_steps = c(recipes[["texlive"]], "RUN apt-get install -y make"))
+    dockerfile <- readLines(file.path(temp_dir, "Dockerfile"))
+    expect_true("RUN apt-get install -y make" %in% dockerfile)
+    expect_true("RUN apt-get install -y pandoc pandoc-citeproc texlive" %in% dockerfile)
+})
+
+test_that(".generate_wrapped_line", {
+    graph <- readRDS("../testdata/graph.RDS")
+    temp_dir <- .generate_temp_dir()
+    dockerize(graph, output_dir = temp_dir)
+    Dockerfile <- readLines(file.path(temp_dir, "Dockerfile"))
+    expect_equal(max(lengths(regmatches(Dockerfile, gregexpr("&&", Dockerfile)))), 1)
+    expect_true(all(grepl("^\t&&", Dockerfile[grepl("&&", Dockerfile)])))
+    graph <- readRDS("../testdata/rang_bioc.RDS")
+    temp_dir <- .generate_temp_dir()
+    dockerize(graph, output_dir = temp_dir)
+    Dockerfile <- readLines(file.path(temp_dir, "Dockerfile"))
+    expect_equal(max(lengths(regmatches(Dockerfile, gregexpr("&&", Dockerfile)))), 1)
+    expect_true(all(grepl("^\t&&", Dockerfile[grepl("&&", Dockerfile)])))
+    graph <- readRDS("../testdata/rang_rio_old.RDS")
+    temp_dir <- .generate_temp_dir()
+    dockerize(graph, output_dir = temp_dir)
+    Dockerfile <- readLines(file.path(temp_dir, "Dockerfile"))
+    expect_equal(max(lengths(regmatches(Dockerfile, gregexpr("&&", Dockerfile)))), 1)
+    expect_true(all(grepl("^\t&&", Dockerfile[grepl("&&", Dockerfile)])))
+})
+
+test_that(".generate_wrapped_line with actual outcome", {
+    skip_on_os("windows")
+    input <- c("RUN apt-get update -qq && apt-get install -y libpcre3-dev zlib1g-dev pkg-config libcurl4-openssl-dev && apt-get install -y libcurl4-openssl-dev libicu-dev libssl-dev make zlib1g-dev",
+               "RUN apt-get install -y curl git && curl -LO https://quarto.org/download/latest/quarto-linux-amd64.deb && dpkg -i quarto-linux-amd64.deb && quarto install tool tinytex")
+    temp_file <- tempfile()
+    writeLines(.generate_wrapped_line(input), temp_file)
+    expected_output <- readLines("../testdata/wrapped_line.txt")
+    expect_equal(readLines(temp_file), expected_output)
 })

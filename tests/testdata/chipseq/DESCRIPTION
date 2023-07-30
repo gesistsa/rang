@@ -1,0 +1,16 @@
+Package: chipseq
+Title: chipseq: A package for analyzing chipseq data
+Version: 1.49.0
+Author: Deepayan Sarkar, Robert Gentleman, Michael Lawrence, Zizhen Yao
+Description: Tools for helping process short read data for chipseq
+        experiments
+Depends: R (>= 2.10), methods, BiocGenerics (>= 0.1.0), S4Vectors (>= 0.17.25),
+        IRanges (>= 2.13.12), GenomicRanges (>= 1.31.8), ShortRead
+Imports: methods, stats, lattice, BiocGenerics, IRanges, GenomicRanges,
+        ShortRead
+Suggests: BSgenome, GenomicFeatures, TxDb.Mmusculus.UCSC.mm9.knownGene
+Maintainer: Bioconductor Package Maintainer
+        <maintainer@bioconductor.org>
+License: Artistic-2.0
+LazyLoad: yes
+biocViews: ChIPSeq, Sequencing, Coverage, QualityControl, DataImport

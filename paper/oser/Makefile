@@ -1,7 +1,10 @@
 output_file=reproduced.html
-r_cmd = "rmarkdown::render('materials/README.Rmd', output_file = '${output_file}')"
+r_cmd = "rmarkdown::render('materials/README.Rmd', \
+output_file = '${output_file}')"
 handle=oser
 local_file=${handle}_README.html
+
+.PHONY: all resolve build render export rebuild
 
 all: resolve build render
 	echo "finished"
