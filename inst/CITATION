@@ -3,8 +3,8 @@ citHeader("To cite rang in publications use:")
 
 bibentry(bibtype = "article",
          title = "rang: Reconstructing reproducible R computational environments",
-         journal = "arXiv preprint 2303.04758",
+         journal = "PLOS ONE",
          author = c(person("Chung-hong", "Chan"), person("David", "Schoch")),
          url = "https://github.com/chainsawriot/rang",
          year = 2023,
-         doi = "10.48550/arXiv.2303.04758")
+         doi = "10.1371/journal.pone.0286761")

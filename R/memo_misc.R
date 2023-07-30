@@ -5,7 +5,25 @@ NULL
 
 ## one hr
 
-.memo_search <- memoise::memoise(pkgsearch::cran_package_history, cache = cachem::cache_mem(max_age = 60 * 60))
+.cran_package_history <- function(package, max_retries = 5) {
+    n_retries <- 0
+    while(n_retries < max_retries) {
+        tryCatch({
+            return(pkgsearch::cran_package_history(package))
+        }, error = function(e) {
+            if (grepl("parse error: premature EOF", e$message)) {
+                n_retries <<- n_retries + 1
+                ##message("retrying in 2s...")
+                Sys.sleep(2)
+            } else {
+                stop(e)
+            }
+        })
+    }
+    stop("Can't query this package: ", package, call. = FALSE)
+}
+
+.memo_search <- memoise::memoise(.cran_package_history, cache = cachem::cache_mem(max_age = 60 * 60))
 
 .rver <- function() {
     suppressWarnings(jsonlite::fromJSON(readLines("https://api.r-hub.io/rversions/r-versions"), simplifyVector = TRUE))

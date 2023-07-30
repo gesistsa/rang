@@ -479,17 +479,17 @@ print.rang <- function(x, all_pkgs = FALSE, ...) {
     return(res)
 }
 
-.gh <- function(path,ref = NULL,...){
+.gh <- function(path,ref = NULL,...) {
     url <- httr::parse_url("https://api.github.com/")
     url <- httr::modify_url(url, path = path)
     token <- Sys.getenv("GITHUB_PAT", NA_character_)
-    if(is.na(token)){
+    if(is.na(token)) {
         token <- Sys.getenv("GITHUB_TOKEN", NA_character_)
     }
-    if(is.na(token)){
+    if(is.na(token)) {
         token <- ""
     }
-    config <- httr::add_headers(Accept = "application/vnd.github.v3+json",Authorization=token)
+    config <- httr::add_headers(Accept = "application/vnd.github.v3+json", Authorization = paste0("token ", token))
     params <- list(ref = ref,...)
     request_results <- httr::GET(httr::modify_url(url, path = path), config, query = params)
     status_code <- httr::status_code(request_results)

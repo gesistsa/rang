@@ -30,8 +30,8 @@ of R.
 Please cite this package as:
 
 Chan CH, Schoch D (2023) rang: Reconstructing reproducible R
-computational environments. arXiv
-preprint:[2303.04758](https://doi.org/10.48550/arXiv.2303.04758)
+computational environments. PLOS ONE
+<https://doi.org/10.1371/journal.pone.0286761>
 
 ## Installation
 
