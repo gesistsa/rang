@@ -39,7 +39,7 @@ This function provides the a clearly separated organizational structure. Compone
 }
 \references{
 \href{https://the-turing-way.netlify.app/reproducible-research/compendia.html}{The Turing Way: Research Compendia}
-Gorman, KB, Williams TD. and Fraser WR (2014). \href{http://dx.doi.org/10.1371/journal.pone.0090081}{Ecological Sexual Dimorphism and Environmental Variability within a Community of Antarctic Penguins (Genus Pygoscelis)}. PLoS ONE 9(3):e90081.
+Gorman, KB, Williams TD. and Fraser WR (2014). Ecological Sexual Dimorphism and Environmental Variability within a Community of Antarctic Penguins (Genus Pygoscelis). PLoS ONE 9(3):e90081. \doi{10.1371/journal.pone.0090081}
 }
 \seealso{
 \code{\link[=use_rang]{use_rang()}}

@@ -483,7 +483,7 @@ dockerize <- function(rang, output_dir, materials_dir = NULL, post_installation_
 #' @references
 #' [Apptainer / Singularity](https://apptainer.org/)
 #'
-#' Kurtzer, G. M., Sochat, V., & Bauer, M. W. (2017) [Singularity: Scientific containers for mobility of compute](https://doi.org/10.1371/journal.pone.0177459) PLOS ONE, 12(5):e0177459.
+#' Kurtzer, G. M., Sochat, V., & Bauer, M. W. (2017) Singularity: Scientific containers for mobility of compute. PLOS ONE, 12(5):e0177459. \doi{10.1371/journal.pone.0177459}
 #'
 #' [The Rocker Project](https://rocker-project.org)
 #'

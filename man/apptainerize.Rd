@@ -117,7 +117,7 @@ if (interactive()) {
 \references{
 \href{https://apptainer.org/}{Apptainer / Singularity}
 
-Kurtzer, G. M., Sochat, V., & Bauer, M. W. (2017) \href{https://doi.org/10.1371/journal.pone.0177459}{Singularity: Scientific containers for mobility of compute} PLOS ONE, 12(5):e0177459.
+Kurtzer, G. M., Sochat, V., & Bauer, M. W. (2017) Singularity: Scientific containers for mobility of compute. PLOS ONE, 12(5):e0177459. \doi{10.1371/journal.pone.0177459}
 
 \href{https://rocker-project.org}{The Rocker Project}
 
