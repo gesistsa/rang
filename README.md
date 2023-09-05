@@ -38,7 +38,7 @@ computational environments. PLOS ONE
 You can install the development version of rang like so:
 
 ``` r
-remotes::install_github("chainsawriot/rang")
+remotes::install_github("gesistsa/rang")
 ```
 
 Or the stable CRAN version
