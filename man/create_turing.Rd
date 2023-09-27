@@ -26,8 +26,6 @@ create_turing(
 
 \item{force}{logical, whether to overwrite files (\code{inst/rang/update.R}, \code{Makefile}, \code{.here}) if they
 exist.}
-
-\item{...}{additional parameters pass to \code{\link[=use_rang]{use_rang()}}}
 }
 \value{
 path, invisibly

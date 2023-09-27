@@ -58,7 +58,6 @@ use_rang <- function(path = ".", add_makefile = TRUE, add_here = TRUE,
 #' This `usethis`-style function creates an executable research compendium according to the Turing Way.
 #' @param path character, path to the project root
 #' @param add_rang logical, whether to run [use_rang()] to `path`
-#' @param ... additional parameters pass to [use_rang()]
 #' @inheritParams use_rang
 #' @return path, invisibly
 #' @seealso [use_rang()]
