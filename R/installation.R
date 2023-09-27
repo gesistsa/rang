@@ -148,7 +148,7 @@
 #' }
 #' }
 export_rang <- function(rang, path, rang_as_comment = TRUE, verbose = TRUE, lib = NA,
-                            cran_mirror = getOption("repos", "https://cloud.r-project.org/"), check_cran_mirror = TRUE,
+                            cran_mirror = "https://cran.r-project.org/", check_cran_mirror = TRUE,
                             bioc_mirror = "https://bioconductor.org/packages/") {
     if (.is_r_version_older_than(rang, "1.3.1")) {
         stop("`export_rang` doesn't support this R version (yet).")
@@ -448,7 +448,7 @@ export_renv <- function(rang, path = ".") {
 dockerize <- function(rang, output_dir, materials_dir = NULL, post_installation_steps = NULL,
                       image = c("r-ver", "rstudio", "tidyverse", "verse", "geospatial"),
                       rang_as_comment = TRUE, cache = FALSE, verbose = TRUE, lib = NA,
-                      cran_mirror = getOption("repos", "https://cloud.r-project.org/"), check_cran_mirror = TRUE,
+                      cran_mirror = "https://cran.r-project.org/", check_cran_mirror = TRUE,
                       bioc_mirror = "https://bioconductor.org/packages/",
                       no_rocker = FALSE,
                       debian_version = c("lenny", "squeeze", "wheezy", "jessie", "stretch"),

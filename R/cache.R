@@ -3,7 +3,7 @@
 NULL
 
 .query_mirror_validity <- function(mirror) {
-    if (mirror %in% c("https://cran.r-project.org/", "https://cloud.r-project.org/")) {
+    if (mirror == "https://cran.r-project.org/") {
         return(TRUE)
     }
     all_mirrors <- utils::getCRANmirrors()$URL
