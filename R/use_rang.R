@@ -58,7 +58,7 @@ use_rang <- function(path = ".", add_makefile = TRUE, add_here = TRUE,
 #' This `usethis`-style function creates an executable research compendium according to the Turing Way.
 #' @param path character, path to the project root
 #' @param add_rang logical, whether to run [use_rang()] to `path`
-#' @param ... additional parameters pass to [use_rang()]
+#' @inheritParams use_rang
 #' @return path, invisibly
 #' @seealso [use_rang()]
 #' @details
@@ -80,7 +80,7 @@ use_rang <- function(path = ".", add_makefile = TRUE, add_here = TRUE,
 #' [The Turing Way: Research Compendia](https://the-turing-way.netlify.app/reproducible-research/compendia.html)
 #' Gorman, KB, Williams TD. and Fraser WR (2014). Ecological Sexual Dimorphism and Environmental Variability within a Community of Antarctic Penguins (Genus Pygoscelis). PLoS ONE 9(3):e90081. \doi{10.1371/journal.pone.0090081}
 #' @export
-create_turing <- function(path, add_rang = TRUE, ...) {
+create_turing <- function(path, add_rang = TRUE, add_makefile = TRUE, add_here = TRUE, verbose = TRUE, force = FALSE) {
     if (isTRUE(dir.exists(path))) {
         stop("`path` exists.")
     }
@@ -91,7 +91,7 @@ create_turing <- function(path, add_rang = TRUE, ...) {
     dir.create(file.path(path, "figures"))
     dir.create(file.path(path, "data_clean"))
     if (isTRUE(add_rang)) {
-        use_rang(path, ...)
+        use_rang(path, add_makefile = add_makefile, add_here = add_here, verbose = verbose, force = force)
     }
     invisible(path)
 }

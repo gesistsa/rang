@@ -4,14 +4,28 @@
 \alias{create_turing}
 \title{Create executable research compendium according to the Turing Way}
 \usage{
-create_turing(path, add_rang = TRUE, ...)
+create_turing(
+  path,
+  add_rang = TRUE,
+  add_makefile = TRUE,
+  add_here = TRUE,
+  verbose = TRUE,
+  force = FALSE
+)
 }
 \arguments{
 \item{path}{character, path to the project root}
 
 \item{add_rang}{logical, whether to run \code{\link[=use_rang]{use_rang()}} to \code{path}}
 
-\item{...}{additional parameters pass to \code{\link[=use_rang]{use_rang()}}}
+\item{add_makefile}{logical, whether to insert a barebone \code{Makefile} in the project root.}
+
+\item{add_here}{logical, whether to insert a hidden \code{.here} file in the project root}
+
+\item{verbose}{logical, whether to print out messages}
+
+\item{force}{logical, whether to overwrite files (\code{inst/rang/update.R}, \code{Makefile}, \code{.here}) if they
+exist.}
 }
 \value{
 path, invisibly
