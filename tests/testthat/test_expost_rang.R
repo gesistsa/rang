@@ -64,7 +64,7 @@ test_that("integration of mirror selection to `export_rang` #18", {
     temp_r <- tempfile(fileext = ".R")
     export_rang(rang_ok, path = temp_r) ## cran_mirror = "https://cran.r-project.org/"
     x <- readLines(temp_r)
-    expect_true(any(grepl("^cran.mirror <- \"https://cran\\.r\\-project\\.org/\"", x)))
+    expect_true(any(grepl("^cran.mirror <- \"https://cloud\\.r\\-project\\.org/\"", x)))
     export_rang(rang_ok, path = temp_r, cran_mirror = "cran.r-project.org")
     x <- readLines(temp_r)
     expect_true(any(grepl("^cran.mirror <- \"https://cran\\.r\\-project\\.org/\"", x)))
@@ -83,20 +83,20 @@ test_that("integration of https to `export_rang` #20", {
     temp_r <- tempfile(fileext = ".R")
     export_rang(rang_ok, path = temp_r) ## cran_mirror = "https://cran.r-project.org/"
     x <- readLines(temp_r)
-    expect_true(any(grepl("^cran.mirror <- \"https://cran\\.r\\-project\\.org/\"", x)))
+    expect_true(any(grepl("^cran.mirror <- \"https://cloud\\.r\\-project\\.org/\"", x)))
     rang_ok <- readRDS("../testdata/rang_ok.RDS")
     rang_ok$r_version <- "3.3.0"
     temp_r <- tempfile(fileext = ".R")
     export_rang(rang_ok, path = temp_r) ## cran_mirror = "https://cran.r-project.org/"
     x <- readLines(temp_r)
-    expect_true(any(grepl("^cran.mirror <- \"https://cran\\.r\\-project\\.org/\"", x)))
+    expect_true(any(grepl("^cran.mirror <- \"https://cloud\\.r\\-project\\.org/\"", x)))
     rang_ok <- readRDS("../testdata/rang_ok.RDS")
     rang_ok$r_version <- "3.2.0"
     temp_r <- tempfile(fileext = ".R")
     export_rang(rang_ok, path = temp_r) ## cran_mirror = "https://cran.r-project.org/"
     x <- readLines(temp_r)
-    expect_false(any(grepl("^cran.mirror <- \"https://cran\\.r\\-project\\.org/\"", x)))
-    expect_true(any(grepl("^cran.mirror <- \"http://cran\\.r\\-project\\.org/\"", x)))
+    expect_false(any(grepl("^cran.mirror <- \"https://cloud\\.r\\-project\\.org/\"", x)))
+    expect_true(any(grepl("^cran.mirror <- \"http://cloud\\.r\\-project\\.org/\"", x)))
 })
 
 test_that("Docker R < 1.3.1", {

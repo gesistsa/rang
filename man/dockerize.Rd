@@ -17,7 +17,7 @@ dockerize(
   cache = FALSE,
   verbose = TRUE,
   lib = NA,
-  cran_mirror = "https://cran.r-project.org/",
+  cran_mirror = getOption("repos", "https://cloud.r-project.org/"),
   check_cran_mirror = TRUE,
   bioc_mirror = "https://bioconductor.org/packages/",
   no_rocker = FALSE,

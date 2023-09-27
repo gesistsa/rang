@@ -62,9 +62,9 @@ test_that("integration of #16 in dockerize()", {
 test_that("integration of #18 in dockerize()", {
     rang_ok <- readRDS("../testdata/rang_ok.RDS")
     temp_dir <- .generate_temp_dir()
-    dockerize(rang = rang_ok, output_dir = temp_dir) ## cran_mirror = "https://cran.r-project.org/"
+    dockerize(rang = rang_ok, output_dir = temp_dir)
     x <- readLines(file.path(temp_dir, "rang.R"))
-    expect_true(any(grepl("^cran.mirror <- \"https://cran\\.r\\-project\\.org/\"", x)))
+    expect_true(any(grepl("^cran.mirror <- \"https://cloud\\.r\\-project\\.org/\"", x)))
     dockerize(rang = rang_ok, output_dir = temp_dir, cran_mirror = "cran.r-project.org")
     x <- readLines(file.path(temp_dir, "rang.R"))
     expect_true(any(grepl("^cran.mirror <- \"https://cran\\.r\\-project\\.org/\"", x)))
@@ -81,20 +81,20 @@ test_that("integration of #20 to dockerize()", {
     rang_ok <- readRDS("../testdata/rang_ok.RDS")
     expect_equal(rang_ok$r_version, "4.2.2")
     temp_dir <- .generate_temp_dir()
-    dockerize(rang_ok, output_dir = temp_dir) ## cran_mirror = "https://cran.r-project.org/"
+    dockerize(rang_ok, output_dir = temp_dir)
     x <- readLines(file.path(temp_dir, "rang.R"))
-    expect_true(any(grepl("^cran.mirror <- \"https://cran\\.r\\-project\\.org/\"", x)))
+    expect_true(any(grepl("^cran.mirror <- \"https://cloud\\.r\\-project\\.org/\"", x)))
     rang_ok <- readRDS("../testdata/rang_ok.RDS")
     rang_ok$r_version <- "3.3.0"
-    dockerize(rang_ok, output_dir = temp_dir) ## cran_mirror = "https://cran.r-project.org/"
+    dockerize(rang_ok, output_dir = temp_dir)
     x <- readLines(file.path(temp_dir, "rang.R"))
-    expect_true(any(grepl("^cran.mirror <- \"https://cran\\.r\\-project\\.org/\"", x)))
+    expect_true(any(grepl("^cran.mirror <- \"https://cloud\\.r\\-project\\.org/\"", x)))
     rang_ok <- readRDS("../testdata/rang_ok.RDS")
     rang_ok$r_version <- "3.2.0"
-    dockerize(rang_ok, output_dir = temp_dir) ## cran_mirror = "https://cran.r-project.org/"
+    dockerize(rang_ok, output_dir = temp_dir)
     x <- readLines(file.path(temp_dir, "rang.R"))
-    expect_false(any(grepl("^cran.mirror <- \"https://cran\\.r\\-project\\.org/\"", x)))
-    expect_true(any(grepl("^cran.mirror <- \"http://cran\\.r\\-project\\.org/\"", x)))
+    expect_false(any(grepl("^cran.mirror <- \"https://cloud\\.r\\-project\\.org/\"", x)))
+    expect_true(any(grepl("^cran.mirror <- \"http://cloud\\.r\\-project\\.org/\"", x)))
 })
 
 test_that("sugars", {

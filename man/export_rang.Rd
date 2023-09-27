@@ -10,7 +10,7 @@ export_rang(
   rang_as_comment = TRUE,
   verbose = TRUE,
   lib = NA,
-  cran_mirror = "https://cran.r-project.org/",
+  cran_mirror = getOption("repos", "https://cloud.r-project.org/"),
   check_cran_mirror = TRUE,
   bioc_mirror = "https://bioconductor.org/packages/"
 )

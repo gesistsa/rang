@@ -9,4 +9,6 @@
 library(testthat)
 library(rang)
 
-test_check("rang")
+withr::with_options(new = list(repo = "https://cloud.r-project.org/"), {
+    test_check("rang")
+})
