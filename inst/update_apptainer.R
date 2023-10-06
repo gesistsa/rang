@@ -14,8 +14,8 @@ rang <- resolve(here::here(),
                 verbose = TRUE)
 
 ## You might want to edit `post_installation_steps` or `cache`
-dockerize(rang, output_dir = here::here(), verbose = TRUE, cache = TRUE,
-          post_installation_steps = c(recipes[["make"]], recipes[["texlive"]], recipes[["clean"]]),
-          insert_readme = FALSE,
-          copy_all = TRUE,
-          cran_mirror = cran_mirror)
+apptainerize(rang, output_dir = here::here(), verbose = TRUE, cache = TRUE,
+             post_installation_steps = c(recipes[["make"]], recipes[["texlive"]], recipes[["clean"]]),
+             insert_readme = FALSE,
+             copy_all = TRUE,
+             cran_mirror = cran_mirror)

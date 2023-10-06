@@ -9,7 +9,8 @@ use_rang(
   add_makefile = TRUE,
   add_here = TRUE,
   verbose = TRUE,
-  force = FALSE
+  force = FALSE,
+  apptainer = FALSE
 )
 }
 \arguments{
@@ -23,6 +24,8 @@ use_rang(
 
 \item{force}{logical, whether to overwrite files (\code{inst/rang/update.R}, \code{Makefile}, \code{.here}) if they
 exist.}
+
+\item{apptainer}{logical, whether to use apptainer. \code{FALSE} indicates using Docker}
 }
 \value{
 path, invisibly
