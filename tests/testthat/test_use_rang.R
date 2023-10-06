@@ -93,3 +93,19 @@ test_that("Existing components .here", {
     content <- readLines(file.path(tempdir, ".here"))
     expect_unequal(content, dummy) ## got overwritten
 })
+
+test_that("Apptainer", {
+    tempdir <- .generate_temp_dir()
+    dir.create(tempdir)
+    msg <- capture_messages(use_rang(tempdir, apptainer = TRUE))
+    expect_true(any(grepl("infrastructure", msg)))
+    tempdir <- .generate_temp_dir()
+    dir.create(tempdir)
+    expect_silent(use_rang(tempdir, verbose = FALSE, apptainer = TRUE))
+    expect_true(dir.exists(file.path(tempdir, "inst/rang")))
+    expect_true(file.exists(file.path(tempdir, "inst/rang/update.R")))
+    expect_true(file.exists(file.path(tempdir, ".here")))
+    expect_true(file.exists(file.path(tempdir, "Makefile")))
+    expect_true(any(grepl("apptainer", readLines(file.path(tempdir, "inst/rang/update.R")))))
+    expect_true(any(grepl("apptainer", readLines(file.path(tempdir, "Makefile")))))
+})
