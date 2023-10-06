@@ -377,7 +377,7 @@ export_renv <- function(rang, path = ".") {
                                               copy_all = copy_all)
         if (isTRUE(cache)) {
             .cache_rsrc(r_version = r_version, base_dir = base_dir,
-                        verbose = verbose)
+                        verbose = verbose, cran_mirror = cran_mirror)
             .cache_debian(debian_version = debian_version, base_dir = base_dir,
                           verbose = verbose)
         }

@@ -119,7 +119,7 @@ NULL
     invisible(base_dir)
 }
 
-.cache_rsrc <- function(r_version, base_dir, verbose) {
+.cache_rsrc <- function(r_version, base_dir, verbose, cran_mirror) {
     cache_dir <- file.path(base_dir, "cache", "rsrc")
     if (!dir.exists(cache_dir)) {
         dir.create(cache_dir, recursive = TRUE)
@@ -132,7 +132,7 @@ NULL
     }
     download_dir <- paste0("R-", major_version)
     tar_file <- paste0("R-", r_version, file_extension)
-    url <- paste0("https://cran.r-project.org/src/base/", download_dir, "/", tar_file)
+    url <- paste0(cran_mirror, "src/base/", download_dir, "/", tar_file)
     tar_path <- file.path(cache_dir, tar_file)
     download.file(url = url, destfile = tar_path, quiet = !verbose)
     if (!file.exists(tar_path)) {
