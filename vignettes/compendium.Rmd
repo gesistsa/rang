@@ -22,7 +22,7 @@ There has been several implementations of research compendium in the R ecosystem
 
 If you would like to create a new research compendium, you can either use any of the aforementioned formats; or to use `create_turing()` to create a structure suggested by The Turing Way. However, the idea is that `use_rang()`, a `usethis`-style function, is a general function that can work well with any structure. Just like `rang` in general, `use_rang()` is designed with interoperability in mind.
 
-# Case 1: Turing-style research compendium
+# Case 1: Create a Turing-style research compendium
 
 `create_turing()` can be used to create a general research compendium structure. The function generates an example structure like this:
 
@@ -52,30 +52,75 @@ More information about this can be found in [the Turing Way](https://the-turing-
 3. The scripts should generate intermediate data files in `data_intermediate`, figures in `figures`.
 4. After the code execution, a file for the manuscript is written with literate programming techniques. In this case, `Paper.Rmd`.
 
-The special part is `inst/rang/update.R`. The content of this file, by default, is like this:
+The special part is `inst/rang/update.R`. Running this script does the following things:
+
+1. It scans the current directory for all R packages used.
+2. It creates the infrastructure for building the Docker image to run the code.
+3. It caches all R packages.
+
+As written in the file, you should edit this script to cater for your own needs. You might also need to run this multiple time during the project lifecycle. You can also use the `Makefile` included to pull off some of the tasks. For example, you can run `make update` to run `inst/rang/update.R`. We highly recommend using GNU Make.
+
+The first step is to run `inst/rang/update.R`. You can either run it by `Rscript inst/rang/update.R` or `make update`. It will determine the snapshot date, scan the current directory for R dependencies, determine the dependency graph, generate `Dockerfile`, and cache R packages.
+
+After running it, you should have `Dockerfile` at the root level. In `inst/rang`, you should have `rang.R` and `cache`. Now, you can build the Docker image. We recommend using GNU Make and type `make build` (or `docker build -t yourprojectimg .`). And launch the Docker container (`make launch` or `docker run --rm --name "yourprojectcontainer" -ti yourprojectimg`). Another idea is to launch a Bash shell (`make bash` or `docker run --rm --name "yourprojectcontainer" --entrypoint bash -ti yourprojectimg`). Let's assume you take this approach.
+
+Inside the container, you will get all your files. And that container should have all the dependencies installed and you can run all the scripts right away. Let's say
+
+```bash
+Rscript code/00_preprocess.R 
+Rscript code/01_visualization.R 
+Rscript -e "rmarkdown::render('paper.Rmd')"
+```
+
+You can copy any artefact generated inside the container from **another shell instance**.
+
+```bash
+docker cp yourprojectcontainer:/paper.pdf ./
+```
+
+## Other ideas
+
+1. Add a readme: `usethis::use_readme()`
+2. Add a license: `usethis::use_mit_license()`
+3. Add the steps to run the code in the `Makefile`, but you'll need to rerun `make build`.
+4. Export the Docker image: `make export` and restore it `make restore`
+
+# Case 2: Enhance an existing research compendium
+
+Oser et al. shared their data as a zip file on [OSF](https://osf.io/y7cg5). You can obtain a copy using `osfr`.
+
+```bash
+Rscript -e "osfr::osf_download(osfr::osf_retrieve_file('https://osf.io/y7cg5'))"
+unzip meta-analysis\ replication\ files.zip
+cd meta-analysis
+```
+
+Suppose you want to use Apptainer to reproduce this research. At the root level of this compendium, run:
+
+```bash
+Rscript -e "rang::use_rang(apptainer = TRUE)" 
+```
+
+This compendium is slightly more tricky because we know that there is one undeclared GitHub package. You need to edit `inst/rang/update.R` yourself. In this case, you also want to fix the `snapshot_date`. Also, you know that "texlive" is not needed.
 
 ```r
-library(rang)
-library(here)
+pkgs <- as_pkgrefs(here::here())
+pkgs[pkgs == "cran::dmetar"] <- "MathiasHarrer/dmetar"
 
-cran_mirror <- "https://cloud.r-project.org/"
-
-## Please note that the project scanning result should be checked manually.
-## 1. Github packages must be added manually
-## as_pkgrefs(here::here())
-## 2. You might also want to change the `snapshot_date` to a fix date, when
-## the project is finalized.
-
-rang <- resolve(here::here(),
-                snapshot_date = NA,
+rang <- resolve(pkgs,
+                snapshot_date = "2021-08-11",
                 verbose = TRUE)
 
-## You might want to edit `post_installation_steps` or `cache`
-dockerize(rang, output_dir = here::here(), verbose = TRUE, cache = TRUE,
-          post_installation_steps = c(recipes[["make"]], recipes[["texlive"]], recipes[["clean"]]),
-          insert_readme = FALSE,
-          copy_all = TRUE,
-          cran_mirror = cran_mirror)
+apptainerize(rang, output_dir = here::here(), verbose = TRUE, cache = TRUE,
+             post_installation_steps = c(recipes[["make"]], recipes[["clean"]]),
+             insert_readme = FALSE,
+             copy_all = TRUE,
+             cran_mirror = cran_mirror)
 
 ```
 
+You can also edit `Makefile` to give the project a handle. Maybe "oser" is a good handle.
+
+```Makefile
+
+```
