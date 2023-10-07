@@ -1,0 +1,81 @@
+---
+title: "Create research compendia"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Create research compendia}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(rang)
+```
+
+There has been several implementations of research compendium in the R ecosystem already: `rrtools`, `rcompendium`, `template`, `manuscriptPackage`, and `ProjectTemplate`. The idea of `use_rang()` is not to create a new format. Instead, `use_rang()` can be used to **enhance** your current research compendium.
+
+If you would like to create a new research compendium, you can either use any of the aforementioned formats; or to use `create_turing()` to create a structure suggested by The Turing Way. However, the idea is that `use_rang()`, a `usethis`-style function, is a general function that can work well with any structure. Just like `rang` in general, `use_rang()` is designed with interoperability in mind.
+
+# Case 1: Turing-style research compendium
+
+`create_turing()` can be used to create a general research compendium structure. The function generates an example structure like this:
+
+```txt
+.
+├── bibliography.bib
+├── CITATION
+├── code
+│   ├── 00_preprocess.R
+│   └── 01_visualization.R
+├── data_clean
+├── data_raw
+│   └── penguins_raw.csv
+├── figures
+├── .here
+├── inst
+│   └── rang
+│       └── update.R
+├── Makefile
+└── paper.Rmd
+```
+
+More information about this can be found in [the Turing Way](https://the-turing-way.netlify.app/reproducible-research/compendia.html). But in general:
+
+1. Raw data should be in the directory `data_raw`
+2. Scripts should be in the directory `code`, preferably named in the execution order.
+3. The scripts should generate intermediate data files in `data_intermediate`, figures in `figures`.
+4. After the code execution, a file for the manuscript is written with literate programming techniques. In this case, `Paper.Rmd`.
+
+The special part is `inst/rang/update.R`. The content of this file, by default, is like this:
+
+```r
+library(rang)
+library(here)
+
+cran_mirror <- "https://cloud.r-project.org/"
+
+## Please note that the project scanning result should be checked manually.
+## 1. Github packages must be added manually
+## as_pkgrefs(here::here())
+## 2. You might also want to change the `snapshot_date` to a fix date, when
+## the project is finalized.
+
+rang <- resolve(here::here(),
+                snapshot_date = NA,
+                verbose = TRUE)
+
+## You might want to edit `post_installation_steps` or `cache`
+dockerize(rang, output_dir = here::here(), verbose = TRUE, cache = TRUE,
+          post_installation_steps = c(recipes[["make"]], recipes[["texlive"]], recipes[["clean"]]),
+          insert_readme = FALSE,
+          copy_all = TRUE,
+          cran_mirror = cran_mirror)
+
+```
+
