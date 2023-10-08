@@ -1,0 +1,141 @@
+---
+title: "Create research compendia"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Create research compendia}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+There has been several implementations of research compendium in the R ecosystem already: `rrtools`, `rcompendium`, `template`, `manuscriptPackage`, and `ProjectTemplate`. The idea of `use_rang()` is not to create a new format. Instead, `use_rang()` can be used to **enhance** your current research compendium.
+
+If you would like to create a new research compendium, you can either use any of the aforementioned formats; or to use `create_turing()` to create a structure suggested by The Turing Way. However, the idea is that `use_rang()`, a `usethis`-style function, is a general function that can work well with any structure. Just like `rang` in general, `use_rang()` is designed with interoperability in mind.
+
+# Case 1: Create a Turing-style research compendium
+
+`create_turing()` can be used to create a general research compendium structure. The function generates an example structure like this:
+
+```txt
+.
+├── bibliography.bib
+├── CITATION
+├── code
+│   ├── 00_preprocess.R
+│   └── 01_visualization.R
+├── data_clean
+├── data_raw
+│   └── penguins_raw.csv
+├── figures
+├── .here
+├── inst
+│   └── rang
+│       └── update.R
+├── Makefile
+└── paper.Rmd
+```
+
+More information about this can be found in [the Turing Way](https://the-turing-way.netlify.app/reproducible-research/compendia.html). But in general:
+
+1. Raw data should be in the directory `data_raw`
+2. Scripts should be in the directory `code`, preferably named in the execution order.
+3. The scripts should generate intermediate data files in `data_intermediate`, figures in `figures`.
+4. After the code execution, a file for the manuscript is written with literate programming techniques. In this case, `Paper.Rmd`.
+
+The special part is `inst/rang/update.R`. Running this script does the following things:
+
+1. It scans the current directory for all R packages used.
+2. It creates the infrastructure for building the Docker image to run the code.
+3. It caches all R packages.
+
+As written in the file, you should edit this script to cater for your own needs. You might also need to run this multiple time during the project lifecycle. You can also use the `Makefile` included to pull off some of the tasks. For example, you can run `make update` to run `inst/rang/update.R`. We highly recommend using GNU Make.
+
+The first step is to run `inst/rang/update.R`. You can either run it by `Rscript inst/rang/update.R` or `make update`. It will determine the snapshot date, scan the current directory for R dependencies, determine the dependency graph, generate `Dockerfile`, and cache R packages.
+
+After running it, you should have `Dockerfile` at the root level. In `inst/rang`, you should have `rang.R` and `cache`. Now, you can build the Docker image. We recommend using GNU Make and type `make build` (or `docker build -t yourprojectimg .`). And launch the Docker container (`make launch` or `docker run --rm --name "yourprojectcontainer" -ti yourprojectimg`). Another idea is to launch a Bash shell (`make bash` or `docker run --rm --name "yourprojectcontainer" --entrypoint bash -ti yourprojectimg`). Let's assume you take this approach.
+
+Inside the container, you will get all your files. And that container should have all the dependencies installed and you can run all the scripts right away. Let's say
+
+```bash
+Rscript code/00_preprocess.R 
+Rscript code/01_visualization.R 
+Rscript -e "rmarkdown::render('paper.Rmd')"
+```
+
+You can copy any artefact generated inside the container from **another shell instance**.
+
+```bash
+docker cp yourprojectcontainer:/paper.pdf ./
+```
+
+## Other ideas
+
+1. Add a readme: `usethis::use_readme()`
+2. Add a license: `usethis::use_mit_license()`
+3. Add the steps to run the code in the `Makefile`, but you'll need to rerun `make build`.
+4. Export the Docker image: `make export` and restore it `make restore`
+
+# Case 2: Enhance an existing research compendium
+
+Oser et al. shared their data as a zip file on [OSF](https://osf.io/y7cg5). You can obtain a copy using `osfr`.
+
+```bash
+Rscript -e "osfr::osf_download(osfr::osf_retrieve_file('https://osf.io/y7cg5'))"
+unzip meta-analysis\ replication\ files.zip
+cd meta-analysis
+```
+
+Suppose you want to use Apptainer to reproduce this research. At the root level of this compendium, run:
+
+```bash
+Rscript -e "rang::use_rang(apptainer = TRUE)" 
+```
+
+This compendium is slightly more tricky because we know that there is one undeclared GitHub package. You need to edit `inst/rang/update.R` yourself. In this case, you also want to fix the `snapshot_date`. Also, you know that "texlive" is not needed.
+
+```r
+pkgs <- as_pkgrefs(here::here())
+pkgs[pkgs == "cran::dmetar"] <- "MathiasHarrer/dmetar"
+
+rang <- resolve(pkgs,
+                snapshot_date = "2021-08-11",
+                verbose = TRUE)
+
+apptainerize(rang, output_dir = here::here(), verbose = TRUE, cache = TRUE,
+             post_installation_steps = c(recipes[["make"]], recipes[["clean"]]),
+             insert_readme = FALSE,
+             copy_all = TRUE,
+             cran_mirror = cran_mirror)
+
+```
+
+You can also edit `Makefile` to give the project a handle. Maybe "oser" is a good handle.
+
+```Makefile
+handle=oser
+.PHONY: update build launch bash daemon stop export
+```
+
+Similar to above, we first run `make build` to build the Apptainer image. As the handle is "oser", it generates an Apptainer image called "oserimg.sif".
+
+Similar to above, you can now launch a bash shell and render the RMarkdown file.
+
+```bash
+make bash
+Rscript -e "rmarkdown::render('README.Rmd', output_file = 'output.html')"
+exit
+```
+
+Upon you exit, you have "output.html" in your host machine. You don't need to transfer the file from the container. Please note that this feature is handy but can also have a [negative impact to reproducibility](https://the-turing-way.netlify.app/reproducible-research/renv/renv-containers#words-of-warning).
+
+# What to share?
+
+It is important to know that there are at least two levels of reproducibility: 1) Whether your computational environment can be reproducibly reconstructed, and 2) Whether your analysis is reproducibility. The discussion of reproducibility usually conflates the two. We want to focus on the 2nd goal.
+
+If your goal is to ensure other researchers can have a compatible computational environment that can (re)run your code, The Turing Way [recommends](https://the-turing-way.netlify.app/reproducible-research/renv/renv-containers#long-term-storage-of-container-images) that one should share the research compendium and the container images, not just the recipes e.g. `Dockerfile` or `container.def`. There are many moving parts during the reconstruction, e.g. whether the source Docker image is available and usable. As long as Docker or Apptainer support the same image format (or allow upgrade the current format), sharing the images is the most future proof method.
