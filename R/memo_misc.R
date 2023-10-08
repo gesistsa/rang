@@ -110,7 +110,7 @@ NULL
 
 ## internal data generation
 ## ---
-## ### Supported OS Versions
+### Supported OS Versions
 ## supported_os <- c("trusty" = "ubuntu-14.04", "xenial" = "ubuntu-16.04", "bionic" = "ubuntu-18.04", "focal" = "ubuntu-20.04", "centos-6", "centos-7", "centos-8", "redhat-6", "redhat-7", "redhat-8")
 ## ### R version history
 ## cached_rver <- .rver()
