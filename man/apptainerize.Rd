@@ -9,7 +9,7 @@
 \alias{singularize_rang}
 \alias{singularise}
 \alias{singularise_rang}
-\title{Create an Apptainer/Singularity definition file of The Resolved Result}
+\title{Create an Apptainer/Singularity Definition File of The Resolved Result}
 \usage{
 apptainerize(
   rang,

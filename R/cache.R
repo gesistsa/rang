@@ -85,7 +85,7 @@ NULL
 }
 
 .cache_pkgs <- function(rang, base_dir, cran_mirror, bioc_mirror, verbose) {
-    installation_order <- .generate_installation_order(rang)
+    installation_order <- generate_installation_order(rang)
     cache_dir <- file.path(base_dir, "cache", "rpkgs")
     if (!dir.exists(cache_dir)) {
         dir.create(cache_dir, recursive = TRUE)

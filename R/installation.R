@@ -7,7 +7,22 @@
     }
 }
 
-.generate_installation_order <- function(rang) {
+#' Create a Data Frame of The Resolved Result
+#' This function exports the results from [resolve()] to a data frame, which each row represents one installation step. The order of rows is the installation order. By installing packages in the specified order, one can install all the resolved packages without conflicts.
+#' @inheritParams export_rang
+#' @return A data frame ordered by installation order.
+#' @references
+#' Ripley, B. (2005) [Packages and their Management in R 2.1.0.](https://cran.r-project.org/doc/Rnews/Rnews_2005-1.pdf) R News, 5(1):8--11.
+#' @examples
+#' \donttest{
+#' if (interactive()) {
+#'     graph <- resolve(pkgs = c("openNLP", "LDAvis", "topicmodels", "quanteda"),
+#'                     snapshot_date = "2020-01-16")
+#'     generate_installation_order(graph)
+#' }
+#' }
+#' @export
+generate_installation_order <- function(rang) {
     dep <- fastmap::fastmap()
     version <- fastmap::fastmap()
     uid <- fastmap::fastmap()
@@ -133,6 +148,7 @@
 #' @param check_cran_mirror logical, whether to check the CRAN mirror
 #' @param bioc_mirror character, which Bioconductor mirror to use
 #' @return `path`, invisibly
+#' @seealso [generate_installation_order()]
 #' @details The idea behind this is to determine the installation order of R packages locally. Then, the installation script can be deployed to another
 #' fresh R session to install R packages. [dockerize()] and [apptainerize()] are more reasonable ways because a fresh R session with all system requirements
 #' is provided. The current approach does not work in R < 2.1.0.
@@ -166,7 +182,7 @@ export_rang <- function(rang, path, rang_as_comment = TRUE, verbose = TRUE, lib 
     if (.is_r_version_older_than(rang, "3.3")) { #20
         cran_mirror <- .normalize_url(cran_mirror, https = FALSE)
     }
-    installation_order <- .generate_installation_order(rang)
+    installation_order <- generate_installation_order(rang)
     file.create(path)
     con <- file(path, open="w")
     if (.is_r_version_older_than(rang, "2.1")) {
@@ -219,7 +235,7 @@ export_renv <- function(rang, path = ".") {
         warning("Nothing to export.")
         return(invisible(NULL))
     }
-    pkg_df <- .generate_installation_order(rang)
+    pkg_df <- generate_installation_order(rang)
     pkg_list <- vector(mode = "list",length = nrow(pkg_df))
     names(pkg_list) <- pkg_df$x
     for(i in seq_len(nrow(pkg_df))){
@@ -234,7 +250,7 @@ export_renv <- function(rang, path = ".") {
             pkg_list[[i]][["RemoteType"]] <- "GitHub"
             pkg_list[[i]][["RemoteHost"]] <- "api.github.com"
             pkg_list[[i]][["RemoteRepo"]] <- pkg_df$x[i]
-            pkg_list[[i]][["RemoteUsername"]]<- strsplit(pkg_df$handle[i],"/")[[1]][1]
+            pkg_list[[i]][["RemoteUsername"]] <- strsplit(pkg_df$handle[i],"/")[[1]][1]
             pkg_list[[i]][["RemoteRef"]] = "HEAD"
             pkg_list[[i]][["RemoteSha"]] = pkg_df$uid[i]
         #   pkg_list[[i]][["Requirements"]] <- c()
@@ -467,7 +483,7 @@ dockerize <- function(rang, output_dir, materials_dir = NULL, post_installation_
                   output_file = "Dockerfile")
 }
 
-#' Create an Apptainer/Singularity definition file of The Resolved Result
+#' Create an Apptainer/Singularity Definition File of The Resolved Result
 #'
 #' This function exports the result from [resolve()] to an Apptainer/Singularity definition file. For R version >= 3.1.0, the file is based on the versioned Rocker Docker image.
 #' For R version < 3.1.0, the Apptainer/Singularity definition is based on Debian and it compiles R from source.

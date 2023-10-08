@@ -57,3 +57,6 @@ if (interactive()) {
 \references{
 Ripley, B. (2005) \href{https://cran.r-project.org/doc/Rnews/Rnews_2005-1.pdf}{Packages and their Management in R 2.1.0.} R News, 5(1):8--11.
 }
+\seealso{
+\code{\link[=generate_installation_order]{generate_installation_order()}}
+}
