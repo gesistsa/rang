@@ -16,7 +16,7 @@ knitr::opts_chunk$set(
 # rang <img src="man/figures/rang_logo.svg" align="right" height="200" />
 
 <!-- badges: start -->
-[![R-CMD-check](https://github.com/chainsawriot/rang/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/chainsawriot/rang/actions/workflows/R-CMD-check.yaml)
+[![R-CMD-check](https://github.com/gesistsa/rang/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/gesistsa/rang/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
 The goal of rang (Reconstructing Ancient Number-crunching Gears) [^gesis] is to obtain the dependency graph of R packages at a specific time point.
