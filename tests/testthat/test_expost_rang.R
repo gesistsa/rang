@@ -132,11 +132,11 @@ test_that("empty rang export, #75", {
 test_that("prevent infinite loop, #81", {
     graph <- readRDS("../testdata/rang_ok.RDS")
     graph$ranglets[[1]]$deps[[2]] <- NULL
-    expect_error(.generate_installation_order(graph), "cran::LDAvis")
+    expect_error(generate_installation_order(graph), "cran::LDAvis")
     graph <- readRDS("../testdata/rang_ok.RDS")
     graph$ranglets[[1]]$original$y <- "S4Vectors"
     graph$ranglets[[1]]$original$y_pkgref <- "bioc::S4Vectors"
-    expect_error(.generate_installation_order(graph), "cran::LDAvis")
+    expect_error(generate_installation_order(graph), "cran::LDAvis")
 })
 
 test_that("renv export cran", {
@@ -183,10 +183,10 @@ test_that("renv export unknown source", {
 
 test_that("Super ancient special packages", {
     graph <- readRDS("../testdata/superancientsna.RDS")
-    expect_error(.generate_installation_order(graph), NA)
+    expect_error(generate_installation_order(graph), NA)
 })
 
 test_that("base as a dependency, issue 144", {
     graph <- readRDS("../testdata/dt.RDS")
-    expect_error(.generate_installation_order(graph), NA)
+    expect_error(generate_installation_order(graph), NA)
 })
