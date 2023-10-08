@@ -7,10 +7,10 @@ update:
 build: container.def
 	apptainer build "${handle}img.sif" container.def
 launch:
-	apptainer run "${handle}img.sif" R
+	-apptainer run "${handle}img.sif" R
 bash:
-	apptainer shell "${handle}img.sif"
+	-apptainer shell "${handle}img.sif"
 daemon:
-	apptainer instance start "${handle}img.sif" "${handle}container"
+	-apptainer instance start "${handle}img.sif" "${handle}container"
 stop:
-	apptainer instance stop "${handle}container"
+	-apptainer instance stop "${handle}container"

@@ -7,13 +7,13 @@ update:
 build: Dockerfile
 	docker build -t ${handle}img .
 launch:
-	docker run --rm --name "${handle}container" -ti ${handle}img
+	-docker run --rm --name "${handle}container" -ti ${handle}img
 bash:
-	docker run --rm --name "${handle}container" --entrypoint bash -ti ${handle}img
+	-docker run --rm --name "${handle}container" --entrypoint bash -ti ${handle}img
 daemon:
-	docker run -d --rm --name "${handle}container" -ti ${handle}img
+	-docker run -d --rm --name "${handle}container" -ti ${handle}img
 stop:
-	docker stop ${handle}container
+	-docker stop ${handle}container
 export:
 	docker save ${handle}img | gzip > ${handle}img.tar.gz
 rebuild: ${handle}img.tar.gz
