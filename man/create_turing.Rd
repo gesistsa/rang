@@ -27,11 +27,8 @@ create_turing(
 
 \item{force}{logical, whether to overwrite files (\code{inst/rang/update.R}, \code{Makefile}, \code{.here}) if they
 exist.}
-<<<<<<< HEAD
-=======
 
 \item{apptainer}{logical, whether to use apptainer. \code{FALSE} indicates using Docker}
->>>>>>> turing2
 }
 \value{
 path, invisibly
