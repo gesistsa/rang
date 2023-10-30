@@ -1,0 +1,232 @@
+---
+title: "rang"
+subtitle: "(Re)constructing reproducible R computational environment"
+author: Chung-hong Chan, David Schoch
+institute: GESIS
+date: "2023-11-02"
+date-format: "YYYY-MM-DD"
+footer: "rang"
+embed-resources: true
+format: fakegesis-revealjs
+---
+
+## Case study
+
+Are these analysis steps performed on the same dataset **consistently produce the same answer**?
+
+```r
+require(dplyr)
+data <- data.frame(id = c(1,1,2), outcome = c(TRUE, TRUE, FALSE))
+distinct(data, id) %>%
+    select(outcome)
+```
+
+## On my own machine: dplyr 1.1.2
+
+```{r}
+#| echo: true
+#| error: true
+require(dplyr)
+data <- data.frame(id = c(1,1,2), outcome = c(TRUE, TRUE, FALSE))
+distinct(data, id) %>%
+    select(outcome)
+```
+
+## Also on my own machine
+
+![](dplyr.png)
+
+## Time machine
+
+![](dplyr1.png)
+
+::: {style="font-size: 0.3em"}
+Source: [https://dplyr.tidyverse.org/news/index.html#dplyr-050](https://dplyr.tidyverse.org/news/index.html#dplyr-050)
+:::
+
+
+::: {.notes}
+Before Tidyverse (2016-09-09). Trump and Brexit too.
+:::
+
+
+## Method 1
+
+Code rewrite
+
+```{.r code-line-numbers="|3"}
+require(dplyr)
+data <- data.frame(id = c(1,1,2), outcome = c(TRUE, TRUE, FALSE))
+distinct(data, id, .keep_all = TRUE) %>%
+    select(outcome)
+```
+
+::: {.notes}
+You'll need to edit your code when there are new breaking changes
+:::
+
+## Method 2
+
+Install the old version
+
+```{.r code-line-numbers="|1"}
+remotes::install_version("dplyr", "0.4.3")
+require(dplyr)
+data <- data.frame(id = c(1,1,2), outcome = c(TRUE, TRUE, FALSE))
+distinct(data, id) %>%
+    select(outcome)
+```
+
+::: {.notes}
+It installs the latest recursive dependencies
+:::
+
+## (Non-)method 3
+
+Using ~~MRAN~~ Posit Public Package Manager (P3M)
+
+```{.r code-line-numbers="|1,2"}
+p3m <- "https://packagemanager.posit.co/cran/2016-01-10"
+options(repos = c(REPO_NAME = p3m))
+install.packages("dplyr") # install 0.4.3?
+
+require(dplyr)
+data <- data.frame(id = c(1,1,2), outcome = c(TRUE, TRUE, FALSE))
+distinct(data, id) %>%
+    select(outcome)
+```
+
+::: {.notes}
+It won't work because P3M can only go as far back as 2017 Oct 10.
+It installs the "time-appropriate" recursive dependencies. But it mixes old packages with your current system library.
+Of course, you can use install.packages("dplyr", lib = "xyz")
+:::
+
+## (Non-)method 4
+
+Using `renv` 1.0.0
+
+```{.r code-line-numbers="|4"}
+require(renv)
+renv::init() ## restart
+install.packages("dplyr")
+renv::checkout(date = "2016-01-10")
+renv::snapshot()
+require(dplyr)
+data <- data.frame(id = c(1,1,2), outcome = c(TRUE, TRUE, FALSE))
+distinct(data, id) %>%
+    select(outcome)
+```
+
+::: {.notes}
+It won't work also because P3M can only go as far back as 2017 Oct 10.
+:::
+
+## Our solution: rang
+
+* Date-based pinning (like P3M, `renv`)
+* Create container images (like Rocker)
+* Support CRAN, Bioconductor, GitHub, & local packages
+* Resolve system dependencies, e.g. `libxml2`
+* Depend on r-hub, CRAN, Bioconductor, GitHub API; doesn't use P3M
+* Interoperability with `renv` (lockfile, project scanning)
+* Can go as far back as **2001-08-31** (or R 1.3.1)
+
+::: {.notes}
+We are talking about Tony Blair and Bush 43 (and that's two weeks before 911)
+:::
+
+## Usage: Resolve
+
+Resolve the dependency graph
+
+```r
+library(rang)
+graph <- resolve(pkgs = c("dplyr"), snapshot_date = "2016-01-10")
+graph
+```
+
+```{r}
+#| echo: false
+library(rang)
+readRDS("dplyr.RDS")
+```
+
+## Usage: Dockerize
+
+```r
+dockerize(rang = graph,
+          output_dir = "~/dplyr_example",
+          no_rocker = TRUE,  # recommended
+          cache = TRUE) # recommended
+```
+
+## What's inside
+
+```text
+├── cache
+│   ├── debian
+│   │   └── rootfs.tar.xz
+│   ├── rpkgs
+│   │   ├── assertthat_0.1.tar.gz
+│   │   ├── BH_1.60.0-1.tar.gz
+│   │   ├── DBI_0.3.1.tar.gz
+│   │   ├── dplyr_0.4.3.tar.gz
+│   │   ├── lazyeval_0.1.10.tar.gz
+│   │   ├── magrittr_1.5.tar.gz
+│   │   ├── R6_2.1.1.tar.gz
+│   │   └── Rcpp_0.12.2.tar.gz
+│   └── rsrc
+│       └── R-3.2.3.tar.gz
+├── compile_r.sh
+├── Dockerfile
+├── rang.R
+└── README
+
+4 directories, 14 files
+```
+
+## Dockerfile
+
+```Dockerfile
+FROM scratch
+ADD /cache/debian/rootfs.tar.xz /
+ENV TZ UTC
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
+	&& echo $TZ > /etc/timezone \
+	&& apt-get update -qq \
+	&& apt-get install wget locales build-essential r-base-dev  -y
+ENV RANG_PATH /rang.R
+ENV COMPILE_PATH /compile_r.sh
+ENV CACHE_PATH /cache
+COPY rang.R /rang.R
+COPY compile_r.sh /compile_r.sh
+COPY cache/rpkgs /cache/rpkgs
+COPY cache/rsrc /cache/rsrc
+RUN apt-get update -qq \
+	&& apt-get install -y libpcre3-dev zlib1g-dev pkg-config libcurl4-openssl-dev
+RUN bash $COMPILE_PATH 3.2.3
+CMD ["R"]
+```
+
+## Build and launch
+
+```sh
+cd ~/dplyr_example
+docker build -t dplyr .
+docker run --rm --name "dplyr" -ti dplyr
+```
+
+. . .
+
+![](dplyr.png)
+
+# Summary
+
+* code edit
+* Install old version
+* renv
+* P3M
+* rang
+* New development: evercran (CRAN snapshot and versioned Docker images)
+
