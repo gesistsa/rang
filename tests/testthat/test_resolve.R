@@ -24,6 +24,50 @@ test_that(".check_local_in_pkgrefs", {
     expect_error(suppressWarnings(.check_local_in_pkgrefs(c("local::../testdata/issue39.RDS", "cran::rtoot"))))
 })
 
+test_that(".query_rver (and semver argument)", {
+    expect_equal(.query_rver(parsedate::parse_date("2000-02-29 10:00:00")), "1.0")
+    expect_equal(.query_rver(parsedate::parse_date("2000-02-29 10:00:00"), semver = TRUE), "1.0.0")
+})
+
+test_that(".generate_pubdate", {
+    a <- c("a", "b")
+    b <- c("c", "d")
+    c <- c("e", "f")
+    expect_equal(.generate_pubdate(data.frame(date = a)), a)
+    expect_equal(.generate_pubdate(data.frame(date = a, crandb_file_date = b)), a)
+    expect_equal(.generate_pubdate(data.frame(crandb_file_date = b)), b)
+    x <- data.frame(`Date/Publication` = a, crandb_file_date = b)
+    colnames(x)[1] <- "Date/Publication"
+    expect_equal(.generate_pubdate(x), a)
+    ## "Date/Publication has a higher priority"
+    x <- data.frame(`Date/Publication` = a, date = b)
+    colnames(x)[1] <- "Date/Publication"
+    expect_equal(.generate_pubdate(x), a)
+    ## NA attack
+    x <- data.frame(`Date/Publication` = a, date = b)
+    colnames(x)[1] <- "Date/Publication"
+    x[1, 1] <- NA
+    expect_equal(.generate_pubdate(x), b)
+    x <- data.frame(`Date/Publication` = a, date = b, crandb_file_date = c)
+    colnames(x)[1] <- "Date/Publication"
+    x[1, 1] <- NA
+    x[2, 2] <- NA
+    expect_equal(.generate_pubdate(x), c)
+    ## single
+    expect_equal(.generate_pubdate(data.frame(date = "a")), "a")
+    expect_equal(.generate_pubdate(data.frame(date = "a", crandb_file_date = "b")), "a")
+    expect_equal(.generate_pubdate(data.frame(crandb_file_date = "a")), "a")
+    x <- data.frame(`Date/Publication` = NA, date = NA, crandb_file_date = "c")
+    colnames(x)[1] <- "Date/Publication"
+    expect_equal(.generate_pubdate(x), "c")
+    x <- data.frame(`Date/Publication` = "a", date = NA, crandb_file_date = "c")
+    colnames(x)[1] <- "Date/Publication"
+    expect_equal(.generate_pubdate(x), "a")
+    x <- data.frame(`Date/Publication` = NA, date = "b", crandb_file_date = "c")
+    colnames(x)[1] <- "Date/Publication"
+    expect_equal(.generate_pubdate(x), "b")
+})
+
 ## The following are real tests. Even with memoisation, please keep at minimum
 
 test_that("normal", {
