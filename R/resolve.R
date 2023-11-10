@@ -1,11 +1,14 @@
-.query_rver <- function(snapshot_date) {
+.query_rver <- function(snapshot_date, semver = FALSE) {
     if (snapshot_date < attr(cached_rver, "newest_date")) {
         allvers <- cached_rver
     } else {
         allvers <- .memo_rver()
     }
     allvers$date <- parsedate::parse_date(allvers$date)
-    utils::tail(allvers[allvers$date < snapshot_date,], 1)$version
+    if (!semver) {
+        return(utils::tail(allvers[allvers$date < snapshot_date,], 1)$version)
+    }
+    return(utils::tail(allvers[allvers$date < snapshot_date,], 1)$semver)
 }
 
 .query_biocver <- function(snapshot_date) {
@@ -41,10 +44,23 @@
            })
 }
 
+.generate_pubdate <- function(search_res) {
+    ## there are three different date columns: "date", "Date/Publication", and "crandb_file_date"
+    ## But they have different problems: "date" and "Date/Publication" are not always available and complete, and they are
+    ## the most accurate; "crandb_file_date" is always available, but not accurate
+    if (!is.null(search_res$`Date/Publication`) && all(!is.na(search_res$`Date/Publication`))) {
+        return(search_res$`Date/Publication`)
+    }
+    if (!is.null(search_res$date) && all(!is.na(search_res$date))) {
+        return(search_res$date)
+    }
+    return(search_res$crandb_file_date)
+}
+
 .query_snapshot_dependencies_cran <- function(handle = "rtoot", snapshot_date = "2022-12-10", bioc_version = NULL) {
     snapshot_date <- parsedate::parse_date(snapshot_date)
     search_res <- .memo_search(handle)
-    search_res$pubdate <- parsedate::parse_date(search_res$crandb_file_date)
+    search_res$pubdate <- parsedate::parse_date(.generate_pubdate(search_res))
     snapshot_versions <- search_res[search_res$pubdate <= snapshot_date,]
     if (nrow(snapshot_versions) == 0) {
         stop("No snapshot version exists for ", handle, ".",  call. = FALSE)
