@@ -73,3 +73,32 @@
     }
     return(containerfile_content)
 }
+
+.generate_evercran_dockerfile_content <- function(r_version, lib, sysreqs_cmd, cache,
+                                                  post_installation_steps = NULL,
+                                                  rel_dir = "",
+                                                  copy_all = FALSE) {
+    rang_path <- file.path(rel_dir, "rang.R")
+    cache_path <- file.path(rel_dir, "cache")
+    containerfile_content <- list(
+        ## evercran only works with semver
+        FROM = c(paste0("FROM ghcr.io/r-hub/evercran/", r_version)),
+        ENV = c(paste0("ENV RANG_PATH ", rang_path)),
+        COPY = c(paste0("COPY rang.R ", rang_path)),
+        RUN = c(paste("RUN", sysreqs_cmd)),
+        CMD = c("CMD [\"R\"]"))
+    if (!is.na(lib)) {
+        containerfile_content$RUN <- append(containerfile_content$RUN, paste0("RUN mkdir ", lib, " && Rscript $RANG_PATH"))
+    } else {
+        containerfile_content$RUN <- append(containerfile_content$RUN, "RUN R --no-save < $RANG_PATH")
+    }
+    if (isTRUE(cache)) {
+        containerfile_content$COPY <- append(containerfile_content$COPY, paste0("COPY cache ", cache_path))
+        containerfile_content$ENV <- append(containerfile_content$ENV, paste0("ENV CACHE_PATH ", cache_path))
+    }
+    containerfile_content$RUN <- append(containerfile_content$RUN, .normalize_docker_steps(post_installation_steps))
+    if (isTRUE(copy_all)) {
+        containerfile_content$COPY <- c("COPY . /")
+    }
+    return(containerfile_content)
+}

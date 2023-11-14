@@ -276,23 +276,23 @@ test_that("dockerize with bioc #58", {
   expect_true(any(grepl("bioc.mirror",x)))
 })
 
-test_that("no_rocker #67", {
+test_that("method debian #67", {
     rang_ok <- readRDS("../testdata/rang_ok.RDS")
     temp_dir <- .generate_temp_dir()
-    dockerize(rang = rang_ok, output_dir = temp_dir) ## no_rocker = FALSE
+    dockerize(rang = rang_ok, output_dir = temp_dir)
     expect_false(file.exists(file.path(temp_dir, "compile_r.sh")))
     expect_false(any(readLines(file.path(temp_dir, "Dockerfile")) == "FROM debian/eol:lenny"))
     temp_dir <- .generate_temp_dir()
-    dockerize(rang = rang_ok, output_dir = temp_dir, no_rocker = TRUE) ## debian_version = lenny
+    dockerize(rang = rang_ok, output_dir = temp_dir, method = "debian") ## debian_version = lenny
     expect_true(file.exists(file.path(temp_dir, "compile_r.sh")))
     expect_true(any(readLines(file.path(temp_dir, "Dockerfile")) == "FROM debian/eol:lenny"))
     temp_dir <- .generate_temp_dir()
-    dockerize(rang = rang_ok, output_dir = temp_dir, no_rocker = TRUE,
+    dockerize(rang = rang_ok, output_dir = temp_dir, method = "debian",
               debian_version = "jessie")
     expect_true(file.exists(file.path(temp_dir, "compile_r.sh")))
     expect_true(any(readLines(file.path(temp_dir, "Dockerfile")) == "FROM debian/eol:jessie"))
     temp_dir <- .generate_temp_dir()
-    expect_error(dockerize(rang = rang_ok, output_dir = temp_dir, no_rocker = TRUE,
+    expect_error(dockerize(rang = rang_ok, output_dir = temp_dir, method = "debian",
               debian_version = "3.11"))
 })
 
