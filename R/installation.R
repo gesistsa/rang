@@ -498,6 +498,7 @@ export_renv <- function(rang, path = ".") {
 #' @param skip_r17 logical, whether to skip R 1.7.x. Currently, it is not possible to compile R 1.7.x (R 1.7.0 and R 1.7.1) with the method provided by  `rang`. It affects `snapshot_date` from 2003-04-16 to 2003-10-07. When `skip_r17` is TRUE and `snapshot_date` is within the aforementioned range, R 1.8.0 is used instead
 #' @param insert_readme logical, whether to insert a README file
 #' @param copy_all logical, whether to copy everything in the current directory into the container. If `inst/rang` is detected in `output_dir`, this is coerced to TRUE.
+#' @param method character, can only be "auto", "evercran", "rocker", or "debian". Select which base image is used. "auto" (the default) selects the best option based on the R version. "evercran" is experimental.
 #' @param ... arguments to be passed to `dockerize`
 #' @return `output_dir`, invisibly
 #' @inheritParams export_rang

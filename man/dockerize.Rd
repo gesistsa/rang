@@ -72,6 +72,8 @@ and \code{\link[=download.file]{download.file()}}.}
 
 \item{copy_all}{logical, whether to copy everything in the current directory into the container. If \code{inst/rang} is detected in \code{output_dir}, this is coerced to TRUE.}
 
+\item{method}{character, can only be "auto", "evercran", "rocker", or "debian". Select which base image is used. "auto" (the default) selects the best option based on the R version. "evercran" is experimental.}
+
 \item{...}{arguments to be passed to \code{dockerize}}
 }
 \value{
