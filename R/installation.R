@@ -126,7 +126,12 @@ generate_installation_order <- function(rang) {
 }
 
 .is_r_version_older_than <- function(rang, r_version = "1.3.1") {
-    utils::compareVersion(rang$r_version, r_version) == -1
+    if (inherits(rang, "rang")) {
+        current_ver <- rang$r_version
+    } else {
+        current_ver <- rang
+    }
+    utils::compareVersion(current_ver, r_version) == -1
 }
 
 ## Wrap long line by breaking line at &&

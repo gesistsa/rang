@@ -87,11 +87,16 @@
         COPY = c(paste0("COPY rang.R ", rang_path)),
         RUN = c(paste("RUN", sysreqs_cmd)),
         CMD = c("CMD [\"R\"]"))
+    run_cmd <- "RUN "
     if (!is.na(lib)) {
-        containerfile_content$RUN <- append(containerfile_content$RUN, paste0("RUN mkdir ", lib, " && Rscript $RANG_PATH"))
-    } else {
-        containerfile_content$RUN <- append(containerfile_content$RUN, "RUN R --no-save < $RANG_PATH")
+        run_cmd <- paste(run_cmd, "mkdir", lib, "&&")
     }
+    if (.is_r_version_older_than(r_version, "2.5.0")) {
+        run_cmd <- paste(run_cmd, "R --no-save < $RANG_PATH")
+    } else {
+        run_cmd <- paste(run_cmd, "Rscript $RANG_PATH")
+    }
+    containerfile_content$RUN <- append(containerfile_content$RUN, run_cmd)
     if (isTRUE(cache)) {
         containerfile_content$COPY <- append(containerfile_content$COPY, paste0("COPY cache ", cache_path))
         containerfile_content$ENV <- append(containerfile_content$ENV, paste0("ENV CACHE_PATH ", cache_path))
