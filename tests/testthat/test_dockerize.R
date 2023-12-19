@@ -364,3 +364,19 @@ test_that(".generate_wrapped_line with actual outcome", {
     expected_output <- readLines("../testdata/wrapped_line.txt")
     expect_equal(readLines(temp_file), expected_output)
 })
+
+test_that("evercran", {
+    graph <- readRDS("../testdata/graph.RDS")
+    temp_dir <- .generate_temp_dir()
+    dockerize(graph, output_dir = temp_dir, method = "evercran")
+    Dockerfile <- readLines(file.path(temp_dir, "Dockerfile"))
+    expect_true(any(grepl("r-hub/evercran", Dockerfile)))
+    expect_false(any(grepl("R \\-\\-", Dockerfile)))
+    ## older
+    graph$r_version <- "2.4.0"
+    temp_dir <- .generate_temp_dir()
+    dockerize(graph, output_dir = temp_dir, method = "evercran")
+    Dockerfile <- readLines(file.path(temp_dir, "Dockerfile"))
+    expect_true(any(grepl("r-hub/evercran", Dockerfile)))
+    expect_true(any(grepl("R \\-\\-", Dockerfile)))
+})
