@@ -24,7 +24,8 @@ dockerize(
   debian_version = c("lenny", "squeeze", "wheezy", "jessie", "stretch"),
   skip_r17 = TRUE,
   insert_readme = TRUE,
-  copy_all = FALSE
+  copy_all = FALSE,
+  method = c("auto", "evercran", "rocker", "debian")
 )
 
 dockerize_rang(...)
@@ -61,7 +62,7 @@ and \code{\link[=download.file]{download.file()}}.}
 
 \item{bioc_mirror}{character, which Bioconductor mirror to use}
 
-\item{no_rocker}{logical, whether to skip using Rocker images even when an appropriate version is available. Please keep this as \code{TRUE} unless you know what you are doing}
+\item{no_rocker}{logical, whether to skip using Rocker images even when an appropriate version is available. Please keep this as \code{FALSE} unless you know what you are doing}
 
 \item{debian_version}{when Rocker images are not used, which EOL version of Debian to use. Can only be "lenny", "etch", "squeeze", "wheezy", "jessie", "stretch". Please keep this as default "lenny" unless you know what you are doing}
 
