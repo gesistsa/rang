@@ -126,7 +126,12 @@ generate_installation_order <- function(rang) {
 }
 
 .is_r_version_older_than <- function(rang, r_version = "1.3.1") {
-    utils::compareVersion(rang$r_version, r_version) == -1
+    if (inherits(rang, "rang")) {
+        current_ver <- rang$r_version
+    } else {
+        current_ver <- rang
+    }
+    utils::compareVersion(current_ver, r_version) == -1
 }
 
 ## Wrap long line by breaking line at &&
@@ -184,16 +189,17 @@ export_rang <- function(rang, path, rang_as_comment = TRUE, verbose = TRUE, lib 
     }
     installation_order <- generate_installation_order(rang)
     file.create(path)
-    con <- file(path, open="w")
+    con <- file(path, open = "w")
     if (.is_r_version_older_than(rang, "2.1")) {
         header_file <- "header_cmd.R"
     } else {
         header_file <- "header.R"
     }
     writeLines(readLines(system.file(header_file, package = "rang")), con = con)
-    cat("installation.order <- ", file = con)
-    dput(installation_order, file = con)
+    cat("installation.order.list <- ", file = con)
+    dput(installation_order, file = con, control = c("keepNA", "niceNames", "S_compatible"))
     cat("\n", file = con)
+    cat("installation.order <- data.frame(installation.order.list)\n", file = con)
     cat(paste0("verbose <- ", as.character(verbose), "\n"), file = con)
     if (is.na(lib)) {
         cat("lib <- NA\n", file = con)
@@ -309,6 +315,29 @@ export_renv <- function(rang, path = ".") {
     writeLines(content, path)
 }
 
+.determine_method <- function(method = "auto", no_rocker = FALSE, rang, verb = "dockerize") {
+    if (method == "evercran") {
+        return(method)
+    }
+    if (method == "debian") {
+        return(method)
+    }
+    if (method == "rocker" && !.is_r_version_older_than(rang, "3.1")) {
+        return(method)
+    }
+    if (no_rocker) {
+        lifecycle::deprecate_warn(
+                       when = "0.4.0",
+                       what = paste0(verb, "(no_rocker)"),
+                       details = "`no_rocker` will be removed in 1.0.0. Please use `method` instead. Also, the default option will be changed to `evercran`, not `debian`.")
+        return("debian")
+    }
+    if (.is_r_version_older_than(rang, "3.1")) {
+        return("debian")
+    }
+    return("rocker")
+}
+
 ## generate *ize() / *ise() content as a directory to output_dir
 ## `containerfile_content` is a list from .generate_rocker_*_content() or .generate_debian_eol_*_content()
 .containerize <- function(rang, output_dir, materials_dir = NULL, post_installation_steps = NULL,
@@ -324,7 +353,9 @@ export_renv <- function(rang, path = ".") {
                           verb = "dockerize", passive_verb = "dockerized",
                           generate_rocker = .generate_rocker_dockerfile_content,
                           generate_eol = .generate_debian_eol_dockerfile_content,
-                          output_file = "Dockerfile") {
+                          generate_evercran = .generate_evercran_dockerfile_content,
+                          output_file = "Dockerfile",
+                          method = c("auto", "evercran", "rocker", "debian")) {
     if (length(rang$ranglets) == 0) {
         warning(paste0("Nothing to ", verb), call. = FALSE)
         return(invisible(NULL))
@@ -352,7 +383,8 @@ export_renv <- function(rang, path = ".") {
     }
     image <- match.arg(image)
     debian_version <- match.arg(debian_version)
-    sysreqs_cmd <- .group_sysreqs(rang)
+    method <- .determine_method(match.arg(method), no_rocker = no_rocker, rang = rang, verb = verb)
+    sysreqs_cmd <- .group_sysreqs(rang, method != "evercran")
     if (!dir.exists(output_dir)) {
         dir.create(output_dir)
     }
@@ -381,7 +413,15 @@ export_renv <- function(rang, path = ".") {
         .cache_pkgs(rang = rang, base_dir = base_dir, cran_mirror = cran_mirror,
                     bioc_mirror = bioc_mirror, verbose = verbose)
     }
-    if (.is_r_version_older_than(rang, "3.1") || isTRUE(no_rocker)) {
+    if (method == "rocker") {
+        containerfile_content <- generate_rocker(r_version = r_version,
+                                                 sysreqs_cmd = sysreqs_cmd, lib = lib,
+                                                 cache = cache, image = image,
+                                                 post_installation_steps = post_installation_steps,
+                                                 rel_dir = rel_dir,
+                                                 copy_all = copy_all)
+    }
+    if (method == "debian") {
         file.copy(system.file("compile_r.sh", package = "rang"), file.path(base_dir, "compile_r.sh"),
                   overwrite = TRUE)
         containerfile_content <- generate_eol(r_version = r_version,
@@ -397,14 +437,39 @@ export_renv <- function(rang, path = ".") {
             .cache_debian(debian_version = debian_version, base_dir = base_dir,
                           verbose = verbose)
         }
-    } else {
-        containerfile_content <- generate_rocker(r_version = r_version,
-                                                 sysreqs_cmd = sysreqs_cmd, lib = lib,
-                                                 cache = cache, image = image,
-                                                 post_installation_steps = post_installation_steps,
-                                                 rel_dir = rel_dir,
-                                                 copy_all = copy_all)
     }
+    if (method == "evercran") {
+        containerfile_content <- generate_evercran(r_version = r_version,
+                                                    sysreqs_cmd = sysreqs_cmd, lib = lib,
+                                                    cache = cache,
+                                                    post_installation_steps = post_installation_steps,
+                                                    rel_dir = rel_dir,
+                                                    copy_all = copy_all)
+    }
+    ## if (.is_r_version_older_than(rang, "3.1") || isTRUE(no_rocker)) {
+    ##     file.copy(system.file("compile_r.sh", package = "rang"), file.path(base_dir, "compile_r.sh"),
+    ##               overwrite = TRUE)
+    ##     containerfile_content <- generate_eol(r_version = r_version,
+    ##                                           sysreqs_cmd = sysreqs_cmd, lib = lib,
+    ##                                           cache = cache,
+    ##                                           debian_version = debian_version,
+    ##                                           post_installation_steps = post_installation_steps,
+    ##                                           rel_dir = rel_dir,
+    ##                                           copy_all = copy_all)
+    ##     if (isTRUE(cache)) {
+    ##         .cache_rsrc(r_version = r_version, base_dir = base_dir,
+    ##                     verbose = verbose, cran_mirror = cran_mirror)
+    ##         .cache_debian(debian_version = debian_version, base_dir = base_dir,
+    ##                       verbose = verbose)
+    ##     }
+    ## } else {
+    ##     containerfile_content <- generate_rocker(r_version = r_version,
+    ##                                              sysreqs_cmd = sysreqs_cmd, lib = lib,
+    ##                                              cache = cache, image = image,
+    ##                                              post_installation_steps = post_installation_steps,
+    ##                                              rel_dir = rel_dir,
+    ##                                              copy_all = copy_all)
+    ## }
     if (!(is.null(materials_dir))) {
         materials_subdir_in_output_dir <- file.path(base_dir, "materials")
         if (isFALSE(dir.exists(materials_subdir_in_output_dir))) {
@@ -433,11 +498,12 @@ export_renv <- function(rang, path = ".") {
 #' @param image character, which versioned Rocker image to use. Can only be "r-ver", "rstudio", "tidyverse", "verse", "geospatial"
 #' This applies only to R version >= 3.1
 #' @param cache logical, whether to cache the packages now. Please note that the system requirements are not cached. For query with non-CRAN packages, this option is strongly recommended. For query with local packages, this must be TRUE regardless of R version. For R version < 3.1, this must be also TRUE if there is any non-CRAN packages.
-#' @param no_rocker logical, whether to skip using Rocker images even when an appropriate version is available. Please keep this as `TRUE` unless you know what you are doing
+#' @param no_rocker logical, whether to skip using Rocker images even when an appropriate version is available. Please keep this as `FALSE` unless you know what you are doing
 #' @param debian_version when Rocker images are not used, which EOL version of Debian to use. Can only be "lenny", "etch", "squeeze", "wheezy", "jessie", "stretch". Please keep this as default "lenny" unless you know what you are doing
 #' @param skip_r17 logical, whether to skip R 1.7.x. Currently, it is not possible to compile R 1.7.x (R 1.7.0 and R 1.7.1) with the method provided by  `rang`. It affects `snapshot_date` from 2003-04-16 to 2003-10-07. When `skip_r17` is TRUE and `snapshot_date` is within the aforementioned range, R 1.8.0 is used instead
 #' @param insert_readme logical, whether to insert a README file
 #' @param copy_all logical, whether to copy everything in the current directory into the container. If `inst/rang` is detected in `output_dir`, this is coerced to TRUE.
+#' @param method character, can only be "auto", "evercran", "rocker", or "debian". Select which base image is used. "auto" (the default) selects the best option based on the R version. "evercran" is experimental.
 #' @param ... arguments to be passed to `dockerize`
 #' @return `output_dir`, invisibly
 #' @inheritParams export_rang
@@ -470,7 +536,8 @@ dockerize <- function(rang, output_dir, materials_dir = NULL, post_installation_
                       debian_version = c("lenny", "squeeze", "wheezy", "jessie", "stretch"),
                       skip_r17 = TRUE,
                       insert_readme = TRUE,
-                      copy_all = FALSE) {
+                      copy_all = FALSE,
+                      method = c("auto", "evercran", "rocker", "debian")) {
     .containerize(rang = rang, output_dir = output_dir, materials_dir = materials_dir,
                   post_installation_steps = post_installation_steps, image = image,
                   rang_as_comment = rang_as_comment, cache = cache, verbose = verbose, lib = lib,
@@ -480,7 +547,8 @@ dockerize <- function(rang, output_dir, materials_dir = NULL, post_installation_
                   copy_all = copy_all, verb = "dockerize", passive_verb = "dockerized",
                   generate_rocker = .generate_rocker_dockerfile_content,
                   generate_eol = .generate_debian_eol_dockerfile_content,
-                  output_file = "Dockerfile")
+                  generate_evercran = .generate_evercran_dockerfile_content,
+                  output_file = "Dockerfile", method = method)
 }
 
 #' Create an Apptainer/Singularity Definition File of The Resolved Result
@@ -530,7 +598,8 @@ apptainerize <- function(rang, output_dir, materials_dir = NULL, post_installati
                          debian_version = c("lenny", "squeeze", "wheezy", "jessie", "stretch"),
                          skip_r17 = TRUE,
                          insert_readme = TRUE,
-                         copy_all = FALSE) {
+                         copy_all = FALSE,
+                         method = c("auto", "evercran", "rocker", "debian")) {
     .containerize(rang = rang, output_dir = output_dir, materials_dir = materials_dir,
                   post_installation_steps = post_installation_steps, image = image,
                   rang_as_comment = rang_as_comment, cache = cache, verbose = verbose, lib = lib,
@@ -540,7 +609,7 @@ apptainerize <- function(rang, output_dir, materials_dir = NULL, post_installati
                   copy_all = copy_all, verb = "apptainerize/singularize", passive_verb = "apptainerized/singularized",
                   generate_rocker = .generate_rocker_apptainer_content,
                   generate_eol = .generate_debian_eol_apptainer_content,
-                  output_file = "container.def")
+                  output_file = "container.def", method = method)
 }
 
 ## aliases

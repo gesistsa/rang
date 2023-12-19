@@ -276,23 +276,23 @@ test_that("dockerize with bioc #58", {
   expect_true(any(grepl("bioc.mirror",x)))
 })
 
-test_that("no_rocker #67", {
+test_that("method debian #67", {
     rang_ok <- readRDS("../testdata/rang_ok.RDS")
     temp_dir <- .generate_temp_dir()
-    dockerize(rang = rang_ok, output_dir = temp_dir) ## no_rocker = FALSE
+    dockerize(rang = rang_ok, output_dir = temp_dir)
     expect_false(file.exists(file.path(temp_dir, "compile_r.sh")))
     expect_false(any(readLines(file.path(temp_dir, "Dockerfile")) == "FROM debian/eol:lenny"))
     temp_dir <- .generate_temp_dir()
-    dockerize(rang = rang_ok, output_dir = temp_dir, no_rocker = TRUE) ## debian_version = lenny
+    dockerize(rang = rang_ok, output_dir = temp_dir, method = "debian") ## debian_version = lenny
     expect_true(file.exists(file.path(temp_dir, "compile_r.sh")))
     expect_true(any(readLines(file.path(temp_dir, "Dockerfile")) == "FROM debian/eol:lenny"))
     temp_dir <- .generate_temp_dir()
-    dockerize(rang = rang_ok, output_dir = temp_dir, no_rocker = TRUE,
+    dockerize(rang = rang_ok, output_dir = temp_dir, method = "debian",
               debian_version = "jessie")
     expect_true(file.exists(file.path(temp_dir, "compile_r.sh")))
     expect_true(any(readLines(file.path(temp_dir, "Dockerfile")) == "FROM debian/eol:jessie"))
     temp_dir <- .generate_temp_dir()
-    expect_error(dockerize(rang = rang_ok, output_dir = temp_dir, no_rocker = TRUE,
+    expect_error(dockerize(rang = rang_ok, output_dir = temp_dir, method = "debian",
               debian_version = "3.11"))
 })
 
@@ -363,4 +363,20 @@ test_that(".generate_wrapped_line with actual outcome", {
     writeLines(.generate_wrapped_line(input), temp_file)
     expected_output <- readLines("../testdata/wrapped_line.txt")
     expect_equal(readLines(temp_file), expected_output)
+})
+
+test_that("evercran", {
+    graph <- readRDS("../testdata/graph.RDS")
+    temp_dir <- .generate_temp_dir()
+    dockerize(graph, output_dir = temp_dir, method = "evercran")
+    Dockerfile <- readLines(file.path(temp_dir, "Dockerfile"))
+    expect_true(any(grepl("r-hub/evercran", Dockerfile)))
+    expect_false(any(grepl("R \\-\\-", Dockerfile)))
+    ## older
+    graph$r_version <- "2.4.0"
+    temp_dir <- .generate_temp_dir()
+    dockerize(graph, output_dir = temp_dir, method = "evercran")
+    Dockerfile <- readLines(file.path(temp_dir, "Dockerfile"))
+    expect_true(any(grepl("r-hub/evercran", Dockerfile)))
+    expect_true(any(grepl("R \\-\\-", Dockerfile)))
 })

@@ -31,7 +31,8 @@ Imports:
     httr,
     vctrs,
     renv,
-    here
+    here,
+    lifecycle
 Depends: 
     R (>= 3.5.0)
 VignetteBuilder: knitr

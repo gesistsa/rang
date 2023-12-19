@@ -2,11 +2,11 @@
 #' @importFrom here here
 NULL
 
-.query_mirror_validity <- function(mirror) {
+.query_mirror_validity <- function(mirror, local.only = TRUE) {
     if (mirror == "https://cran.r-project.org/") {
         return(TRUE)
     }
-    all_mirrors <- utils::getCRANmirrors()$URL
+    all_mirrors <- utils::getCRANmirrors(local.only = local.only)$URL
     mirror %in% all_mirrors
 }
 

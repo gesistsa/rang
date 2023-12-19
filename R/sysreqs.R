@@ -217,10 +217,10 @@ query_sysreqs <- function(rang, os = "ubuntu-20.04") {
     return(cmd)
 }
 
-.group_sysreqs <- function(rang) {
+.group_sysreqs <- function(rang, add_curl = TRUE) {
     must_do_cmd <- "apt-get update -qq && apt-get install -y libpcre3-dev zlib1g-dev pkg-config"
     if (length(rang$sysreqs) == 0) {
-        must_do_cmd <- paste(must_do_cmd, "libcurl4-openssl-dev")
+        must_do_cmd <- paste(must_do_cmd, ifelse(add_curl, "libcurl4-openssl-dev", ""))
         return(must_do_cmd)
     }
     if (isFALSE(.is_ppa_in_sysreqs(rang))) {

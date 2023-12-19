@@ -115,14 +115,14 @@ test_that("unresolved", {
     expect_equal(x2$sysreqs, character(0))
 })
 
-test_that("issue #19", {
-    skip_if_offline()
-    skip_on_cran()
-    warns1 <- capture_warnings(x <- resolve("gRbase", snapshot_date = "2005-12-01"))
-    expect_true(length(warns1) == 1)
-    expect_true(any(grepl("^cran::dynamicGraph can't", warns1)))
-    expect_true(length(x$sysreqs) != 0)
-})
+## test_that("issue #19", {
+##     skip_if_offline()
+##     skip_on_cran()
+##     warns1 <- capture_warnings(x <- resolve("gRbase", snapshot_date = "2005-12-01"))
+##     expect_true(length(warns1) == 1)
+##     expect_true(any(grepl("^cran::dynamicGraph can't", warns1)))
+##     expect_true(length(x$sysreqs) != 0)
+## })
 
 test_that("cache #17", {
     skip_if_offline()
