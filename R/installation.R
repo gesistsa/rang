@@ -156,7 +156,7 @@ generate_installation_order <- function(rang) {
 #' @seealso [generate_installation_order()]
 #' @details The idea behind this is to determine the installation order of R packages locally. Then, the installation script can be deployed to another
 #' fresh R session to install R packages. [dockerize()] and [apptainerize()] are more reasonable ways because a fresh R session with all system requirements
-#' is provided. The current approach does not work in R < 2.1.0.
+#' is provided.
 #' @export
 #' @references
 #' Ripley, B. (2005) [Packages and their Management in R 2.1.0.](https://cran.r-project.org/doc/Rnews/Rnews_2005-1.pdf) R News, 5(1):8--11.
@@ -284,7 +284,7 @@ export_renv <- function(rang, path = ".") {
 
 .generate_container_readme <- function(output_dir, image, verb = c("dockerize", "apptainerize/singularize")) {
     file.create(file.path(output_dir,"README"))
-    con <- file(file.path(output_dir,"README"), open="w")
+    con <- file(file.path(output_dir,"README"), open = "w")
     verb <- match.arg(verb)
     template_path <- switch(verb,
                             "dockerize" = "docker_readme_template.txt",
@@ -446,30 +446,6 @@ export_renv <- function(rang, path = ".") {
                                                     rel_dir = rel_dir,
                                                     copy_all = copy_all)
     }
-    ## if (.is_r_version_older_than(rang, "3.1") || isTRUE(no_rocker)) {
-    ##     file.copy(system.file("compile_r.sh", package = "rang"), file.path(base_dir, "compile_r.sh"),
-    ##               overwrite = TRUE)
-    ##     containerfile_content <- generate_eol(r_version = r_version,
-    ##                                           sysreqs_cmd = sysreqs_cmd, lib = lib,
-    ##                                           cache = cache,
-    ##                                           debian_version = debian_version,
-    ##                                           post_installation_steps = post_installation_steps,
-    ##                                           rel_dir = rel_dir,
-    ##                                           copy_all = copy_all)
-    ##     if (isTRUE(cache)) {
-    ##         .cache_rsrc(r_version = r_version, base_dir = base_dir,
-    ##                     verbose = verbose, cran_mirror = cran_mirror)
-    ##         .cache_debian(debian_version = debian_version, base_dir = base_dir,
-    ##                       verbose = verbose)
-    ##     }
-    ## } else {
-    ##     containerfile_content <- generate_rocker(r_version = r_version,
-    ##                                              sysreqs_cmd = sysreqs_cmd, lib = lib,
-    ##                                              cache = cache, image = image,
-    ##                                              post_installation_steps = post_installation_steps,
-    ##                                              rel_dir = rel_dir,
-    ##                                              copy_all = copy_all)
-    ## }
     if (!(is.null(materials_dir))) {
         materials_subdir_in_output_dir <- file.path(base_dir, "materials")
         if (isFALSE(dir.exists(materials_subdir_in_output_dir))) {
