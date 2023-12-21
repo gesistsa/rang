@@ -2,15 +2,13 @@ url: https://gesistsa.github.io/rang/
 template:
   bootstrap: 5
   bslib:
-    bg: '#F9F7F7'
-    fg: '#112D4E'
-    primary: '#3F72AF'
-    text-muted: '#FFFFFF'
-    base_font:
-      google: Roboto
-    heading_font:
-      google: Roboto Slab
-    code_font:
-      google: JetBrains Mono
+    bg: "#F9F7F7"
+    fg: "#112D4E"
+    primary: "#3F72AF"
+    navbar-color: "#FFFFFF"
+    base_font: {google: "Roboto"}
+    heading_font: {google: "Roboto Slab"}
+    code_font: {google: "JetBrains Mono"}
 navbar:
-  bg: primary
+  bg: none
+  type: light
