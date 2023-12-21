@@ -11,3 +11,7 @@
 ^\.Rproj\.user$
 tests/.renvignore
 ^\.gitattributes$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
+^\.gitignore$
