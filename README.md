@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# rang <img src="man/figures/rang_logo.svg" align="right" height="200" />
+# rang <img src="man/figures/rang_logo.png" align="right" width = "120" />
 
 <!-- badges: start -->
 
@@ -342,8 +342,19 @@ method works for R \< 3.1.0 but not R \< 1.3.1. The `image` parameter is
 ignored in this case.
 
 ``` r
-rang_rio <- resolve("rio", snapshot_date = "2013-08-28") ## R 3.0.1
+rang_rio <- resolve("rio", snapshot_date = "2013-08-30") ## R 3.0.1
 dockerize(rang_rio, output_dir = "~/old_renviron")
+```
+
+## `evercran` support (experimental)
+
+`rang` supports [evercran](https://github.com/r-hub/evercran). As of
+writing, the support is still experimental (just like `evercran`
+itself). In the future, `evercran` will replace the Debian method.
+
+``` r
+rang_rio <- resolve("rio", snapshot_date = "2013-08-30") ## R 3.0.1
+dockerize(rang_rio, output_dir = "~/old_renviron", method = "evercran")
 ```
 
 ## Acknowledgment
