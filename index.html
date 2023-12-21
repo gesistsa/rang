@@ -68,7 +68,7 @@
 </nav><div class="container template-home">
 <div class="row">
   <main id="main" class="col-md-9"><div class="section level1">
-<div class="page-header"><h1 id="rang-">rang <img src="reference/figures/rang_logo.svg" align="right" height="200"><a class="anchor" aria-label="anchor" href="#rang-"></a>
+<div class="page-header"><h1 id="rang-">rang <img src="reference/figures/rang_logo.png" align="right" width="120"><a class="anchor" aria-label="anchor" href="#rang-"></a>
 </h1></div>
 <!-- badges: start -->
 
@@ -286,8 +286,17 @@ loaded via a namespace (and not attached):
 </h2>
 <p><code>rang</code> can still be used to recreate computational environments for R &lt; 3.1.0. The Dockerfile generated is based on Debian Lenny (5.0) and the requested version of R is compiled from source. As of writing, this method works for R &lt; 3.1.0 but not R &lt; 1.3.1. The <code>image</code> parameter is ignored in this case.</p>
 <div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">rang_rio</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/resolve.html">resolve</a></span><span class="op">(</span><span class="st">"rio"</span>, snapshot_date <span class="op">=</span> <span class="st">"2013-08-28"</span><span class="op">)</span> <span class="co">## R 3.0.1</span></span>
+<code class="sourceCode R"><span><span class="va">rang_rio</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/resolve.html">resolve</a></span><span class="op">(</span><span class="st">"rio"</span>, snapshot_date <span class="op">=</span> <span class="st">"2013-08-30"</span><span class="op">)</span> <span class="co">## R 3.0.1</span></span>
 <span><span class="fu"><a href="reference/dockerize.html">dockerize</a></span><span class="op">(</span><span class="va">rang_rio</span>, output_dir <span class="op">=</span> <span class="st">"~/old_renviron"</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="evercran-support-experimental">
+<code>evercran</code> support (experimental)<a class="anchor" aria-label="anchor" href="#evercran-support-experimental"></a>
+</h2>
+<p><code>rang</code> supports <a href="https://github.com/r-hub/evercran" class="external-link">evercran</a>. As of writing, the support is still experimental (just like <code>evercran</code> itself). In the future, <code>evercran</code> will replace the Debian method.</p>
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">rang_rio</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/resolve.html">resolve</a></span><span class="op">(</span><span class="st">"rio"</span>, snapshot_date <span class="op">=</span> <span class="st">"2013-08-30"</span><span class="op">)</span> <span class="co">## R 3.0.1</span></span>
+<span><span class="fu"><a href="reference/dockerize.html">dockerize</a></span><span class="op">(</span><span class="va">rang_rio</span>, output_dir <span class="op">=</span> <span class="st">"~/old_renviron"</span>, method <span class="op">=</span> <span class="st">"evercran"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="acknowledgment">Acknowledgment<a class="anchor" aria-label="anchor" href="#acknowledgment"></a>
