@@ -13,7 +13,7 @@ License: GPL (>= 3)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
-URL: https://github.com/gesistsa/rang
+URL: https://gesistsa.github.io/rang, https://github.com/gesistsa/rang
 BugReports: https://github.com/gesistsa/rang/issues
 Suggests: 
     knitr,
