@@ -1,0 +1,312 @@
+# --------------------------------------------
+# CITATION file created with {cffr} R package
+# See also: https://docs.ropensci.org/cffr/
+# --------------------------------------------
+ 
+cff-version: 1.2.0
+message: 'To cite package "rang" in publications use:'
+type: software
+license: GPL-3.0-or-later
+title: 'rang: Reconstructing Reproducible R Computational Environments'
+version: 0.3.0
+doi: 10.1371/journal.pone.0286761
+identifiers:
+- type: doi
+  value: 10.32614/CRAN.package.rang
+abstract: Resolve the dependency graph of R packages at a specific time point based
+  on the information from various 'R-hub' web services <https://blog.r-hub.io/>. The
+  dependency graph can then be used to reconstruct the R computational environment
+  with 'Rocker' <https://rocker-project.org>.
+authors:
+- family-names: Chan
+  given-names: Chung-hong
+  email: chainsawtiney@gmail.com
+  orcid: https://orcid.org/0000-0002-6232-7530
+- family-names: Schoch
+  given-names: David
+  email: david@schochastics.net
+  orcid: https://orcid.org/0000-0003-2952-4812
+preferred-citation:
+  type: article
+  title: 'rang: Reconstructing reproducible R computational environments'
+  authors:
+  - family-names: Chan
+    given-names: Chung-hong
+    email: chainsawtiney@gmail.com
+    orcid: https://orcid.org/0000-0002-6232-7530
+  - family-names: Schoch
+    given-names: David
+    email: david@schochastics.net
+    orcid: https://orcid.org/0000-0003-2952-4812
+  journal: PLOS ONE
+  url: https://github.com/gesistsa/rang
+  year: '2023'
+  doi: 10.1371/journal.pone.0286761
+repository: https://CRAN.R-project.org/package=rang
+repository-code: https://github.com/gesistsa/rang
+url: https://gesistsa.github.io/rang
+contact:
+- family-names: Chan
+  given-names: Chung-hong
+  email: chainsawtiney@gmail.com
+  orcid: https://orcid.org/0000-0002-6232-7530
+keywords:
+- cran
+- r
+- reproducibility
+- reproducible-research
+- rstats
+references:
+- type: software
+  title: knitr
+  abstract: 'knitr: A General-Purpose Package for Dynamic Report Generation in R'
+  notes: Suggests
+  url: https://yihui.org/knitr/
+  repository: https://CRAN.R-project.org/package=knitr
+  authors:
+  - family-names: Xie
+    given-names: Yihui
+    email: xie@yihui.name
+    orcid: https://orcid.org/0000-0003-0645-5666
+  year: '2025'
+  doi: 10.32614/CRAN.package.knitr
+- type: software
+  title: rmarkdown
+  abstract: 'rmarkdown: Dynamic Documents for R'
+  notes: Suggests
+  url: https://pkgs.rstudio.com/rmarkdown/
+  repository: https://CRAN.R-project.org/package=rmarkdown
+  authors:
+  - family-names: Allaire
+    given-names: JJ
+    email: jj@posit.co
+  - family-names: Xie
+    given-names: Yihui
+    email: xie@yihui.name
+    orcid: https://orcid.org/0000-0003-0645-5666
+  - family-names: Dervieux
+    given-names: Christophe
+    email: cderv@posit.co
+    orcid: https://orcid.org/0000-0003-4474-2498
+  - family-names: McPherson
+    given-names: Jonathan
+    email: jonathan@posit.co
+  - family-names: Luraschi
+    given-names: Javier
+  - family-names: Ushey
+    given-names: Kevin
+    email: kevin@posit.co
+  - family-names: Atkins
+    given-names: Aron
+    email: aron@posit.co
+  - family-names: Wickham
+    given-names: Hadley
+    email: hadley@posit.co
+  - family-names: Cheng
+    given-names: Joe
+    email: joe@posit.co
+  - family-names: Chang
+    given-names: Winston
+    email: winston@posit.co
+  - family-names: Iannone
+    given-names: Richard
+    email: rich@posit.co
+    orcid: https://orcid.org/0000-0003-3925-190X
+  year: '2025'
+  doi: 10.32614/CRAN.package.rmarkdown
+- type: software
+  title: testthat
+  abstract: 'testthat: Unit Testing for R'
+  notes: Suggests
+  url: https://testthat.r-lib.org
+  repository: https://CRAN.R-project.org/package=testthat
+  authors:
+  - family-names: Wickham
+    given-names: Hadley
+    email: hadley@posit.co
+  year: '2025'
+  doi: 10.32614/CRAN.package.testthat
+  version: '>= 3.0.0'
+- type: software
+  title: parsedate
+  abstract: 'parsedate: Recognize and Parse Dates in Various Formats, Including All
+    ISO 8601 Formats'
+  notes: Imports
+  url: https://github.com/gaborcsardi/parsedate
+  repository: https://CRAN.R-project.org/package=parsedate
+  authors:
+  - family-names: Csárdi
+    given-names: Gábor
+    email: csardi.gabor@gmail.com
+  - family-names: Torvalds
+    given-names: Linus
+  year: '2025'
+  doi: 10.32614/CRAN.package.parsedate
+- type: software
+  title: fastmap
+  abstract: 'fastmap: Fast Data Structures'
+  notes: Imports
+  url: https://r-lib.github.io/fastmap/
+  repository: https://CRAN.R-project.org/package=fastmap
+  authors:
+  - family-names: Chang
+    given-names: Winston
+    email: winston@posit.co
+  year: '2025'
+  doi: 10.32614/CRAN.package.fastmap
+- type: software
+  title: jsonlite
+  abstract: 'jsonlite: A Simple and Robust JSON Parser and Generator for R'
+  notes: Imports
+  url: https://jeroen.r-universe.dev/jsonlite
+  repository: https://CRAN.R-project.org/package=jsonlite
+  authors:
+  - family-names: Ooms
+    given-names: Jeroen
+    email: jeroenooms@gmail.com
+    orcid: https://orcid.org/0000-0002-4035-0289
+  year: '2025'
+  doi: 10.32614/CRAN.package.jsonlite
+- type: software
+  title: memoise
+  abstract: 'memoise: ''Memoisation'' of Functions'
+  notes: Imports
+  url: https://memoise.r-lib.org
+  repository: https://CRAN.R-project.org/package=memoise
+  authors:
+  - family-names: Wickham
+    given-names: Hadley
+    email: hadley@rstudio.com
+  - family-names: Hester
+    given-names: Jim
+  - family-names: Chang
+    given-names: Winston
+    email: winston@rstudio.com
+  - family-names: Müller
+    given-names: Kirill
+    email: krlmlr+r@mailbox.org
+  - family-names: Cook
+    given-names: Daniel
+    email: danielecook@gmail.com
+  year: '2025'
+  doi: 10.32614/CRAN.package.memoise
+- type: software
+  title: remotes
+  abstract: 'remotes: R Package Installation from Remote Repositories, Including ''GitHub'''
+  notes: Imports
+  url: https://remotes.r-lib.org
+  repository: https://CRAN.R-project.org/package=remotes
+  authors:
+  - family-names: Csárdi
+    given-names: Gábor
+    email: csardi.gabor@gmail.com
+  - family-names: Hester
+    given-names: Jim
+  - family-names: Wickham
+    given-names: Hadley
+  - family-names: Chang
+    given-names: Winston
+  - family-names: Morgan
+    given-names: Martin
+  - family-names: Tenenbaum
+    given-names: Dan
+  year: '2025'
+  doi: 10.32614/CRAN.package.remotes
+- type: software
+  title: utils
+  abstract: 'R: A Language and Environment for Statistical Computing'
+  notes: Imports
+  authors:
+  - name: R Core Team
+  institution:
+    name: R Foundation for Statistical Computing
+    address: Vienna, Austria
+  year: '2025'
+- type: software
+  title: httr
+  abstract: 'httr: Tools for Working with URLs and HTTP'
+  notes: Imports
+  url: https://httr.r-lib.org/
+  repository: https://CRAN.R-project.org/package=httr
+  authors:
+  - family-names: Wickham
+    given-names: Hadley
+    email: hadley@posit.co
+  year: '2025'
+  doi: 10.32614/CRAN.package.httr
+- type: software
+  title: vctrs
+  abstract: 'vctrs: Vector Helpers'
+  notes: Imports
+  url: https://vctrs.r-lib.org/
+  repository: https://CRAN.R-project.org/package=vctrs
+  authors:
+  - family-names: Wickham
+    given-names: Hadley
+    email: hadley@posit.co
+  - family-names: Henry
+    given-names: Lionel
+    email: lionel@posit.co
+  - family-names: Vaughan
+    given-names: Davis
+    email: davis@posit.co
+  year: '2025'
+  doi: 10.32614/CRAN.package.vctrs
+- type: software
+  title: renv
+  abstract: 'renv: Project Environments'
+  notes: Imports
+  url: https://rstudio.github.io/renv/
+  repository: https://CRAN.R-project.org/package=renv
+  authors:
+  - family-names: Ushey
+    given-names: Kevin
+    email: kevin@rstudio.com
+    orcid: https://orcid.org/0000-0003-2880-7407
+  - family-names: Wickham
+    given-names: Hadley
+    email: hadley@rstudio.com
+    orcid: https://orcid.org/0000-0003-4757-117X
+  year: '2025'
+  doi: 10.32614/CRAN.package.renv
+- type: software
+  title: here
+  abstract: 'here: A Simpler Way to Find Your Files'
+  notes: Imports
+  url: https://here.r-lib.org/
+  repository: https://CRAN.R-project.org/package=here
+  authors:
+  - family-names: Müller
+    given-names: Kirill
+    email: krlmlr+r@mailbox.org
+    orcid: https://orcid.org/0000-0002-1416-3412
+  year: '2025'
+  doi: 10.32614/CRAN.package.here
+- type: software
+  title: lifecycle
+  abstract: 'lifecycle: Manage the Life Cycle of your Package Functions'
+  notes: Imports
+  url: https://lifecycle.r-lib.org/
+  repository: https://CRAN.R-project.org/package=lifecycle
+  authors:
+  - family-names: Henry
+    given-names: Lionel
+    email: lionel@posit.co
+  - family-names: Wickham
+    given-names: Hadley
+    email: hadley@posit.co
+    orcid: https://orcid.org/0000-0003-4757-117X
+  year: '2025'
+  doi: 10.32614/CRAN.package.lifecycle
+- type: software
+  title: 'R: A Language and Environment for Statistical Computing'
+  notes: Depends
+  url: https://www.R-project.org/
+  authors:
+  - name: R Core Team
+  institution:
+    name: R Foundation for Statistical Computing
+    address: Vienna, Austria
+  year: '2025'
+  version: '>= 3.5.0'
+
