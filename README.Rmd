@@ -43,6 +43,10 @@ Or the stable CRAN version
 install.packages("rang")
 ```
 
+## Hardware Requirements
+
+Rang runs on any hardware that can run R.
+
 ## Example
 
 To obtain the dependency graph of R packages, use `resolve`. Currently, this package supports CRAN, Bioconductor, GitHub, and local packages.
@@ -315,6 +319,10 @@ dockerize(rang_rio, output_dir = "~/old_renviron")
 rang_rio <- resolve("rio", snapshot_date = "2013-08-30") ## R 3.0.1
 dockerize(rang_rio, output_dir = "~/old_renviron", method = "evercran")
 ```
+
+## Technical Details
+
+See the [publication](https://doi.org/10.1371/journal.pone.0286761) for tested and selected models and parameters, the reasoning behind the model selection, and employed datasets for training.
 
 ## Acknowledgment
 
