@@ -322,7 +322,7 @@ dockerize(rang_rio, output_dir = "~/old_renviron", method = "evercran")
 
 ## Technical Details
 
-See the [publication](https://doi.org/10.1371/journal.pone.0286761) for tested and selected models and parameters, the reasoning behind the model selection, and employed datasets for training.
+See the [publication](https://doi.org/10.1371/journal.pone.0286761) for further information.
 
 ## Acknowledgment
 
