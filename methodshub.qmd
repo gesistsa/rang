@@ -51,6 +51,10 @@ The main function `resolve()` accepts various input data. One example is a path 
 
 The main function `resolve()` gives an S3 object of dependency graph. Please refer to @sec-touse.
 
+## Hardware Requirements
+
+Rang runs on any hardware that can run R.
+
 ## How to Use {#sec-touse}
 
 Suppose you would like to run this code snippet in [this 2018 paper](https://joss.theoj.org/papers/10.21105/joss.00774) of the R package `quanteda` (an R package for text analysis).
@@ -96,7 +100,11 @@ docker run --rm --name "rangtest" -ti rang
 
 The launched container is based on R 3.5.1 and `quanteda` 1.3.4 and is able to run the abovementioned code snippet.
 
-Please refer to either the [publication of this package](https://doi.org/10.1371/journal.pone.0286761) or the [official website](https://gesistsa.github.io/rang/) for further information.
+Please refer to the [official website](https://gesistsa.github.io/rang/) for further information.
+
+## Technical Details
+
+See the [publication](https://doi.org/10.1371/journal.pone.0286761) for information about technical details.
 
 ## Contact Details
 
