@@ -7,7 +7,7 @@ date: "2023-07-21"
 date-format: "YYYY-MM-DD"
 footer: "https://chainsawriot.github.io/basel2023_rang"
 embed-resources: true
-format: fakegesis-revealjs
+format: revealjs
 ---
 ## Computational Reproducibility
 
